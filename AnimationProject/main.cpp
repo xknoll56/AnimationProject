@@ -12,6 +12,7 @@
 #include <QMouseEvent>
 #include <QDebug>
 #include <QCloseEvent>
+#include <QElapsedTimer>
 #include <QOpenGLShaderProgram>
 
 #include <glm/glm.hpp>
@@ -23,59 +24,72 @@
 #include <stdio.h>
 #include <sstream>
 #include <chrono>
+#include <map>
 
 #define PI 3.14159265359f
 
+double dt;
+float pitch, yaw;
+
+std::map<int, bool> keys;
 
 class MainWindow: public QWindow
 {
 public:
-bool running;
-MainWindow() : QWindow()
-{
-    setKeyboardGrabEnabled(true);
-    running = true;
-}
-
-void closeEvent(QCloseEvent* event)
-{
-    event->accept();
-    running = true;
-}
-
-void keyPressEvent(QKeyEvent* event) override
-{
-    switch(event->key())
+    bool running;
+    MainWindow() : QWindow()
     {
-    case Qt::Key_Escape:
-        running = false;
+        setKeyboardGrabEnabled(true);
+        running = true;
+        keys.insert(std::pair<int, bool>(Qt::Key_Left, false));
+        keys.insert(std::pair<int, bool>(Qt::Key_Right, false));
     }
-}
 
-bool event(QEvent* event) override
-{
-    switch(event->type())
+    void closeEvent(QCloseEvent* event)
     {
-    case QEvent::Close:
-        running = false;
-    default:
-        return QWindow::event(event);
+        event->accept();
+        running = true;
     }
-}
+
+    void keyPressEvent(QKeyEvent* event) override
+    {
+        switch(event->key())
+        {
+        case Qt::Key_Escape:
+            running = false;
+        }
+        keys[event->key()] = true;
+    }
+
+    void keyReleaseEvent(QKeyEvent* event) override
+    {
+        keys[event->key()] = false;
+    }
+
+    bool event(QEvent* event) override
+    {
+        switch(event->type())
+        {
+        case QEvent::Close:
+            running = false;
+        default:
+            return QWindow::event(event);
+        }
+    }
 };
 
 const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
+                                 "layout (location = 0) in vec3 aPos;\n"
+                                 "void main()\n"
+                                 "{\n"
+                                 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+                                 "}\0";
 const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
+                                   "out vec4 FragColor;\n"
+                                   "void main()\n"
+                                   "{\n"
+                                   "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                   "}\n\0";
 
 const char* getShaderSource(const char* path)
 {
@@ -89,9 +103,38 @@ const char* getShaderSource(const char* path)
         code = ss.str();
         shaderStream.close();
     }
-    qDebug(code.c_str());
     return code.c_str();
 }
+
+
+
+
+glm::mat4 FPSViewRH( glm::vec3 eye, float pitch, float yaw )
+{
+
+    float cosPitch = glm::cos(pitch);
+    float sinPitch = glm::sin(pitch);
+    float cosYaw = glm::cos(yaw);
+    float sinYaw = glm::sin(yaw);
+
+    glm::vec3 xaxis = { cosYaw, 0, -sinYaw };
+    glm::vec3 yaxis = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
+    glm::vec3 zaxis = { sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw };
+
+    glm::mat4 viewMatrix =
+    {
+
+        glm::vec4(       xaxis.x,            yaxis.x,            zaxis.x,      0 ),
+        glm::vec4(       xaxis.y,            yaxis.y,            zaxis.y,      0 ),
+        glm::vec4(       xaxis.z,            yaxis.z,            zaxis.z,      0 ),
+        glm::vec4( -glm::dot( xaxis, eye ), -glm::dot( yaxis, eye ), -glm::dot( zaxis, eye ), 1 )
+    };
+    return viewMatrix;
+}
+
+
+
+
 
 int main(int argc, char *argv[])
 {
@@ -99,7 +142,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     QSurfaceFormat format;
-    format.setSamples(16);
+    format.setSamples(4);
     format.setDepthBufferSize(24);
     format.setMajorVersion(4);
     format.setMinorVersion(3);
@@ -118,54 +161,63 @@ int main(int argc, char *argv[])
     context->create();
     context->makeCurrent(&window);
 
+    QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
+    paintDevice->setSize(window.size() * window.devicePixelRatio());
+    paintDevice->setDevicePixelRatio(window.devicePixelRatio());
+    QPainter painter(paintDevice);
+    painter.setPen(Qt::white);
+    painter.setFont(QFont("Arial", 12));
+    QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
+    painter.setWorldMatrixEnabled(false);
+
     QOpenGLFunctions_3_3_Core* openGLFunctions = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
-//    QOpenGLFunctions* openGLFunctions = new QOpenGLFunctions(context);
-//    openGLFunctions->initializeOpenGLFunctions();
     if(!openGLFunctions)
     {
         qDebug("Could not obtain required version of opengl");
         app.exit();
-    //openGLFunctions.initializeOpenGLFunctions();
     }
-    QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
-    paintDevice->setSize(window.size() * window.devicePixelRatio());
-    paintDevice->setDevicePixelRatio(window.devicePixelRatio());
-
-    QOpenGLShaderProgram program;
-    program.addShaderFromSourceCode(QOpenGLShader::Vertex, getShaderSource("model.vert"));
-    program.addShaderFromSourceCode(QOpenGLShader::Fragment, getShaderSource("model.frag"));
-    program.link();
-    program.bind();
+    openGLFunctions->initializeOpenGLFunctions();
 
     openGLFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openGLFunctions->glEnable(GL_DEPTH_TEST);
+    openGLFunctions->glEnable(GL_CULL_FACE);
+
+
+    QOpenGLShaderProgram modelShader;
+    modelShader.addShaderFromSourceCode(QOpenGLShader::Vertex, getShaderSource("model.vert"));
+    modelShader.addShaderFromSourceCode(QOpenGLShader::Fragment, getShaderSource("model.frag"));
+    modelShader.link();
+    modelShader.bind();
+
+
     glm::vec3 euler(0,0,0);
     glm::mat4 trans(1.0f);
-    GLuint modelLoc = program.uniformLocation("model");
-    GLuint viewLoc = program.uniformLocation("view");
-    GLuint projectionLoc = program.uniformLocation("projection");
+    GLuint modelLoc = modelShader.uniformLocation("model");
+    GLuint viewLoc = modelShader.uniformLocation("view");
+    GLuint projectionLoc = modelShader.uniformLocation("projection");
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(2,2, -5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
-
+    //glm::mat4 view = glm::lookAt(glm::vec3(2,2, -5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
+    pitch = yaw = 0;
+    glm::mat4 view = FPSViewRH(glm::vec3(0, 2, 5.0f), pitch, yaw);
     openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
     openGLFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
     openGLFunctions->glUniformMatrix4fv(projectionLoc, 1, false, &projection[0][0]);
-    unsigned int shaderProgram = program.programId();
+    unsigned int shaderProgram = modelShader.programId();
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
 
         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
         -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
         -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
 
@@ -176,26 +228,26 @@ int main(int argc, char *argv[])
         -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
         -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
 
         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
         -0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
 
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
         -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f
+        0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
     };
     unsigned int VBO, VAO;
 
@@ -220,28 +272,38 @@ int main(int argc, char *argv[])
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     openGLFunctions->glBindVertexArray(0);
 
-    auto elapsedTime = std::chrono::high_resolution_clock::now();
-    double dt;
+    QElapsedTimer timer;
+    timer.start();
     while(window.running)
     {
-        auto newTime = std::chrono::high_resolution_clock::now();
-        dt = std::chrono::duration<double, std::milli>(newTime-elapsedTime).count()/1000.0;
-        elapsedTime = newTime;
-
-        app.processEvents();
-
-        openGLFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
+        dt = timer.nsecsElapsed()/1000000000.0;
+        timer.restart();
+        qDebug() << timer.nsecsElapsed() << "\n";
+        openGLFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         openGLFunctions->glUseProgram(shaderProgram);
-        euler += glm::vec3(dt, 0.5*dt, 0.25*dt);
+        if(keys[Qt::Key_Left])
+             yaw+=dt;
+        if(keys[Qt::Key_Right])
+             yaw-=dt;
+        view = FPSViewRH(glm::vec3(0, 2, 5.0f), pitch, yaw);
+        euler += glm::vec3(dt, 0, 0);
         glm::mat4 rot = glm::rotate(trans, glm::length(euler), euler);
         openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &rot[0][0]);
+        openGLFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
+
         openGLFunctions->glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         openGLFunctions->glDrawArrays(GL_TRIANGLES, 0, 36);
 
+        openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
+
+
+        painter.beginNativePainting();
+        painter.drawText(rect, "Hello, World!");
+        painter.endNativePainting();
+
+        app.processEvents();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
-
     }
 
     app.quit();
