@@ -1,4 +1,4 @@
-
+#define QT_ONSCREEN_PAINT
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <QWindow>
@@ -16,8 +16,13 @@
 #include <QOpenGLShaderProgram>
 
 #include <glm/glm.hpp>
+//#include <glm/ext.hpp>
+#include <glm/common.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 
 #include <fstream>
 #include <string>
@@ -27,6 +32,7 @@
 #include <map>
 
 #define PI 3.14159265359f
+
 
 double dt;
 float pitch, yaw;
@@ -222,6 +228,11 @@ int main(int argc, char *argv[])
     modelShader.link();
     modelShader.bind();
 
+    QOpenGLShaderProgram gridShader;
+    gridShader.addShaderFromSourceCode(QOpenGLShader::Vertex, getShaderSource("grid.vert").toStdString().c_str());
+    gridShader.addShaderFromSourceCode(QOpenGLShader::Fragment, getShaderSource("grid.frag").toStdString().c_str());
+    gridShader.link();
+
 
     glm::vec3 euler(0,0,0);
     glm::mat4 trans(1.0f);
@@ -229,7 +240,6 @@ int main(int argc, char *argv[])
     GLuint viewLoc = modelShader.uniformLocation("view");
     GLuint projectionLoc = modelShader.uniformLocation("projection");
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
-    //glm::mat4 view = glm::lookAt(glm::vec3(2,2, -5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
     pitch = yaw = 0;
     camPos = glm::vec3(0, 2, 5.0f);
     glm::mat4 view = FPSViewRH(camPos, pitch, yaw);
@@ -299,22 +309,16 @@ int main(int argc, char *argv[])
     openglFunctions->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
     openglFunctions->glEnableVertexAttribArray(1);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    openglFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    openglFunctions->glBindVertexArray(0);
 
     QElapsedTimer timer;
     timer.start();
+
+    glm::quat q(glm::vec3(0,0,0));
 
     while(window.running)
     {
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
-        //qDebug() << 1/dt << "\n";
-        //qDebug() << QCursor::pos();
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         openglFunctions->glUseProgram(shaderProgram);
         if(inputs[Qt::Key_A])
@@ -342,7 +346,9 @@ int main(int argc, char *argv[])
         }
         view = FPSViewRH(camPos, pitch, yaw);
         euler += glm::vec3(dt, 0, 0);
-        glm::mat4 rot = glm::rotate(trans, glm::length(euler), euler);
+        q = glm::rotate(q, (float)dt, glm::vec3(1,1,0));
+        //glm::mat4 rot = glm::rotate(trans, glm::length(euler), euler);
+        glm::mat4 rot = glm::toMat4(q);
         openglFunctions->glUniformMatrix4fv(modelLoc, 1, false, &rot[0][0]);
         openglFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
 
@@ -356,8 +362,8 @@ int main(int argc, char *argv[])
         painter.drawText(rect, std::to_string(1.0/dt).c_str());
         painter.endNativePainting();
 
-        for (auto& [_, v] : inputsDown)
-            v = false;
+        for (auto& it: inputsDown)
+            it.second = false;
         app.processEvents();
         context->makeCurrent(&window);
         openglFunctions->glFinish();
