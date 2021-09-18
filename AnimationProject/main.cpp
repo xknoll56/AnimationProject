@@ -30,8 +30,16 @@
 
 double dt;
 float pitch, yaw;
+float camSpeed = 5.0f;
+glm::vec3 camfwd;
+glm::vec3 camup;
+glm::vec3 camright;
+glm::vec3 camPos;
+QPointF mousePos;
 
-std::map<int, bool> keys;
+std::map<int, bool> inputs;
+std::map<int, bool> inputsDown;
+std::map<int, bool> inputsDownReset;
 
 class MainWindow: public QWindow
 {
@@ -41,14 +49,31 @@ public:
     {
         setKeyboardGrabEnabled(true);
         running = true;
-        keys.insert(std::pair<int, bool>(Qt::Key_Left, false));
-        keys.insert(std::pair<int, bool>(Qt::Key_Right, false));
     }
 
     void closeEvent(QCloseEvent* event)
     {
         event->accept();
         running = true;
+    }
+
+    void mousePressEvent(QMouseEvent *event) override
+    {
+        inputs[event->button()] = true;
+        if(!inputsDownReset[event->button()])
+        {
+            mousePos = QCursor::pos();
+            inputsDown[event->button()] = true;
+            inputsDownReset[event->button()] = true;
+        }
+    }
+
+    void mouseReleaseEvent(QMouseEvent *event) override
+    {
+
+        inputs[event->button()] = false;
+        inputsDownReset[event->button()] = false;
+
     }
 
     void keyPressEvent(QKeyEvent* event) override
@@ -58,12 +83,22 @@ public:
         case Qt::Key_Escape:
             running = false;
         }
-        keys[event->key()] = true;
+        inputs[event->key()] = true;
+        if(!inputsDownReset[event->key()])
+        {
+            mousePos = QCursor::pos();
+            inputsDown[event->key()] = true;
+            inputsDownReset[event->key()] = true;
+        }
     }
 
     void keyReleaseEvent(QKeyEvent* event) override
     {
-        keys[event->key()] = false;
+        if(!event->isAutoRepeat())
+        {
+            inputs[event->key()] = false;
+            inputsDownReset[event->key()] = false;
+        }
     }
 
     bool event(QEvent* event) override
@@ -91,19 +126,16 @@ const char *fragmentShaderSource = "#version 330 core\n"
                                    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
                                    "}\n\0";
 
-const char* getShaderSource(const char* path)
+const QString getShaderSource(const char* path)
 {
-    std::string code;
-    std::ifstream shaderStream(path);
-    if(shaderStream.is_open())
+    QString code;
+    QFile file(path);
+    if(file.open(QIODevice::ReadOnly))
     {
-        std::stringstream ss;
-        ss << shaderStream.rdbuf();
-        ss << '\0';
-        code = ss.str();
-        shaderStream.close();
+        QTextStream stream(&file);
+        code = stream.readAll();
     }
-    return code.c_str();
+    return code;
 }
 
 
@@ -117,17 +149,17 @@ glm::mat4 FPSViewRH( glm::vec3 eye, float pitch, float yaw )
     float cosYaw = glm::cos(yaw);
     float sinYaw = glm::sin(yaw);
 
-    glm::vec3 xaxis = { cosYaw, 0, -sinYaw };
-    glm::vec3 yaxis = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
-    glm::vec3 zaxis = { sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw };
+    camright = { cosYaw, 0, -sinYaw };
+    camup = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
+    camfwd = { sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw };
 
     glm::mat4 viewMatrix =
     {
 
-        glm::vec4(       xaxis.x,            yaxis.x,            zaxis.x,      0 ),
-        glm::vec4(       xaxis.y,            yaxis.y,            zaxis.y,      0 ),
-        glm::vec4(       xaxis.z,            yaxis.z,            zaxis.z,      0 ),
-        glm::vec4( -glm::dot( xaxis, eye ), -glm::dot( yaxis, eye ), -glm::dot( zaxis, eye ), 1 )
+        glm::vec4(       camright.x,            camup.x,            camfwd.x,      0 ),
+        glm::vec4(       camright.y,            camup.y,            camfwd.y,      0 ),
+        glm::vec4(       camright.z,            camup.z,            camfwd.z,      0 ),
+        glm::vec4( -glm::dot( camright, eye ), -glm::dot( camup, eye ), -glm::dot( camfwd, eye ), 1 )
     };
     return viewMatrix;
 }
@@ -153,6 +185,7 @@ int main(int argc, char *argv[])
     window.setTitle("Animation Project");
     window.setFormat(format);
     window.setSurfaceType(QWindow::OpenGLSurface);
+    window.setKeyboardGrabEnabled(true);
     window.resize(1024, 768);
     window.show();
 
@@ -170,22 +203,22 @@ int main(int argc, char *argv[])
     QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
     painter.setWorldMatrixEnabled(false);
 
-    QOpenGLFunctions_3_3_Core* openGLFunctions = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
-    if(!openGLFunctions)
+    QOpenGLFunctions_3_3_Core* openglFunctions = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    if(!openglFunctions)
     {
         qDebug("Could not obtain required version of opengl");
         app.exit();
     }
-    openGLFunctions->initializeOpenGLFunctions();
+    openglFunctions->initializeOpenGLFunctions();
 
-    openGLFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
-    openGLFunctions->glEnable(GL_DEPTH_TEST);
-    openGLFunctions->glEnable(GL_CULL_FACE);
+    openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
+    openglFunctions->glEnable(GL_DEPTH_TEST);
+    openglFunctions->glEnable(GL_CULL_FACE);
 
 
     QOpenGLShaderProgram modelShader;
-    modelShader.addShaderFromSourceCode(QOpenGLShader::Vertex, getShaderSource("model.vert"));
-    modelShader.addShaderFromSourceCode(QOpenGLShader::Fragment, getShaderSource("model.frag"));
+    modelShader.addShaderFromSourceCode(QOpenGLShader::Vertex, getShaderSource("model.vert").toStdString().c_str());
+    modelShader.addShaderFromSourceCode(QOpenGLShader::Fragment, getShaderSource("model.frag").toStdString().c_str());
     modelShader.link();
     modelShader.bind();
 
@@ -198,10 +231,11 @@ int main(int argc, char *argv[])
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
     //glm::mat4 view = glm::lookAt(glm::vec3(2,2, -5.0f), glm::vec3(0,0,0), glm::vec3(0,1,0));
     pitch = yaw = 0;
-    glm::mat4 view = FPSViewRH(glm::vec3(0, 2, 5.0f), pitch, yaw);
-    openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
-    openGLFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
-    openGLFunctions->glUniformMatrix4fv(projectionLoc, 1, false, &projection[0][0]);
+    camPos = glm::vec3(0, 2, 5.0f);
+    glm::mat4 view = FPSViewRH(camPos, pitch, yaw);
+    openglFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
+    openglFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
+    openglFunctions->glUniformMatrix4fv(projectionLoc, 1, false, &projection[0][0]);
     unsigned int shaderProgram = modelShader.programId();
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -251,59 +285,84 @@ int main(int argc, char *argv[])
     };
     unsigned int VBO, VAO;
 
-    openGLFunctions->glGenVertexArrays(1, &VAO);
-    openGLFunctions->glGenBuffers(1, &VBO);
+    openglFunctions->glGenVertexArrays(1, &VAO);
+    openglFunctions->glGenBuffers(1, &VBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    openGLFunctions->glBindVertexArray(VAO);
+    openglFunctions->glBindVertexArray(VAO);
 
-    openGLFunctions->glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    openGLFunctions->glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    openglFunctions->glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    openglFunctions->glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    openGLFunctions->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    openGLFunctions->glEnableVertexAttribArray(0);
+    openglFunctions->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    openglFunctions->glEnableVertexAttribArray(0);
 
-    openGLFunctions->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-    openGLFunctions->glEnableVertexAttribArray(1);
+    openglFunctions->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
+    openglFunctions->glEnableVertexAttribArray(1);
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    openGLFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
+    openglFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    openGLFunctions->glBindVertexArray(0);
+    openglFunctions->glBindVertexArray(0);
 
     QElapsedTimer timer;
     timer.start();
+
     while(window.running)
     {
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
-        qDebug() << timer.nsecsElapsed() << "\n";
-        openGLFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        openGLFunctions->glUseProgram(shaderProgram);
-        if(keys[Qt::Key_Left])
-             yaw+=dt;
-        if(keys[Qt::Key_Right])
-             yaw-=dt;
-        view = FPSViewRH(glm::vec3(0, 2, 5.0f), pitch, yaw);
+        //qDebug() << 1/dt << "\n";
+        //qDebug() << QCursor::pos();
+        openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        openglFunctions->glUseProgram(shaderProgram);
+        if(inputs[Qt::Key_A])
+        {
+            camPos -= camSpeed*camright*(float)dt;
+        }
+        if(inputs[Qt::Key_D])
+        {
+            camPos += camSpeed*camright*(float)dt;
+        }
+        if(inputs[Qt::Key_W])
+        {
+            camPos -= camSpeed*camfwd*(float)dt;
+        }
+        if(inputs[Qt::Key_S])
+        {
+            camPos += camSpeed*camfwd*(float)dt;
+        }
+        if(inputs[Qt::MouseButton::LeftButton])
+        {
+            QPointF deltaPos = QCursor::pos()-mousePos;
+            mousePos = QCursor::pos();
+            yaw -= dt*deltaPos.x();
+            pitch -= dt*deltaPos.y();
+        }
+        view = FPSViewRH(camPos, pitch, yaw);
         euler += glm::vec3(dt, 0, 0);
         glm::mat4 rot = glm::rotate(trans, glm::length(euler), euler);
-        openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &rot[0][0]);
-        openGLFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
+        openglFunctions->glUniformMatrix4fv(modelLoc, 1, false, &rot[0][0]);
+        openglFunctions->glUniformMatrix4fv(viewLoc, 1, false, &view[0][0]);
 
-        openGLFunctions->glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        openGLFunctions->glDrawArrays(GL_TRIANGLES, 0, 36);
+        openglFunctions->glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        openglFunctions->glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        openGLFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
+        openglFunctions->glUniformMatrix4fv(modelLoc, 1, false, &trans[0][0]);
 
 
         painter.beginNativePainting();
-        painter.drawText(rect, "Hello, World!");
+        painter.drawText(rect, std::to_string(1.0/dt).c_str());
         painter.endNativePainting();
 
+        for (auto& [_, v] : inputsDown)
+            v = false;
         app.processEvents();
         context->makeCurrent(&window);
+        openglFunctions->glFinish();
         context->swapBuffers(&window);
+
     }
 
     app.quit();
