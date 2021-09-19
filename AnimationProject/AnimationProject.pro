@@ -13,9 +13,15 @@ INCLUDEPATH += \
     Dependencies
 
 SOURCES += \
+    MainWindow.cpp \
+    Camera.cpp \
+    Shader.cpp \
     main.cpp
 
-HEADERS +=
+HEADERS += \
+    MainWindow.h \
+    Camera.h \
+    Shader.h
 
 FORMS +=
 
@@ -25,8 +31,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    grid.frag \
-    grid.vert \
-    model.frag \
-    model.vert
-
+    Shaders/model.frag \
+    Shaders/model.vert \
+    Shaders/grid.vert \
+    Shaders/grid.frag
