@@ -15,12 +15,14 @@ INCLUDEPATH += \
 SOURCES += \
     MainWindow.cpp \
     Camera.cpp \
+    Mesh.cpp \
     Shader.cpp \
     main.cpp
 
 HEADERS += \
     MainWindow.h \
     Camera.h \
+    Mesh.h \
     Shader.h
 
 FORMS +=

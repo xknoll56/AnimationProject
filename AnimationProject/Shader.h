@@ -12,16 +12,16 @@ class Shader
 private:
     const QString getShaderSource(const char* path);
     GLuint handle;
-    std::map<const char*, GLuint> uniforms;
+    std::map<std::string, GLuint> uniforms;
     QOpenGLShaderProgram shader;
 
 public:
     Shader(const char* vertexPath, const char* fragmentPath);
     void use();
-    void insertUniform(const char* name);
-    void setVec3(const char* uniformName, const glm::vec3& value);
-    void setMat4(const char* uniformName, const glm::mat4& value);
-    const GLuint getUniformLocation(const char* uniformName);
+    void insertUniform(std::string uniformName);
+    void setVec3(std::string uniformName, const glm::vec3& value);
+    void setMat4(std::string uniformName, const glm::mat4& value);
+    const GLuint getUniformLocation(std::string uniformName);
     const GLuint getHandle();
 
 };

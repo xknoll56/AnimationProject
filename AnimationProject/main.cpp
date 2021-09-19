@@ -27,25 +27,11 @@
 #include <MainWindow.h>
 #include <Camera.h>
 #include <Shader.h>
+#include <Mesh.h>
 
 
 double dt;
 QOpenGLFunctions_3_3_Core* openglFunctions;
-
-
-
-const QString getShaderSource(const char* path)
-{
-    QString code;
-    QFile file(path);
-    if(file.open(QIODevice::ReadOnly))
-    {
-        QTextStream stream(&file);
-        code = stream.readAll();
-    }
-    return code;
-}
-
 
 
 int main(int argc, char *argv[])
@@ -102,6 +88,8 @@ int main(int argc, char *argv[])
     modelShader.insertUniform("model");
     modelShader.insertUniform("view");
     modelShader.insertUniform("projection");
+    modelShader.insertUniform("color");
+    //modelShader.setVec3("color", glm::vec3(1,1,1));
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
 
     Camera cam(glm::vec3(0,2,5));
@@ -111,67 +99,9 @@ int main(int argc, char *argv[])
     modelShader.setMat4("view", cam.view);
     modelShader.setMat4("projection", projection);
 
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    float vertices[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-
-        -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
-
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-        0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-        0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-    };
-    unsigned int VBO, VAO;
-
-    openglFunctions->glGenVertexArrays(1, &VAO);
-    openglFunctions->glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    openglFunctions->glBindVertexArray(VAO);
-
-    openglFunctions->glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    openglFunctions->glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    openglFunctions->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    openglFunctions->glEnableVertexAttribArray(0);
-
-    openglFunctions->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-    openglFunctions->glEnableVertexAttribArray(1);
-
+    Mesh mesh = Mesh::createCube();
+    mesh.setColor(glm::vec3(1, 1, 0));
 
     QElapsedTimer timer;
     timer.start();
@@ -182,8 +112,9 @@ int main(int argc, char *argv[])
     {
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
+
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        modelShader.use();
+
         if(window.inputs[Qt::Key_A])
         {
             cam.translateRight(-(float)dt);
@@ -215,8 +146,8 @@ int main(int argc, char *argv[])
         modelShader.setMat4("model", rot);
         modelShader.setMat4("view", cam.view);
 
-        openglFunctions->glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        openglFunctions->glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        mesh.draw(modelShader);
 
         painter.beginNativePainting();
         painter.drawText(rect, std::to_string(1.0/dt).c_str());
@@ -226,9 +157,8 @@ int main(int argc, char *argv[])
         window.resetInputs();
         app.processEvents();
         context->makeCurrent(&window);
-        openglFunctions->glFinish();
         context->swapBuffers(&window);
-
+        openglFunctions->glFinish();
     }
 
     app.quit();
