@@ -1,5 +1,5 @@
 #include <glm/glm.hpp>
-#include <QOpenGLFunctions_3_3_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <Shader.h>
 
 #ifndef MESH_H

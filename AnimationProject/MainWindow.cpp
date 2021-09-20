@@ -1,8 +1,8 @@
 #include <MainWindow.h>
 #include <QDebug>
-#include <QOpenGLFunctions_3_3_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
-extern QOpenGLFunctions_3_3_Core* openglFunctions;
+extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
 MainWindow::MainWindow() : QWindow()
 {
@@ -58,7 +58,10 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 void MainWindow::resizeEvent(QResizeEvent *ev)
 {
     if(openglInitialized)
+    {
         openglFunctions->glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
+        resized = true;
+    }
 }
 
 

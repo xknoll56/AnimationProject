@@ -32,7 +32,7 @@
 
 
 double dt;
-QOpenGLFunctions_3_3_Core* openglFunctions;
+QOpenGLFunctions_4_5_Core* openglFunctions;
 
 class CloseEventFilter : public QObject
 {
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     format.setSamples(4);
     format.setDepthBufferSize(24);
     format.setMajorVersion(4);
-    format.setMinorVersion(3);
+    format.setMinorVersion(5);
     format.setSwapInterval(0);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     window.setTitle("Animation Project");
     window.setFormat(format);
     window.setSurfaceType(QWindow::OpenGLSurface);
-    window.resize(1024, 768);
+    window.resize(1280, 720);
     window.setKeyboardGrabEnabled(true);
     window.show();
     CloseEventFilter closeFilter(&window);
@@ -84,13 +84,13 @@ int main(int argc, char *argv[])
     QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
     paintDevice->setSize(window.size() * window.devicePixelRatio());
     paintDevice->setDevicePixelRatio(window.devicePixelRatio());
-    QPainter painter(paintDevice);
-    painter.setPen(Qt::white);
-    painter.setFont(QFont("Arial", 12));
+    QPainter* painter = new QPainter(paintDevice);
+    painter->setPen(Qt::white);
+    painter->setFont(QFont("Arial", 12));
     QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
-    painter.setWorldMatrixEnabled(false);
+    //painter->setWorldMatrixEnabled(false);
 
-    openglFunctions = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    openglFunctions = context->versionFunctions<QOpenGLFunctions_4_5_Core>();
     if(!openglFunctions)
     {
         qDebug("Could not obtain required version of opengl");
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     modelShader.insertUniform("projection");
     modelShader.insertUniform("color");
     //modelShader.setVec3("color", glm::vec3(1,1,1));
-    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
 
     Camera cam(glm::vec3(0,2,5));
     cam.updateView();
@@ -138,6 +138,13 @@ int main(int argc, char *argv[])
         timer.restart();
 
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        if(window.windowResized())
+        {
+            paintDevice->setSize(window.size() * window.devicePixelRatio());
+            paintDevice->setDevicePixelRatio(window.devicePixelRatio());
+            projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
+            modelShader.setMat4("projection", projection);
+        }
 
         if(window.getKey(Qt::Key_A))
         {
@@ -171,9 +178,9 @@ int main(int argc, char *argv[])
         modelShader.setMat4("view", cam.view);
         mesh.draw(modelShader);
 
-        painter.beginNativePainting();
-        painter.drawText(rect, std::to_string(1.0/dt).c_str());
-        painter.endNativePainting();
+        painter->begin(paintDevice);
+        painter->drawText(rect, std::to_string(1.0/dt).c_str());
+        painter->end();
 
 
         window.resetInputs();

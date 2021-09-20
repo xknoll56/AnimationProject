@@ -26,12 +26,19 @@ public:
     bool getMouse(Qt::MouseButton);
     bool getMouseDown(Qt::MouseButton);
     bool openglInitialized = false;
+    bool windowResized()
+    {
+        bool temp = resized;
+        resized = false;
+        return temp;
+    }
 
 private:
     std::map<int, bool> inputs;
     std::map<int, bool> inputsDown;
     std::map<int, bool> inputsDownReset;
     bool running;
+    bool resized = false;
 };
 
 #endif // MAINWINDOW_H
