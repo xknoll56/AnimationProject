@@ -102,8 +102,7 @@ int main(int argc, char *argv[])
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
-    openglFunctions->glEnable(GL_LINE_SMOOTH);
-    openglFunctions->glLineWidth(2.5f);
+    openglFunctions->glDisable(GL_LIGHTING);
 
     Shader modelShader("model.vert", "model.frag");
     Shader gridShader("grid.vert", "grid.frag");
@@ -139,11 +138,11 @@ int main(int argc, char *argv[])
     std::vector<glm::vec3> gridVerts;
     for(int i= -10; i<=10;i++)
     {
-        gridVerts.push_back(glm::vec3(i, 0, -10));
-        gridVerts.push_back(glm::vec3(i, 0, 10));
+        gridVerts.push_back(glm::vec3(i, 0.05f, -10));
+        gridVerts.push_back(glm::vec3(i, 0.05f, 10));
 
-        gridVerts.push_back(glm::vec3(-10, 0, i));
-        gridVerts.push_back(glm::vec3(10, 0, i));
+        gridVerts.push_back(glm::vec3(-10, 0.05f, i));
+        gridVerts.push_back(glm::vec3(10, 0.05f, i));
     }
     Mesh gridMesh(gridVerts, MeshType::LINES);
 
@@ -154,11 +153,11 @@ int main(int argc, char *argv[])
 
     while(window.shouldRun())
     {
-        dt = timer.nsecsElapsed()/1000000000.0;
+        dt = timer.elapsed()/1000.0;
         timer.restart();
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
-        openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 //        if(window.windowResized())
 //        {
@@ -205,7 +204,7 @@ int main(int argc, char *argv[])
         plane.draw(modelShader);
 
         gridShader.setMat4("view", cam.view);
-        gridShader.setVec3("color", glm::vec3(0,0,1));
+        gridShader.setVec3("color", glm::vec3(3.0f, 0, 0));
         openglFunctions->glUseProgram(gridShader.getHandle());
         openglFunctions->glBindVertexArray(gridMesh.getVao());
         openglFunctions->glDrawArrays(GL_LINES, 0, gridVerts.size());
