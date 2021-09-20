@@ -3,8 +3,9 @@
 
 #include <QCloseEvent>
 #include <QMainWindow>
+#include <QOpenGLPaintDevice>
 #include <QWindow>
-
+#include <QPainter>
 
 
 
@@ -25,13 +26,20 @@ public:
     bool getGetDown(Qt::Key);
     bool getMouse(Qt::MouseButton);
     bool getMouseDown(Qt::MouseButton);
-    bool openglInitialized = false;
+    bool InitializeContext();
+    bool InitializeOpenGLFunctions();
+    QOpenGLContext* context;
+    QOpenGLPaintDevice* paintDevice;
+    QPainter* painter;
+    bool shouldResize();
 
 private:
     std::map<int, bool> inputs;
     std::map<int, bool> inputsDown;
     std::map<int, bool> inputsDownReset;
     bool running;
+    bool openglInitialized = false;
+    bool resized = false;
 };
 
 #endif // MAINWINDOW_H

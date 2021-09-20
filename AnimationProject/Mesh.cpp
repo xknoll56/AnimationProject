@@ -1,5 +1,5 @@
 #include "Mesh.h"
-extern QOpenGLFunctions_3_3_Core* openglFunctions;
+extern QOpenGLFunctions_4_4_Core* openglFunctions;
 
 //this constructor will contain the vertices packed in with the normals
 Mesh::Mesh(std::vector<glm::vec3> verts)
