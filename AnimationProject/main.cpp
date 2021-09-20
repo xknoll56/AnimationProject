@@ -85,10 +85,7 @@ int main(int argc, char *argv[])
     QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
     paintDevice->setSize(window.size() * window.devicePixelRatio());
     paintDevice->setDevicePixelRatio(window.devicePixelRatio());
-    QPainter* painter = new QPainter(paintDevice);
-    painter->setPen(Qt::white);
-    painter->setFont(QFont("Arial", 12));
-    QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
+
     //painter->setWorldMatrixEnabled(false);
 
     openglFunctions = context->versionFunctions<QOpenGLFunctions_4_5_Core>();
@@ -105,6 +102,8 @@ int main(int argc, char *argv[])
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
+    openglFunctions->glEnable(GL_LINE_SMOOTH);
+    openglFunctions->glLineWidth(2.5f);
 
     Shader modelShader("model.vert", "model.frag");
     Shader gridShader("grid.vert", "grid.frag");
@@ -134,7 +133,8 @@ int main(int argc, char *argv[])
     gridShader.setMat4("projection", projection);
 
     Mesh mesh = Mesh::createCube();
-    mesh.setColor(glm::vec3(1, 1, 0));
+    Mesh plane = Mesh::createPlane();
+    mesh.setColor(glm::vec3(0, 1, 0));
 
     std::vector<glm::vec3> gridVerts;
     for(int i= -10; i<=10;i++)
@@ -157,14 +157,16 @@ int main(int argc, char *argv[])
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
 
+        openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        if(window.windowResized())
-        {
-            paintDevice->setSize(window.size() * window.devicePixelRatio());
-            paintDevice->setDevicePixelRatio(window.devicePixelRatio());
-            projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
-            modelShader.setMat4("projection", projection);
-        }
+
+//        if(window.windowResized())
+//        {
+//            paintDevice->setSize(window.size() * window.devicePixelRatio());
+//            paintDevice->setDevicePixelRatio(window.devicePixelRatio());
+//            projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
+//            modelShader.setMat4("projection", projection);
+//        }
 
         if(window.getKey(Qt::Key_A))
         {
@@ -192,24 +194,33 @@ int main(int argc, char *argv[])
         cam.updateView();
         euler += glm::vec3(dt, 0, 0);
         q = glm::rotate(q, (float)dt, glm::vec3(0,1,0));
-        //glm::mat4 rot = glm::rotate(trans, glm::length(euler), euler);
-        glm::mat4 rot = glm::toMat4(q);
+        glm::mat4 s = glm::scale(trans, glm::vec3(4,0,4));
+        glm::mat4 t = glm::translate(trans, glm::vec3(0, 0.5f, 0));
+        glm::mat4 rot = glm::toMat4(q)*t;
         modelShader.setMat4("model", rot);
         modelShader.setMat4("view", cam.view);
         mesh.draw(modelShader);
+        s = glm::scale(trans, glm::vec3(20, 1, 20));
+        modelShader.setMat4("model", s);
+        plane.draw(modelShader);
 
         gridShader.setMat4("view", cam.view);
-        gridShader.setVec3("color", glm::vec3(1,0,0));
+        gridShader.setVec3("color", glm::vec3(0,0,1));
         openglFunctions->glUseProgram(gridShader.getHandle());
         openglFunctions->glBindVertexArray(gridMesh.getVao());
         openglFunctions->glDrawArrays(GL_LINES, 0, gridVerts.size());
 
-//        painter->begin(paintDevice);
-//        //painter->beginNativePainting();
-//        painter->drawText(rect, std::to_string(1.0/dt).c_str());
-//        //painter->endNativePainting();
-//        painter->end();
 
+
+        openglFunctions->glDisable(GL_DEPTH_TEST);
+        QPainter painter(paintDevice);
+        painter.setWorldMatrixEnabled(false);
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Arial", 12));
+        QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
+        painter.beginNativePainting();
+        painter.drawText(rect, std::to_string(1.0/dt).c_str());
+        painter.endNativePainting();
 
         window.resetInputs();
         app.processEvents();

@@ -72,6 +72,11 @@ Mesh Mesh::createCube()
     return Mesh(cubeVerts, MeshType::TRIANGLES);
 }
 
+Mesh Mesh::createPlane()
+{
+    return Mesh(planeVerts, MeshType::TRIANGLES);
+}
+
 void Mesh::draw()
 {
     openglFunctions->glBindVertexArray(vao);
