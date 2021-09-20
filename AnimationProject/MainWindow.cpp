@@ -1,4 +1,8 @@
 #include <MainWindow.h>
+#include <QDebug>
+#include <QOpenGLFunctions_3_3_Core>
+
+extern QOpenGLFunctions_3_3_Core* openglFunctions;
 
 MainWindow::MainWindow() : QWindow()
 {
@@ -6,11 +10,6 @@ MainWindow::MainWindow() : QWindow()
     running = true;
 }
 
-void MainWindow::closeEvent(QCloseEvent* event)
-{
-    event->accept();
-    running = true;
-}
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
@@ -56,19 +55,37 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
     }
 }
 
-bool MainWindow::event(QEvent* event)
+void MainWindow::resizeEvent(QResizeEvent *ev)
 {
-    switch(event->type())
-    {
-    case QEvent::Close:
-        running = false;
-    default:
-        return QWindow::event(event);
-    }
+    if(openglInitialized)
+        openglFunctions->glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
 }
+
 
 void MainWindow::resetInputs()
 {
     for (auto& it: inputsDown)
         it.second = false;
+}
+
+bool MainWindow::shouldRun()
+{
+    return running;
+}
+bool MainWindow::getKey(Qt::Key key)
+{
+    return inputs[key];
+}
+bool MainWindow::getGetDown(Qt::Key key)
+{
+    return inputsDown[key];
+}
+
+bool MainWindow::getMouse(Qt::MouseButton button)
+{
+    return inputs[button];
+}
+bool MainWindow::getMouseDown(Qt::MouseButton button)
+{
+    return inputsDown[button];
 }

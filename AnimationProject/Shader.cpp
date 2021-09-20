@@ -31,26 +31,26 @@ void Shader::use()
     openglFunctions->glUseProgram(handle);
 }
 
-void Shader::insertUniform(std::string uniformName)
+void Shader::insertUniform(const std::string& uniformName)
 {
     use();
     GLuint id = openglFunctions->glGetUniformLocation(handle, uniformName.c_str());
     uniforms[uniformName] = id;
 }
 
-void Shader::setVec3(std::string uniformName, const glm::vec3& value)
+void Shader::setVec3(const std::string& uniformName, const glm::vec3& value)
 {
     use();
     openglFunctions->glUniform3fv(uniforms[uniformName], 1, &value[0]);
 }
 
-void Shader::setMat4(std::string uniformName, const glm::mat4& value)
+void Shader::setMat4(const std::string& uniformName, const glm::mat4& value)
 {
     use();
     openglFunctions->glUniformMatrix4fv(uniforms[uniformName], 1, false, &value[0][0]);
 }
 
-const GLuint Shader::getUniformLocation(std::string uniformName)
+const GLuint Shader::getUniformLocation(const std::string& uniformName)
 {
     return uniforms[uniformName];
 }

@@ -18,10 +18,10 @@ private:
 public:
     Shader(const char* vertexPath, const char* fragmentPath);
     void use();
-    void insertUniform(std::string uniformName);
-    void setVec3(std::string uniformName, const glm::vec3& value);
-    void setMat4(std::string uniformName, const glm::mat4& value);
-    const GLuint getUniformLocation(std::string uniformName);
+    void insertUniform(const std::string& uniformName);
+    void setVec3(const std::string& uniformName, const glm::vec3& value);
+    void setMat4(const std::string& uniformName, const glm::mat4& value);
+    const GLuint getUniformLocation(const std::string& uniformName);
     const GLuint getHandle();
 
 };

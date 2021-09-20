@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QCloseEvent>
+#include <QMainWindow>
 #include <QWindow>
 
 
@@ -9,21 +10,28 @@
 
 class MainWindow: public QWindow
 {
-public:
-    std::map<int, bool> inputs;
-    std::map<int, bool> inputsDown;
-    std::map<int, bool> inputsDownReset;
-    QPointF mousePos;
-    bool running;
 
+public:
+    QPointF mousePos;
     MainWindow();
-    void closeEvent(QCloseEvent* event);
     void mousePressEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
-    bool event(QEvent* event) override;
+    void resizeEvent(QResizeEvent *ev) override;
     void resetInputs();
+    bool shouldRun();
+    bool getKey(Qt::Key);
+    bool getGetDown(Qt::Key);
+    bool getMouse(Qt::MouseButton);
+    bool getMouseDown(Qt::MouseButton);
+    bool openglInitialized = false;
+
+private:
+    std::map<int, bool> inputs;
+    std::map<int, bool> inputsDown;
+    std::map<int, bool> inputsDownReset;
+    bool running;
 };
 
 #endif // MAINWINDOW_H

@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <QWindow>
+#include <QObject>
 #include <QtOpenGL>
 #include <QOpenGLContext>
 #include <QOpenGLPaintDevice>
@@ -33,6 +34,24 @@
 double dt;
 QOpenGLFunctions_3_3_Core* openglFunctions;
 
+class CloseEventFilter : public QObject
+{
+public:
+     CloseEventFilter(QObject *parent) : QObject(parent) {}
+     MainWindow* window;
+
+protected:
+     bool eventFilter(QObject *obj, QEvent *event)
+     {
+          if (event->type() == QEvent::Close)
+          {
+               exit(EXIT_SUCCESS);
+          }
+
+          return QObject::eventFilter(obj, event);
+     }
+
+};
 
 int main(int argc, char *argv[])
 {
@@ -50,9 +69,12 @@ int main(int argc, char *argv[])
     window.setTitle("Animation Project");
     window.setFormat(format);
     window.setSurfaceType(QWindow::OpenGLSurface);
-    window.setKeyboardGrabEnabled(true);
     window.resize(1024, 768);
+    window.setKeyboardGrabEnabled(true);
     window.show();
+    CloseEventFilter closeFilter(&window);
+    window.installEventFilter(&closeFilter);
+
 
     QOpenGLContext* context = new QOpenGLContext(&window);
     context->setFormat(window.requestedFormat());
@@ -76,6 +98,8 @@ int main(int argc, char *argv[])
     }
     openglFunctions->initializeOpenGLFunctions();
 
+
+    window.openglInitialized = true;
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
@@ -108,30 +132,30 @@ int main(int argc, char *argv[])
 
     glm::quat q(glm::vec3(0,0,0));
 
-    while(window.running)
+    while(window.shouldRun())
     {
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
 
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if(window.inputs[Qt::Key_A])
+        if(window.getKey(Qt::Key_A))
         {
             cam.translateRight(-(float)dt);
         }
-        if(window.inputs[Qt::Key_D])
+        if(window.getKey(Qt::Key_D))
         {
             cam.translateRight((float)dt);
         }
-        if(window.inputs[Qt::Key_W])
+        if(window.getKey(Qt::Key_W))
         {
             cam.translateFwd(-(float)dt);
         }
-        if(window.inputs[Qt::Key_S])
+        if(window.getKey(Qt::Key_S))
         {
             cam.translateFwd((float)dt);
         }
-        if(window.inputs[Qt::MouseButton::LeftButton])
+        if(window.getMouse(Qt::MouseButton::LeftButton))
         {
             QPointF deltaPos = QCursor::pos()-window.mousePos;
             window.mousePos = QCursor::pos();
@@ -145,8 +169,6 @@ int main(int argc, char *argv[])
         glm::mat4 rot = glm::toMat4(q);
         modelShader.setMat4("model", rot);
         modelShader.setMat4("view", cam.view);
-
-
         mesh.draw(modelShader);
 
         painter.beginNativePainting();
