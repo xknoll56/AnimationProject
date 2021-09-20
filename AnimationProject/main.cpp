@@ -9,7 +9,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLPaintDevice>
 #include <QOpenGLFunctions>
-#include <QOpenGLFunctions_4_4_Core>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QOpenGLFunctions_3_3_Core>
 #include <QPainter>
 #include <QMouseEvent>
@@ -32,7 +32,7 @@
 
 
 double dt;
-extern QOpenGLFunctions_4_4_Core* openglFunctions;
+QOpenGLFunctions_3_3_Core* openglFunctions;
 
 class CloseEventFilter : public QObject
 {
@@ -57,12 +57,11 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
 
-
     QSurfaceFormat format;
     format.setSamples(4);
     format.setDepthBufferSize(24);
     format.setMajorVersion(4);
-    format.setMinorVersion(4);
+    format.setMinorVersion(3);
     format.setSwapInterval(0);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
@@ -76,12 +75,31 @@ int main(int argc, char *argv[])
     CloseEventFilter closeFilter(&window);
     window.installEventFilter(&closeFilter);
 
-    if(!window.InitializeContext())
-        return -1;
-    if(!window.InitializeOpenGLFunctions())
-        return -1;
 
-    QRectF rect(0.0f,0.0f,window.width(), window.height());
+    QOpenGLContext* context = new QOpenGLContext(&window);
+    context->setFormat(window.requestedFormat());
+    context->create();
+    context->makeCurrent(&window);
+
+    QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
+    paintDevice->setSize(window.size() * window.devicePixelRatio());
+    paintDevice->setDevicePixelRatio(window.devicePixelRatio());
+    QPainter painter(paintDevice);
+    painter.setPen(Qt::white);
+    painter.setFont(QFont("Arial", 12));
+    QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
+    painter.setWorldMatrixEnabled(false);
+
+    openglFunctions = context->versionFunctions<QOpenGLFunctions_3_3_Core>();
+    if(!openglFunctions)
+    {
+        qDebug("Could not obtain required version of opengl");
+        app.exit();
+    }
+    openglFunctions->initializeOpenGLFunctions();
+
+
+    window.openglInitialized = true;
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
@@ -89,15 +107,14 @@ int main(int argc, char *argv[])
     Shader modelShader("model.vert", "model.frag");
 
 
-    float aspect = (float)window.width()/window.height();
-    qDebug() << "Aspect: " << aspect;
     glm::vec3 euler(0,0,0);
     glm::mat4 trans(1.0f);
     modelShader.insertUniform("model");
     modelShader.insertUniform("view");
     modelShader.insertUniform("projection");
     modelShader.insertUniform("color");
-    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
+    //modelShader.setVec3("color", glm::vec3(1,1,1));
+    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.devicePixelRatio(), 0.1f, 100.0f);
 
     Camera cam(glm::vec3(0,2,5));
     cam.updateView();
@@ -114,23 +131,12 @@ int main(int argc, char *argv[])
     timer.start();
 
     glm::quat q(glm::vec3(0,0,0));
+
     while(window.shouldRun())
     {
-        window.context->makeCurrent(&window);
         dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
 
-       if(window.shouldResize())
-       {
-           openglFunctions->glViewport(0, 0, window.width()* window.devicePixelRatio(), window.height()* window.devicePixelRatio());
-           rect = QRectF(0.0f,0.0f,window.width(), window.height());
-           window.paintDevice->setSize(window.size() * window.devicePixelRatio());
-           window.paintDevice->setDevicePixelRatio(window.devicePixelRatio());
-           delete window.painter;
-           window.painter = new QPainter(window.paintDevice);
-           projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
-           modelShader.setMat4("projection", projection);
-       }
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if(window.getKey(Qt::Key_A))
@@ -165,17 +171,16 @@ int main(int argc, char *argv[])
         modelShader.setMat4("view", cam.view);
         mesh.draw(modelShader);
 
-        window.painter->beginNativePainting();
-        window.painter->drawText(rect, std::to_string(1.0/dt).c_str());
-        window.painter->endNativePainting();
+        painter.beginNativePainting();
+        painter.drawText(rect, std::to_string(1.0/dt).c_str());
+        painter.endNativePainting();
 
 
         window.resetInputs();
-
-
-        window.context->swapBuffers(&window);
-        //openglFunctions->glFinish();
         app.processEvents();
+        context->makeCurrent(&window);
+        context->swapBuffers(&window);
+        openglFunctions->glFinish();
     }
 
     app.quit();

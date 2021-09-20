@@ -1,8 +1,8 @@
 #include <MainWindow.h>
 #include <QDebug>
-#include <QOpenGLFunctions_4_4_Core>
+#include <QOpenGLFunctions_3_3_Core>
 
-QOpenGLFunctions_4_4_Core* openglFunctions;
+extern QOpenGLFunctions_3_3_Core* openglFunctions;
 
 MainWindow::MainWindow() : QWindow()
 {
@@ -58,9 +58,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent* event)
 void MainWindow::resizeEvent(QResizeEvent *ev)
 {
     if(openglInitialized)
-    {
-        resized = true;
-    }
+        openglFunctions->glViewport(0, 0, width() * devicePixelRatio(), height() * devicePixelRatio());
 }
 
 
@@ -90,47 +88,4 @@ bool MainWindow::getMouse(Qt::MouseButton button)
 bool MainWindow::getMouseDown(Qt::MouseButton button)
 {
     return inputsDown[button];
-}
-
-bool MainWindow::InitializeContext()
-{
-    if(!context)
-    {
-        context = new QOpenGLContext(this);
-        context->setFormat(requestedFormat());
-        context->create();
-        context->makeCurrent(this);
-
-        paintDevice = new QOpenGLPaintDevice;
-        paintDevice->setSize(size() * devicePixelRatio());
-        paintDevice->setDevicePixelRatio(devicePixelRatio());
-        painter = new QPainter(paintDevice);
-        painter->setPen(Qt::white);
-        painter->setFont(QFont("Arial", 12));
-
-        painter->setWorldMatrixEnabled(false);
-        return true;
-    }
-    else
-        return false;
-}
-
-bool MainWindow::InitializeOpenGLFunctions()
-{
-    openglFunctions = context->versionFunctions<QOpenGLFunctions_4_4_Core>();
-    if(!openglFunctions)
-    {
-        qDebug("Could not obtain required version of opengl");
-        return false;
-    }
-    openglFunctions->initializeOpenGLFunctions();
-    openglInitialized = true;
-    return true;
-}
-
-bool MainWindow::shouldResize()
-{
-    bool didResize = resized;
-    resized = false;
-    return didResize;
 }
