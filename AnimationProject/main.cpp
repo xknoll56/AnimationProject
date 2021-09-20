@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     context->create();
     context->makeCurrent(&window);
 
+    //app.processEvents();
     QOpenGLPaintDevice* paintDevice = new QOpenGLPaintDevice;
     paintDevice->setSize(window.size() * window.devicePixelRatio());
     paintDevice->setDevicePixelRatio(window.devicePixelRatio());
@@ -99,12 +100,14 @@ int main(int argc, char *argv[])
     openglFunctions->initializeOpenGLFunctions();
 
 
+
     window.openglInitialized = true;
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
 
     Shader modelShader("model.vert", "model.frag");
+    Shader gridShader("grid.vert", "grid.frag");
 
 
     glm::vec3 euler(0,0,0);
@@ -113,6 +116,10 @@ int main(int argc, char *argv[])
     modelShader.insertUniform("view");
     modelShader.insertUniform("projection");
     modelShader.insertUniform("color");
+    gridShader.insertUniform("model");
+    gridShader.insertUniform("view");
+    gridShader.insertUniform("projection");
+    gridShader.insertUniform("color");
     //modelShader.setVec3("color", glm::vec3(1,1,1));
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
 
@@ -122,10 +129,23 @@ int main(int argc, char *argv[])
     modelShader.setMat4("model", trans);
     modelShader.setMat4("view", cam.view);
     modelShader.setMat4("projection", projection);
-
+    gridShader.setMat4("model", trans);
+    gridShader.setMat4("view", cam.view);
+    gridShader.setMat4("projection", projection);
 
     Mesh mesh = Mesh::createCube();
     mesh.setColor(glm::vec3(1, 1, 0));
+
+    std::vector<glm::vec3> gridVerts;
+    for(int i= -10; i<=10;i++)
+    {
+        gridVerts.push_back(glm::vec3(i, 0, -10));
+        gridVerts.push_back(glm::vec3(i, 0, 10));
+
+        gridVerts.push_back(glm::vec3(-10, 0, i));
+        gridVerts.push_back(glm::vec3(10, 0, i));
+    }
+    Mesh gridMesh(gridVerts, MeshType::LINES);
 
     QElapsedTimer timer;
     timer.start();
@@ -178,16 +198,24 @@ int main(int argc, char *argv[])
         modelShader.setMat4("view", cam.view);
         mesh.draw(modelShader);
 
-        painter->begin(paintDevice);
-        painter->drawText(rect, std::to_string(1.0/dt).c_str());
-        painter->end();
+        gridShader.setMat4("view", cam.view);
+        gridShader.setVec3("color", glm::vec3(1,0,0));
+        openglFunctions->glUseProgram(gridShader.getHandle());
+        openglFunctions->glBindVertexArray(gridMesh.getVao());
+        openglFunctions->glDrawArrays(GL_LINES, 0, gridVerts.size());
+
+//        painter->begin(paintDevice);
+//        //painter->beginNativePainting();
+//        painter->drawText(rect, std::to_string(1.0/dt).c_str());
+//        //painter->endNativePainting();
+//        painter->end();
 
 
         window.resetInputs();
         app.processEvents();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
-        openglFunctions->glFinish();
+        //openglFunctions->glFinish();
     }
 
     app.quit();

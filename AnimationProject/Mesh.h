@@ -5,6 +5,12 @@
 #ifndef MESH_H
 #define MESH_H
 
+enum MeshType
+{
+    TRIANGLES = 0,
+    LINES = 1
+};
+
 class Mesh
 {
 private:
@@ -19,8 +25,8 @@ private:
 
 public:
     //this constructor will contain the vertices packed in with the normals
-    Mesh(std::vector<glm::vec3> verts);
-    Mesh(std::vector<float> verts);
+    Mesh(std::vector<glm::vec3> verts, MeshType type);
+    Mesh(std::vector<float> verts, MeshType type);
     static Mesh createCube();
     void draw();
     void draw(Shader& shader);
