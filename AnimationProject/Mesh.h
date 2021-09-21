@@ -29,6 +29,7 @@ public:
     static Mesh createBoundingBox();
     static Mesh createBoundingSphere();
     static Mesh createBoundingCylinder();
+    static Mesh createBoundingPlane();
     static Mesh createGrid(int size);
     static Mesh createCylinder();
     static Mesh createSphere();
@@ -38,6 +39,7 @@ public:
     void setColor(glm::vec3 color);
     const GLuint getVao();
     const unsigned int getNumVerts();
+    const GLenum getType();
 
 };
 
@@ -53,6 +55,22 @@ static const std::vector<float> planeVerts =
     -0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
     -0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
     0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
+};
+
+static const std::vector<glm::vec3> boundingPlaneVerts =
+{
+    glm::vec3(-0.5f, 0.05f, -0.5f),
+    glm::vec3(-0.5f, 0.05f, 0.5f),
+
+    glm::vec3(0.5f, 0.05f, 0.5f),
+    glm::vec3(0.5f, 0.05f, -0.5f),
+
+    glm::vec3(-0.5f, 0.05f, 0.5f),
+    glm::vec3(0.5f, 0.05f, 0.5f),
+
+    glm::vec3(0.5f, 0.05f, -0.5f),
+    glm::vec3(-0.5f, 0.05f, -0.5f),
+
 };
 
 static std::vector<glm::vec3> boundingSphereVerts;

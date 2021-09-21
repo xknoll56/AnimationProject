@@ -96,6 +96,10 @@ Mesh Mesh::createBoundingCylinder()
     return Mesh(boundingCylinderVerts, GL_LINES);
 }
 
+Mesh Mesh::createBoundingPlane()
+{
+    return Mesh(boundingPlaneVerts, GL_LINES);
+}
 
 Mesh Mesh::createGrid(int size)
 {
@@ -303,4 +307,9 @@ const GLuint Mesh::getVao()
 const unsigned int Mesh::getNumVerts()
 {
     return numVerts;
+}
+
+const GLenum Mesh::getType()
+{
+    return type;
 }
