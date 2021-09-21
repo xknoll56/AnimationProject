@@ -5,11 +5,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-enum MeshType
-{
-    TRIANGLES = 0,
-    LINES = 1
-};
+#define SEGMENTS 30;
 
 class Mesh
 {
@@ -21,14 +17,20 @@ private:
     std::vector<glm::vec3> norms;
     unsigned int numVerts;
     glm::vec3 color;
+    GLenum type;
 
 
 public:
     //this constructor will contain the vertices packed in with the normals
-    Mesh(std::vector<glm::vec3> verts, MeshType type);
-    Mesh(std::vector<float> verts, MeshType type);
+    Mesh(std::vector<glm::vec3> verts, GLenum type);
+    Mesh(std::vector<float> verts, GLenum type);
     static Mesh createCube();
     static Mesh createPlane();
+    static Mesh createBoundingBox();
+    static Mesh createGrid(int size);
+    static Mesh createCylinder();
+    static Mesh createSphere();
+    static void initializeStaticArrays();
     void draw();
     void draw(Shader& shader);
     void setColor(glm::vec3 color);
@@ -37,57 +39,85 @@ public:
 
 };
 
-static const std::vector<float> planeVerts({
-                                               -0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                               0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                               0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                               -0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                               -0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                               0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                           });
+static std::vector<glm::vec3> cylinderVerts;
 
-static const std::vector<float> cubeVerts({
-                                              -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-                                              0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-                                              0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-                                              0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-                                              -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
-                                              -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+static std::vector<glm::vec3> sphereVerts;
 
-                                              -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-                                              0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-                                              0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-                                              0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-                                              -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-                                              -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+static const std::vector<float> planeVerts =
+{
+    -0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.0f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.0f,  0.5f,  0.0f, 1.0f, 0.0f,
+};
 
-                                              -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
-                                              -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-                                              -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-                                              -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
-                                              -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
-                                              -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
+static std::vector<glm::vec3> boundingSphereVerts;
 
-                                              0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-                                              0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-                                              0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-                                              0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-                                              0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-                                              0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+static std::vector<glm::vec3> boundingCylinderVerts;
 
-                                              -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-                                              0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
-                                              0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-                                              0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-                                              -0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
-                                              -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
+static const std::vector<glm::vec3> boundingBoxVerts =
+{
+    glm::vec3(-0.505f, 0.505f, -0.505f), glm::vec3(-0.505f, 0.505f, 0.505f),
+    glm::vec3(-0.505f, 0.505f, 0.505f), glm::vec3(0.505f, 0.505f, 0.505f),
+    glm::vec3(0.505f, 0.505f, 0.505f), glm::vec3(0.505f, 0.505f, -0.505f),
+    glm::vec3(0.505f, 0.505f, -0.505f), glm::vec3(-0.505f, 0.505f, -0.505f),
 
-                                              -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                              0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                              0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                              -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-                                              -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                              0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-                                          });
+    glm::vec3(-0.505f, -0.505f, -0.505f), glm::vec3(-0.505f, -0.505f, 0.505f),
+    glm::vec3(-0.505f, -0.505f, 0.505f), glm::vec3(0.505f, -0.505f, 0.505f),
+    glm::vec3(0.505f, -0.505f, 0.505f), glm::vec3(0.505f, -0.505f, -0.505f),
+    glm::vec3(0.505f, -0.505f, -0.505f), glm::vec3(-0.505f, -0.505f, -0.505f),
+
+    glm::vec3(-0.505f, 0.505f, -0.505f), glm::vec3(-0.505f, -0.505f, -0.505f),
+    glm::vec3(-0.505f, 0.505f, 0.505f), glm::vec3(-0.505f, -0.505f, 0.505f),
+    glm::vec3(0.505f, 0.505f, 0.505f), glm::vec3(0.505f, -0.505f, 0.505f),
+    glm::vec3(0.505f, 0.505f, -0.505f), glm::vec3(0.505f, -0.505f, -0.505f),
+};
+
+static const std::vector<float> cubeVerts=
+{
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+    0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+    0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+    0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, -1.0f,
+
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+    0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+
+    -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  -1.0f, 0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  -1.0f, 0.0f, 0.0f,
+
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
+    0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
+    0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f, 0.0f,
+
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
+};
 
 #endif // MESH_H

@@ -131,32 +131,24 @@ int main(int argc, char *argv[])
     gridShader.setMat4("view", cam.view);
     gridShader.setMat4("projection", projection);
 
-    Mesh mesh = Mesh::createCube();
+    Mesh::initializeStaticArrays();
+    //Mesh mesh = Mesh::createCube();
     Mesh plane = Mesh::createPlane();
-    mesh.setColor(glm::vec3(0, 1, 0));
+    Mesh cubeGrid = Mesh::createBoundingBox();
+    Mesh gridMesh = Mesh::createGrid(10);
 
-    std::vector<glm::vec3> gridVerts;
-    for(int i= -10; i<=10;i++)
-    {
-        gridVerts.push_back(glm::vec3(i, 0.05f, -10));
-        gridVerts.push_back(glm::vec3(i, 0.05f, 10));
-
-        gridVerts.push_back(glm::vec3(-10, 0.05f, i));
-        gridVerts.push_back(glm::vec3(10, 0.05f, i));
-    }
-    Mesh gridMesh(gridVerts, MeshType::LINES);
+    std::vector<glm::vec3> verts;
+    Mesh mesh = Mesh::createSphere();
 
     QElapsedTimer timer;
     timer.start();
-    long elapsed = timer.nsecsElapsed();
-
     glm::quat q(glm::vec3(0,0,0));
 
     while(window.shouldRun())
     {
-        long timeNow = timer.nsecsElapsed();
-        dt = (timeNow-elapsed)/1000000000.0;
-        elapsed = timeNow;
+
+        dt = timer.elapsed()/1000.0;
+        timer.restart();
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -196,20 +188,24 @@ int main(int argc, char *argv[])
         euler += glm::vec3(dt, 0, 0);
         q = glm::rotate(q, (float)dt, glm::vec3(0,1,0));
         glm::mat4 s = glm::scale(trans, glm::vec3(4,0,4));
-        glm::mat4 t = glm::translate(trans, glm::vec3(0, 0.5f, 0));
+        glm::mat4 t = glm::translate(trans, glm::vec3(0, 1.5f, 0));
         glm::mat4 rot = glm::toMat4(q)*t;
-        modelShader.setMat4("model", rot);
+
+        modelShader.setMat4("model", t);
         modelShader.setMat4("view", cam.view);
         mesh.draw(modelShader);
+        gridShader.setMat4("view", cam.view);
+//        gridShader.setVec3("color", glm::vec3(0,1,0));
+//        gridShader.setMat4("model", rot);
+//        cubeGrid.draw();
+
         s = glm::scale(trans, glm::vec3(20, 1, 20));
         modelShader.setMat4("model", s);
         plane.draw(modelShader);
 
-        gridShader.setMat4("view", cam.view);
-        gridShader.setVec3("color", glm::vec3(2.0f, 0, 0));
-        openglFunctions->glUseProgram(gridShader.getHandle());
-        openglFunctions->glBindVertexArray(gridMesh.getVao());
-        openglFunctions->glDrawArrays(GL_LINES, 0, gridVerts.size());
+        gridShader.setMat4("model", trans);
+        gridShader.setVec3("color", glm::vec3(1.0f, 0, 0));
+        gridMesh.draw();
 
 
 
@@ -227,7 +223,7 @@ int main(int argc, char *argv[])
         app.processEvents();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
-        //openglFunctions->glFinish();
+        openglFunctions->glFinish();
     }
 
     app.quit();
