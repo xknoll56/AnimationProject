@@ -86,6 +86,16 @@ Mesh Mesh::createBoundingBox()
     return Mesh(boundingBoxVerts, GL_LINES);
 }
 
+Mesh Mesh::createBoundingSphere()
+{
+    return Mesh(boundingSphereVerts, GL_LINES);
+}
+
+Mesh Mesh::createBoundingCylinder()
+{
+    return Mesh(boundingCylinderVerts, GL_LINES);
+}
+
 
 Mesh Mesh::createGrid(int size)
 {
@@ -223,6 +233,49 @@ void Mesh::initializeStaticArrays()
         }
     }
     sphereVerts = verts;
+
+    verts = std::vector<glm::vec3>();
+    for(int i = 0; i<divs; i++)
+    {
+        float theta0 = (float)i*2.0f*PI/divs;
+        float theta1 = (float)(i+1)*2.0f*PI/divs;
+
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta0), 1.0f, 0.505f*glm::sin(theta0)));
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta1), 1.0f, 0.505f*glm::sin(theta1)));
+
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta0), -1.0f, 0.505f*glm::sin(theta0)));
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta1), -1.0f, 0.505f*glm::sin(theta1)));
+    }
+
+    verts.push_back(glm::vec3(0.505f, 1.0f, 0));
+    verts.push_back(glm::vec3(0.505f, -1.0f, 0));
+
+    verts.push_back(glm::vec3(-0.505f, 1.0f, 0));
+    verts.push_back(glm::vec3(-0.505f, -1.0f, 0));
+
+    verts.push_back(glm::vec3(0, 1.0f, 0.505f));
+    verts.push_back(glm::vec3(0, -1.0f, 0.505f));
+
+    verts.push_back(glm::vec3(0, 1.0f, -0.505f));
+    verts.push_back(glm::vec3(0, -1.0f, -0.505f));
+    boundingCylinderVerts = verts;
+
+    verts = std::vector<glm::vec3>();
+    for(int i = 0; i<divs; i++)
+    {
+        float theta0 = (float)i*2.0f*PI/divs;
+        float theta1 = (float)(i+1)*2.0f*PI/divs;
+
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta0), 0.0f, 0.505f*glm::sin(theta0)));
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta1), 0.0f, 0.505f*glm::sin(theta1)));
+
+        verts.push_back(glm::vec3(0.0f, 0.505f*glm::cos(theta0), 0.505f*glm::sin(theta0)));
+        verts.push_back(glm::vec3(0.0f, 0.505f*glm::cos(theta1), 0.505f*glm::sin(theta1)));
+
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta0), 0.505f*glm::sin(theta0), 0.0f));
+        verts.push_back(glm::vec3(0.505f*glm::cos(theta1), 0.505f*glm::sin(theta1), 0.0f));
+    }
+    boundingSphereVerts = verts;
 }
 
 void Mesh::draw()

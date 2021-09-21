@@ -27,6 +27,8 @@ public:
     static Mesh createCube();
     static Mesh createPlane();
     static Mesh createBoundingBox();
+    static Mesh createBoundingSphere();
+    static Mesh createBoundingCylinder();
     static Mesh createGrid(int size);
     static Mesh createCylinder();
     static Mesh createSphere();

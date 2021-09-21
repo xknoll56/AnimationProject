@@ -114,6 +114,7 @@ int main(int argc, char *argv[])
     modelShader.insertUniform("view");
     modelShader.insertUniform("projection");
     modelShader.insertUniform("color");
+    modelShader.insertUniform("lightDir");
     gridShader.insertUniform("model");
     gridShader.insertUniform("view");
     gridShader.insertUniform("projection");
@@ -124,6 +125,7 @@ int main(int argc, char *argv[])
     Camera cam(glm::vec3(0,2,5));
     cam.updateView();
 
+    modelShader.setVec3("lightDir", glm::vec3(-0.5f, -1.0f, -0.75));
     modelShader.setMat4("model", trans);
     modelShader.setMat4("view", cam.view);
     modelShader.setMat4("projection", projection);
@@ -137,8 +139,13 @@ int main(int argc, char *argv[])
     Mesh cubeGrid = Mesh::createBoundingBox();
     Mesh gridMesh = Mesh::createGrid(10);
 
-    std::vector<glm::vec3> verts;
-    Mesh mesh = Mesh::createSphere();
+
+    Mesh sphereMesh = Mesh::createSphere();
+    Mesh boundingSphere = Mesh::createBoundingSphere();
+    Mesh cylinderMesh = Mesh::createCylinder();
+    Mesh boundingCylinder = Mesh::createBoundingCylinder();
+    Mesh cubeMesh = Mesh::createCube();
+    Mesh boundingCube = Mesh::createBoundingBox();
 
     QElapsedTimer timer;
     timer.start();
@@ -147,7 +154,7 @@ int main(int argc, char *argv[])
     while(window.shouldRun())
     {
 
-        dt = timer.elapsed()/1000.0;
+        dt = timer.nsecsElapsed()/1000000000.0;
         timer.restart();
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
@@ -186,18 +193,30 @@ int main(int argc, char *argv[])
         }
         cam.updateView();
         euler += glm::vec3(dt, 0, 0);
-        q = glm::rotate(q, (float)dt, glm::vec3(0,1,0));
+        //q = glm::rotate(q, (float)dt, glm::vec3(0,1,0));
         glm::mat4 s = glm::scale(trans, glm::vec3(4,0,4));
-        glm::mat4 t = glm::translate(trans, glm::vec3(0, 1.5f, 0));
-        glm::mat4 rot = glm::toMat4(q)*t;
+        glm::mat4 t = glm::translate(trans, glm::vec3(2.0f, 1.0f, 0));
+        gridShader.setVec3("color", glm::vec3(0,1,0));
+        modelShader.setMat4("view", cam.view);
+        gridShader.setMat4("view", cam.view);
 
         modelShader.setMat4("model", t);
-        modelShader.setMat4("view", cam.view);
-        mesh.draw(modelShader);
-        gridShader.setMat4("view", cam.view);
-//        gridShader.setVec3("color", glm::vec3(0,1,0));
-//        gridShader.setMat4("model", rot);
-//        cubeGrid.draw();
+        cylinderMesh.draw(modelShader);
+        gridShader.setMat4("model", t);
+        boundingCylinder.draw();
+
+        t = glm::translate(trans, glm::vec3(0, 0.5f, 0));
+        modelShader.setMat4("model", t);
+        cubeMesh.draw(modelShader);
+        gridShader.setMat4("model", t);
+        boundingCube.draw();
+
+        t = glm::translate(trans, glm::vec3(-2.0f, 0.5f, 0));
+        modelShader.setMat4("model", t);
+        sphereMesh.draw(modelShader);
+        gridShader.setMat4("model", t);
+        boundingSphere.draw();
+
 
         s = glm::scale(trans, glm::vec3(20, 1, 20));
         modelShader.setMat4("model", s);
