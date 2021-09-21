@@ -13,7 +13,6 @@ private:
     const QString getShaderSource(const char* path);
     GLuint handle;
     std::map<std::string, GLuint> uniforms;
-    QOpenGLShaderProgram shader;
 
 public:
     Shader(const char* vertexPath, const char* fragmentPath);

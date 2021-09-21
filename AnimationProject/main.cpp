@@ -148,13 +148,15 @@ int main(int argc, char *argv[])
 
     QElapsedTimer timer;
     timer.start();
+    long elapsed = timer.nsecsElapsed();
 
     glm::quat q(glm::vec3(0,0,0));
 
     while(window.shouldRun())
     {
-        dt = timer.elapsed()/1000.0;
-        timer.restart();
+        long timeNow = timer.nsecsElapsed();
+        dt = (timeNow-elapsed)/1000000000.0;
+        elapsed = timeNow;
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -204,7 +206,7 @@ int main(int argc, char *argv[])
         plane.draw(modelShader);
 
         gridShader.setMat4("view", cam.view);
-        gridShader.setVec3("color", glm::vec3(3.0f, 0, 0));
+        gridShader.setVec3("color", glm::vec3(2.0f, 0, 0));
         openglFunctions->glUseProgram(gridShader.getHandle());
         openglFunctions->glBindVertexArray(gridMesh.getVao());
         openglFunctions->glDrawArrays(GL_LINES, 0, gridVerts.size());
