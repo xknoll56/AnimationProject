@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <QOpenGLShaderProgram>
+#include <QOpenGLFunctions_4_5_Core>
 #include <QString>
 #include <glm/glm.hpp>
 

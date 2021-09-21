@@ -1,8 +1,9 @@
 #include "Shader.h"
 
 #include <QFile>
-#include <QOpenGLFunctions_4_5_Core>
 #include <QString>
+#include <QDebug>
+#include <QTextStream>
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
 const QString Shader::getShaderSource(const char* path)
