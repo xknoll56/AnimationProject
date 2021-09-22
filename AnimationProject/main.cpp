@@ -87,6 +87,11 @@ glm::mat4 IDENTITY(1.0f);
 Shader* modelShader;
 Shader* gridShader;
 
+struct Renderable
+{
+    std::map<Mesh*, glm::vec3> meshes;
+};
+
 class Entity
 {
 private:
@@ -272,6 +277,18 @@ Entity createBoundedConeEntity()
     return Entity(meshes);
 }
 
+Entity createGridedPlaneEntity(int size)
+{
+    Mesh grid = Mesh::createGrid(size);
+    grid.setColor(glm::vec3(0.9f,0.1f,0.3f));
+    Entity parent(grid);
+    std::vector<Mesh> meshes = {Mesh::createPlane(), Mesh::createBoundingPlane()};
+    Entity child(meshes);
+    child.setScale(glm::vec3(2*size, 1, 2*size));
+    parent.addChild(child);
+    return parent;
+}
+
 Entity createBoundedPlaneEntity()
 {
     std::vector<Mesh> meshes = {Mesh::createPlane(), Mesh::createBoundingPlane()};
@@ -325,6 +342,7 @@ int main(int argc, char *argv[])
     format.setMajorVersion(4);
     format.setMinorVersion(5);
     format.setSwapInterval(0);
+    format.setSwapBehavior(QSurfaceFormat::SwapBehavior::DefaultSwapBehavior);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
     MainWindow window;
@@ -402,13 +420,7 @@ int main(int argc, char *argv[])
 
     Mesh::initializeStaticArrays();
 
-    Mesh gridMesh = Mesh::createGrid(10);
-
-
-
-
-    Entity plane = createBoundedPlaneEntity();
-    plane.setScale(glm::vec3(20,1,20));
+    Entity plane = createGridedPlaneEntity(10);
 
     Entity unitDirs = createUnitDirs();
     Entity cube = createBoundedCubeEntity();
@@ -428,6 +440,8 @@ int main(int argc, char *argv[])
 
 
     QElapsedTimer timer;
+    QElapsedTimer elapsedTimer;
+    elapsedTimer.start();
     timer.start();
     glm::quat q(glm::vec3(0,0,0));
 
@@ -469,22 +483,24 @@ int main(int argc, char *argv[])
         {
             QPointF deltaPos = QCursor::pos()-window.mousePos;
             window.mousePos = QCursor::pos();
-            cam.rotateYaw(-(float)dt*deltaPos.x());
-            cam.rotatePitch(-(float)dt*deltaPos.y());
+            cam.smoothRotateYaw(-(float)dt*deltaPos.x());
+            cam.smoothRotatePitch(-(float)dt*deltaPos.y());
         }
-        cam.updateView();
+        cam.smoothUpdateView();
         modelShader->setMat4("view", cam.view);
         gridShader->setMat4("view", cam.view);
 
         unitDirs.rotate(glm::quat(glm::vec3(0, dt,0)));
+        float s = glm::cos(elapsedTimer.elapsed()/1000.0f);
+        unitDirs.setScale(glm::vec3(s, s, s));
         unitDirs.draw();
 
         plane.draw();
 
 
-        gridShader->setMat4("model", trans);
-        gridShader->setVec3("color", glm::vec3(1, 0, 0));
-        gridMesh.draw();
+//        gridShader->setMat4("model", trans);
+//        gridShader->setVec3("color", glm::vec3(1, 0, 0));
+//        gridMesh.draw();
 
 
         openglFunctions->glDisable(GL_DEPTH_TEST);

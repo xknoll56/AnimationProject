@@ -137,7 +137,7 @@ Mesh Mesh::createBoundingCone()
 Mesh Mesh::createGrid(int size)
 {
     std::vector<glm::vec3> gridVerts;
-    for(int i= -size; i<=size;i++)
+    for(int i= -size+1; i<size;i++)
     {
         gridVerts.push_back(glm::vec3(i, 0.05f, -size));
         gridVerts.push_back(glm::vec3(i, 0.05f, size));
