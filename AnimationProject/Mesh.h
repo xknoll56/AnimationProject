@@ -7,23 +7,37 @@
 
 #define SEGMENTS 30;
 
+struct PrimitiveBufferData;
+
+//This structure will be use to store pointers to all the vertex data in the
+//gpu so that vertex buffers will only be allocated once
+struct PrimitiveBufferData
+{
+    GLuint vao, vbo;
+    unsigned int numVerts;
+    GLenum type;
+};
+
+
 class Mesh
 {
 private:
     GLuint vao, vbo;
     //some objects will use an element/normal buffers separate
     GLuint nbo, ebo;
-    std::vector<glm::vec3> verts;
-    std::vector<glm::vec3> norms;
     unsigned int numVerts;
     glm::vec3 color;
     GLenum type;
+
 
 
 public:
     //this constructor will contain the vertices packed in with the normals
     Mesh(std::vector<glm::vec3> verts, GLenum type);
     Mesh(std::vector<float> verts, GLenum type);
+    Mesh(const PrimitiveBufferData& pbd);
+    Mesh(const Mesh& mesh);
+
     static Mesh createCube();
     static Mesh createPlane();
     static Mesh createBoundingBox();
@@ -33,6 +47,8 @@ public:
     static Mesh createGrid(int size);
     static Mesh createCylinder();
     static Mesh createSphere();
+    static Mesh createCone();
+    static Mesh createBoundingCone();
     static void initializeStaticArrays();
     void draw();
     void draw(Shader& shader);
@@ -40,8 +56,14 @@ public:
     const GLuint getVao();
     const unsigned int getNumVerts();
     const GLenum getType();
+    static PrimitiveBufferData extractPrimitiveBufferData(const Mesh& mesh);
 
 };
+
+
+static std::vector<glm::vec3> coneVerts;
+
+static std::vector<glm::vec3> boundingConeVerts;
 
 static std::vector<glm::vec3> cylinderVerts;
 
@@ -139,5 +161,6 @@ static const std::vector<float> cubeVerts=
     -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
 };
+
 
 #endif // MESH_H

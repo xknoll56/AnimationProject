@@ -3,6 +3,17 @@
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 #define PI 3.14159265359f
 
+static PrimitiveBufferData cubePBD;
+static PrimitiveBufferData cubeBoundsPBD;
+static PrimitiveBufferData cylinderPBD;
+static PrimitiveBufferData cylinderBoundsPBD;
+static PrimitiveBufferData spherePBD;
+static PrimitiveBufferData sphereBoundsPBD;
+static PrimitiveBufferData planePBD;
+static PrimitiveBufferData planeBoundsPBD;
+static PrimitiveBufferData conePBD;
+static PrimitiveBufferData coneBoundsPBD;
+
 //this constructor will contain the vertices packed in with the normals
 Mesh::Mesh(std::vector<glm::vec3> verts, GLenum type)
 {
@@ -69,36 +80,58 @@ Mesh::Mesh(std::vector<float> verts, GLenum type)
         numVerts = verts.size()/3;
         color = glm::vec3(1,1,1);
     }
+
+
+}
+
+Mesh::Mesh(const Mesh& mesh)
+{
+    vao = mesh.vao;
+    vbo = mesh.vbo;
+    nbo = mesh.nbo;
+    ebo = mesh.ebo;
+    numVerts = mesh.numVerts;
+    color = mesh.color;
+    type = mesh.type;
 }
 
 Mesh Mesh::createCube()
 {
-    return Mesh(cubeVerts, GL_TRIANGLES);
+    return Mesh(cubePBD);
 }
 
 Mesh Mesh::createPlane()
 {
-    return Mesh(planeVerts, GL_TRIANGLES);
+    return Mesh(planePBD);
 }
 
 Mesh Mesh::createBoundingBox()
 {
-    return Mesh(boundingBoxVerts, GL_LINES);
+    return Mesh(cubeBoundsPBD);
 }
 
 Mesh Mesh::createBoundingSphere()
 {
-    return Mesh(boundingSphereVerts, GL_LINES);
+    return Mesh(sphereBoundsPBD);
 }
 
 Mesh Mesh::createBoundingCylinder()
 {
-    return Mesh(boundingCylinderVerts, GL_LINES);
+    return Mesh(cylinderBoundsPBD);
 }
 
 Mesh Mesh::createBoundingPlane()
 {
-    return Mesh(boundingPlaneVerts, GL_LINES);
+    return Mesh(planeBoundsPBD);
+}
+Mesh Mesh::createCone()
+{
+    return Mesh(conePBD);
+}
+
+Mesh Mesh::createBoundingCone()
+{
+    return Mesh(coneBoundsPBD);
 }
 
 Mesh Mesh::createGrid(int size)
@@ -117,12 +150,34 @@ Mesh Mesh::createGrid(int size)
 
 Mesh Mesh::createCylinder()
 {
-    return Mesh(cylinderVerts, GL_TRIANGLES);
+    return Mesh(cylinderPBD);
 }
 
 Mesh Mesh::createSphere()
 {
-    return Mesh(sphereVerts, GL_TRIANGLES);
+    return Mesh(spherePBD);
+}
+
+PrimitiveBufferData Mesh::extractPrimitiveBufferData(const Mesh& mesh)
+{
+    PrimitiveBufferData pbd;
+    pbd.vao = mesh.vao;
+    pbd.type = mesh.type;
+    pbd.numVerts = mesh.numVerts;
+    pbd.vbo = mesh.vbo;
+    return pbd;
+}
+
+Mesh::Mesh(const PrimitiveBufferData& pbd)
+{
+    vao = pbd.vao;
+    type = pbd.type;
+    numVerts = pbd.numVerts;
+    vbo = pbd.vbo;
+    if(type == GL_TRIANGLES)
+        color = glm::vec3(1,1,1);
+    else if(type == GL_LINES)
+        color = glm::vec3(0,1,0);
 }
 
 void Mesh::initializeStaticArrays()
@@ -280,7 +335,84 @@ void Mesh::initializeStaticArrays()
         verts.push_back(glm::vec3(0.505f*glm::cos(theta1), 0.505f*glm::sin(theta1), 0.0f));
     }
     boundingSphereVerts = verts;
-}
+
+    verts = std::vector<glm::vec3>();
+    for(int i = 0; i<divs; i++)
+    {
+        float theta0 = (float)i*2.0f*PI/divs;
+        float theta1 = (float)(i+1)*2.0f*PI/divs;
+        glm::vec3 v1 = glm::vec3(0.5f*glm::cos(theta0), -0.5f, 0.5f*glm::sin(theta0));
+        glm::vec3 v2 = glm::vec3(0, 0.5f, 0);
+        glm::vec3 v3 = glm::vec3(0.5f*glm::cos(theta1), -0.5f, 0.5f*glm::sin(theta1));
+
+        glm::vec3 normal = glm::cross(v2-v1, v3-v1);
+        normal = glm::normalize(normal);
+
+        verts.push_back(v1);
+        verts.push_back(normal);
+        verts.push_back(v2);
+        verts.push_back(normal);
+        verts.push_back(v3);
+        verts.push_back(normal);
+
+        v3 = glm::vec3(0.5f*glm::cos(theta0), -0.5f, 0.5f*glm::sin(theta0));
+        v2 = glm::vec3(0, -0.5f, 0);
+        v1 = glm::vec3(0.5f*glm::cos(theta1), -0.5f, 0.5f*glm::sin(theta1));
+
+        normal = glm::cross(v2-v1, v3-v1);
+        normal = glm::normalize(normal);
+
+        verts.push_back(v1);
+        verts.push_back(normal);
+        verts.push_back(v2);
+        verts.push_back(normal);
+        verts.push_back(v3);
+        verts.push_back(normal);
+    }
+    coneVerts = verts;
+
+    verts = std::vector<glm::vec3>();
+    verts.push_back(glm::vec3(0, 0.5f, 0));
+    verts.push_back(glm::vec3(0.5f, -0.5f, 0));
+    verts.push_back(glm::vec3(0, 0.5f, 0));
+    verts.push_back(glm::vec3(-0.5f, -0.5f, 0));
+    verts.push_back(glm::vec3(0, 0.5f, 0));
+    verts.push_back(glm::vec3(0, -0.5f, 0.5f));
+    verts.push_back(glm::vec3(0, 0.5f, 0));
+    verts.push_back(glm::vec3(0, -0.5f, -0.5f));
+    verts.push_back(glm::vec3(0.5f, -0.5f, 0));
+    verts.push_back(glm::vec3(-0.5f, -0.5f, 0));
+    verts.push_back(glm::vec3(0, -0.5f, 0.5f));
+    verts.push_back(glm::vec3(0, -0.5f, -0.5f));
+    boundingConeVerts = verts;
+
+    Mesh cube(cubeVerts, GL_TRIANGLES);
+    cubePBD = Mesh::extractPrimitiveBufferData(cube);
+    Mesh boundingCube(boundingBoxVerts, GL_LINES);
+    cubeBoundsPBD = Mesh::extractPrimitiveBufferData(boundingCube);
+
+    Mesh cyl(cylinderVerts, GL_TRIANGLES);
+    cylinderPBD = Mesh::extractPrimitiveBufferData(cyl);
+    Mesh boundingCyl(boundingCylinderVerts, GL_LINES);
+    cylinderBoundsPBD = Mesh::extractPrimitiveBufferData(boundingCyl);
+
+    Mesh sphere(sphereVerts, GL_TRIANGLES);
+    spherePBD = Mesh::extractPrimitiveBufferData(sphere);
+    Mesh boundingSphere(boundingSphereVerts, GL_LINES);
+    sphereBoundsPBD = Mesh::extractPrimitiveBufferData(boundingSphere);
+
+    Mesh plane(planeVerts, GL_TRIANGLES);
+    planePBD = Mesh::extractPrimitiveBufferData(plane);
+    Mesh planeBounds(boundingPlaneVerts, GL_LINES);
+    planeBoundsPBD = Mesh::extractPrimitiveBufferData(planeBounds);
+
+    Mesh cone(coneVerts, GL_TRIANGLES);
+    conePBD = Mesh::extractPrimitiveBufferData(cone);
+    Mesh coneBounds(boundingConeVerts, GL_LINES);
+    coneBoundsPBD = Mesh::extractPrimitiveBufferData(coneBounds);
+    }
+
+
 
 void Mesh::draw()
 {

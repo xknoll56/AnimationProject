@@ -95,8 +95,8 @@ private:
     glm::mat4 scaleMat;
     glm::mat4 rotationMat;
     glm::mat4 model;
-    std::vector<Entity*> children;
-    std::vector<Mesh*> meshes;
+    std::vector<Entity> children;
+
 
     void setModel()
     {
@@ -108,42 +108,78 @@ private:
         glm::mat4 mat =  parentModel*model;
         for(auto& mesh: meshes)
         {
-            switch(mesh->getType())
+            switch(mesh.getType())
             {
             case GL_TRIANGLES:
                 modelShader->setMat4("model", mat);
-                mesh->draw(*modelShader);
+                mesh.draw(*modelShader);
                 break;
             case GL_LINES:
                 gridShader->setMat4("model", mat);
-                mesh->draw(*gridShader);
+                mesh.draw(*gridShader);
                 break;
             }
         }
 
         for(auto& child: children)
         {
-            child->drawEntitiesRecursively(mat);
+            child.drawEntitiesRecursively(mat);
         }
     }
 
 public:
+
+    std::vector<Mesh> meshes;
+
     Entity(Mesh& mesh)
     {
         positionMat = glm::translate(IDENTITY, transform.position);
         scaleMat = glm::scale(IDENTITY, transform.scale);
         rotationMat = glm::toMat4(transform.rotation);
         setModel();
-        meshes.push_back(&mesh);
+        meshes.push_back(mesh);
     }
 
-    Entity(const std::vector<Mesh*>& meshes)
+    Entity(Mesh& mesh, const Transform& transform)
+    {
+        setTransform(transform);
+        meshes.push_back(mesh);
+    }
+
+    Entity(const Transform& transform)
+    {
+        setTransform(transform);
+    }
+
+    Entity()
+    {
+        positionMat = glm::translate(IDENTITY, transform.position);
+        scaleMat = glm::scale(IDENTITY, transform.scale);
+        rotationMat = glm::toMat4(transform.rotation);
+        setModel();
+    }
+
+    Entity(const std::vector<Mesh>& meshes)
     {
         positionMat = glm::translate(IDENTITY, transform.position);
         scaleMat = glm::scale(IDENTITY, transform.scale);
         rotationMat = glm::toMat4(transform.rotation);
         setModel();
         this->meshes = meshes;
+    }
+
+    const Transform& getTransform()
+    {
+        return transform;
+    }
+
+    void setTransform(const Transform& transform)
+    {
+        this->transform = transform;
+        positionMat = glm::translate(IDENTITY, transform.position);
+        scaleMat = glm::scale(IDENTITY, transform.scale);
+        rotationMat = glm::toMat4(transform.rotation);
+        setModel();
     }
 
     void translate(const glm::vec3& trans)
@@ -189,23 +225,95 @@ public:
         setModel();
     }
 
-    void addMesh(Mesh& mesh)
+    void addMeshWithColor(const Mesh& mesh, glm::vec3 color)
     {
-        meshes.push_back(&mesh);
+        Mesh toAdd = Mesh(mesh);
+        toAdd.setColor(color);
+        meshes.push_back(toAdd);
     }
-
     void addChild(Entity& entity)
     {
-        children.push_back(&entity);
+        children.push_back(entity);
     }
 
     void draw()
     {
         drawEntitiesRecursively(IDENTITY);
     }
+};
 
+class Cube: public Entity
+{
+public:
 
 };
+
+Entity createBoundedCubeEntity()
+{
+    std::vector<Mesh> meshes = {Mesh::createCube(), Mesh::createBoundingBox()};
+    return Entity(meshes);
+}
+
+Entity createBoundedCylinderEntity()
+{
+    std::vector<Mesh> meshes = {Mesh::createCylinder(), Mesh::createBoundingCylinder()};
+    return Entity(meshes);
+}
+
+Entity createBoundedSphereEntity()
+{
+    std::vector<Mesh> meshes = {Mesh::createSphere(), Mesh::createBoundingSphere()};
+    return Entity(meshes);
+}
+
+Entity createBoundedConeEntity()
+{
+    std::vector<Mesh> meshes = {Mesh::createCone(), Mesh::createBoundingCone()};
+    return Entity(meshes);
+}
+
+Entity createBoundedPlaneEntity()
+{
+    std::vector<Mesh> meshes = {Mesh::createPlane(), Mesh::createBoundingPlane()};
+    return Entity(meshes);
+}
+
+Entity createUnitDirs()
+{
+    Entity unitDirs;
+    Mesh cone = Mesh::createCone();
+    Mesh cyl = Mesh::createCylinder();
+
+    Transform tCylX(glm::vec3(0.5f, 0, 0), glm::vec3(0.1f, 0.5f, 0.1f), glm::vec3(0, 0, -(float)PI*0.5f));
+    Transform tConeX(glm::vec3(1.0f, 0, 0), glm::vec3(0.25f, 0.25f, 0.25f), glm::vec3(0, 0, -(float)PI*0.5f));
+    Transform tCylY(glm::vec3(0, 0.5f, 0), glm::vec3(0.1f, 0.5f, 0.1f), glm::vec3(0, 0, 0));
+    Transform tConeY(glm::vec3(0, 1.0f, 0), glm::vec3(0.25f, 0.25f, 0.25f), glm::vec3(0, 0, 0));
+    Transform tCylZ(glm::vec3(0, 0, 0.5f), glm::vec3(0.1f, 0.5f, 0.1f), glm::vec3((float)PI*0.5f, 0, 0));
+    Transform tConeZ(glm::vec3(0, 0, 1.0f), glm::vec3(0.25f, 0.25f, 0.25f), glm::vec3((float)PI*0.5f, 0, 0));
+
+    Entity cylX(tCylX);
+    Entity coneX(tConeX);
+    Entity cylY(tCylY);
+    Entity coneY(tConeY);
+    Entity cylZ(tCylZ);
+    Entity coneZ(tConeZ);
+
+    cylX.addMeshWithColor(cyl, glm::vec3(1,0,0));
+    coneX.addMeshWithColor(cone, glm::vec3(1,0,0));
+    cylY.addMeshWithColor(cyl, glm::vec3(0,1,0));
+    coneY.addMeshWithColor(cone, glm::vec3(0,1,0));
+    cylZ.addMeshWithColor(cyl, glm::vec3(0,0,1));
+    coneZ.addMeshWithColor(cone, glm::vec3(0,0,1));
+
+    unitDirs.addChild(cylX);
+    unitDirs.addChild(coneX);
+    unitDirs.addChild(cylY);
+    unitDirs.addChild(coneY);
+    unitDirs.addChild(cylZ);
+    unitDirs.addChild(coneZ);
+
+    return unitDirs;
+}
 
 int main(int argc, char *argv[])
 {
@@ -293,28 +401,30 @@ int main(int argc, char *argv[])
     gridShader->setMat4("projection", projection);
 
     Mesh::initializeStaticArrays();
-    //Mesh mesh = Mesh::createCube();
-    Mesh plane = Mesh::createPlane();
-    Mesh cubeGrid = Mesh::createBoundingBox();
+
     Mesh gridMesh = Mesh::createGrid(10);
 
 
-    Mesh sphereMesh = Mesh::createSphere();
-    Mesh boundingSphere = Mesh::createBoundingSphere();
-    Mesh cylinderMesh = Mesh::createCylinder();
-    Mesh boundingCylinder = Mesh::createBoundingCylinder();
-    Mesh cubeMesh = Mesh::createCube();
-    Mesh boundingCube = Mesh::createBoundingBox();
-    boundingCube.setColor(glm::vec3(0,1,0));
-    Mesh boundingPlane = Mesh::createBoundingPlane();
 
-    Entity cube(cubeMesh);
-    cube.addMesh(boundingCube);
 
-    Entity childCube(cubeMesh);
-    childCube.setPosition(glm::vec3(2, 0, 0));
-    childCube.addMesh(boundingCube);
-    cube.addChild(childCube);
+    Entity plane = createBoundedPlaneEntity();
+    plane.setScale(glm::vec3(20,1,20));
+
+    Entity unitDirs = createUnitDirs();
+    Entity cube = createBoundedCubeEntity();
+    Entity cone = createBoundedConeEntity();
+    Entity sphere = createBoundedSphereEntity();
+    Entity cylinder = createBoundedCylinderEntity();
+    cube.setPosition(glm::vec3(3,0,0));
+    cone.setPosition(glm::vec3(-3, 0, 0));
+    sphere.setPosition(glm::vec3(0,0,3));
+    cylinder.setPosition(glm::vec3(0,0,-3));
+    unitDirs.addChild(cube);
+    unitDirs.addChild(cone);
+    unitDirs.addChild(sphere);
+    unitDirs.addChild(cylinder);
+
+    unitDirs.setPosition(glm::vec3(0,3, 0));
 
 
     QElapsedTimer timer;
@@ -366,17 +476,11 @@ int main(int argc, char *argv[])
         modelShader->setMat4("view", cam.view);
         gridShader->setMat4("view", cam.view);
 
+        unitDirs.rotate(glm::quat(glm::vec3(0, dt,0)));
+        unitDirs.draw();
 
-        cube.rotate(glm::quat(glm::vec3( 0, 0,  (float)dt)));
-        cube.scale(glm::vec3(dt, dt, dt));
-        cube.draw();
+        plane.draw();
 
-        glm::mat4 s = glm::scale(trans, glm::vec3(20, 1, 20));
-        modelShader->setMat4("model", s);
-        plane.draw(*modelShader);
-        gridShader->setMat4("model", s);
-        gridShader->setVec3("color", glm::vec3(0,1,0));
-        boundingPlane.draw();
 
         gridShader->setMat4("model", trans);
         gridShader->setVec3("color", glm::vec3(1, 0, 0));
@@ -397,7 +501,7 @@ int main(int argc, char *argv[])
         app.processEvents();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
-        //openglFunctions->glFinish();
+        openglFunctions->glFinish();
     }
 
     app.quit();
