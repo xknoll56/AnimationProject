@@ -31,27 +31,138 @@
 #include <Entity.h>
 
 
-double dt;
+float dt;
 QOpenGLFunctions_4_5_Core* openglFunctions;
 Shader* modelShader;
 Shader* gridShader;
 
-class CloseEventFilter : public QObject
+struct UniformRigidBody
 {
-public:
-     CloseEventFilter(QObject *parent) : QObject(parent) {}
-     MainWindow* window;
 
-protected:
-     bool eventFilter(QObject *obj, QEvent *event)
-     {
-          if (event->type() == QEvent::Close)
-          {
-               exit(EXIT_SUCCESS);
-          }
-          return QObject::eventFilter(obj, event);
-     }
+    //constants
+    const float mass;
+    const float inertia;
+    float massInv;
+    float inertiaInv;
+
+    //state variables
+    glm::vec3 position;
+    glm::quat rotation;
+    glm::vec3 linearMomentum;
+    glm::vec3 angularMomentum;
+
+    //derived quantities
+    glm::vec3 velocity;
+    glm::vec3 angularVelocity;
+
+    //known quantities
+    glm::vec3 force;
+    glm::vec3 torque;
+
+    //applied force/torque will be applie for a single step
+    glm::vec3 appliedForce;
+    glm::vec3 appliedTorque;
+    bool applyForce = false;
+    bool applyTorque = false;
+
+    UniformRigidBody(float _mass, float _inertia): mass(_mass), inertia(_inertia)
+    {
+        massInv = 1.0f/mass;
+        inertiaInv = 1.0f/inertia;
+        position = glm::vec3();
+        rotation = glm::quat(glm::vec3(0,0,0));
+        linearMomentum = glm::vec3();
+        angularMomentum = glm::vec3();
+        velocity = glm::vec3();
+        angularVelocity = glm::vec3();
+        force = glm::vec3();
+        torque = glm::vec3();
+        appliedForce = glm::vec3();
+        appliedTorque = glm::vec3();
+    }
+
+    void addForce(const glm::vec3& force)
+    {
+        appliedForce = force;
+        applyForce = true;
+    }
+
+    void addTorque(const glm::vec3& torque)
+    {
+        appliedTorque = torque;
+        applyTorque = true;
+    }
+
+    void stepQuantities(float dt)
+    {
+
+        if(applyForce)
+        {
+            linearMomentum+=dt*appliedForce;
+            applyForce = false;
+        }
+        if(applyTorque)
+        {
+            angularMomentum+=dt*appliedTorque;
+            applyTorque = false;
+        }
+        angularMomentum += torque*dt;
+        linearMomentum += force*dt;
+        angularVelocity = inertiaInv*angularMomentum;
+        velocity = massInv*linearMomentum;
+        rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;
+        rotation = glm::normalize(rotation);
+        position+=dt*velocity;
+    }
 };
+
+struct PhysicsWorld
+{
+    std::vector<UniformRigidBody*> bodies;
+
+    void stepWorld(float dt)
+    {
+        for(const auto& body: bodies)
+        {
+            body->stepQuantities(dt);
+        }
+    }
+};
+
+//class RigidBody
+//{
+//private:
+//    //constants
+//    const float mass;
+//    const glm::mat3 inertialTensor;
+//    const glm::mat3 inertialTensorInverse;
+
+//    //state variables
+//    glm::vec3 position;
+//    glm::quat rotation;
+//    glm::vec3 linearMomentum;
+//    glm::vec3 angularMomentum;
+
+//    //derived quantities
+//    glm::mat3 inertiaInverse;
+//    glm::mat3 rotationMatrix;
+//    glm::vec3 velocity;
+//    glm::vec3 angularVelocity;
+
+//    //known quantities
+//    glm::vec3 force;
+//    glm::vec3 torque;
+//public:
+//    void computeQuantities()
+//    {
+//        velocity = linearMomentum/mass;
+//        inertiaInverse = rotationMatrix*inertialTensorInverse*glm::transpose(rotationMatrix);
+//        angularVelocity = inertiaInverse*angularMomentum;
+//        rotationMatrix = glm::toMat3(glm::normalize(rotation));
+//    }
+
+
+//};
 
 
 int main(int argc, char *argv[])
@@ -144,28 +255,33 @@ int main(int argc, char *argv[])
 
     Entity plane = createGridedPlaneEntity(10);
 
-    Entity unitDirs = createUnitDirs();
-    Entity cube = createBoundedCubeEntity();
-    Entity cone = createBoundedConeEntity();
+//    Entity unitDirs = createUnitDirs();
+//    Entity cube = createBoundedCubeEntity();
+//    Entity cone = createBoundedConeEntity();
+//    Entity sphere = createBoundedSphereEntity();
+//    Entity cylinder = createBoundedCylinderEntity();
+//    Entity capsule = createBoundedCapsuleEntity();
+//    cube.setPosition(glm::vec3(3,0,0));
+//    capsule.setPosition(glm::vec3(-3, 0, 0));
+//    sphere.setPosition(glm::vec3(0,0,3));
+//    cylinder.setPosition(glm::vec3(0,0,-3));
+//    unitDirs.addChild(cube);
+//    unitDirs.addChild(capsule);
+//    unitDirs.addChild(sphere);
+//    unitDirs.addChild(cylinder);
+
+//    unitDirs.setPosition(glm::vec3(0,3, 0));
+
     Entity sphere = createBoundedSphereEntity();
-    Entity cylinder = createBoundedCylinderEntity();
-    Entity capsule = createBoundedCapsuleEntity();
-    cube.setPosition(glm::vec3(3,0,0));
-    capsule.setPosition(glm::vec3(-3, 0, 0));
-    sphere.setPosition(glm::vec3(0,0,3));
-    cylinder.setPosition(glm::vec3(0,0,-3));
-    unitDirs.addChild(cube);
-    unitDirs.addChild(capsule);
-    unitDirs.addChild(sphere);
-    unitDirs.addChild(cylinder);
-
-    unitDirs.setPosition(glm::vec3(0,3, 0));
+    float mass = 1.0f;
+    float radius = 1.0f;
+    float inertia = (2.0f/5.0f)*mass*radius*radius;
+    UniformRigidBody rb(mass, inertia);
+    PhysicsWorld world;
+    world.bodies.push_back(&rb);
 
 
-
-
-
-
+    rb.position = glm::vec3(0, 15, 0);
 
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
@@ -175,7 +291,7 @@ int main(int argc, char *argv[])
     {
 
         long timeNow = elapsedTimer.nsecsElapsed();
-        dt = (timeNow-time)/1000000000.0;
+        dt = (timeNow-time)/1000000000.0f;
         time = timeNow;
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
@@ -192,39 +308,43 @@ int main(int argc, char *argv[])
 
         if(window.getKey(Qt::Key_A))
         {
-            cam.translateRight(-(float)dt);
+            cam.translateRight(-dt);
         }
         if(window.getKey(Qt::Key_D))
         {
-            cam.translateRight((float)dt);
+            cam.translateRight(dt);
         }
         if(window.getKey(Qt::Key_W))
         {
-            cam.translateFwd(-(float)dt);
+            cam.translateFwd(-dt);
         }
         if(window.getKey(Qt::Key_S))
         {
-            cam.translateFwd((float)dt);
+            cam.translateFwd(dt);
         }
         if(window.getMouse(Qt::MouseButton::LeftButton))
         {
             QPointF deltaPos = QCursor::pos()-window.mousePos;
             window.mousePos = QCursor::pos();
-            cam.smoothRotateYaw(-(float)dt*deltaPos.x());
-            cam.smoothRotatePitch(-(float)dt*deltaPos.y());
+            cam.smoothRotateYaw(-dt*deltaPos.x());
+            cam.smoothRotatePitch(-dt*deltaPos.y());
 //            cam.rotateYaw(-(float)dt*deltaPos.x());
 //            cam.rotatePitch(-(float)dt*deltaPos.y());
+        }
+        if(window.getGetDown(Qt::Key_Space))
+        {
+            rb.addForce(glm::vec3(20, 0, 0));
         }
         cam.smoothUpdateView();
         //cam.updateView();
         modelShader->setMat4("view", cam.view);
         gridShader->setMat4("view", cam.view);
 
-        unitDirs.rotate(glm::quat(glm::vec3(0, dt,0)));
-        float s = glm::cos(elapsedTimer.elapsed()/1000.0f);
-       // unitDirs.setScale(glm::vec3(s, s, s));
-        unitDirs.draw();
-        //capsule.draw();
+        world.stepWorld(dt);
+        sphere.setPosition(rb.position);
+        sphere.setRotation(rb.rotation);
+        sphere.draw();
+
 
         plane.draw();
 

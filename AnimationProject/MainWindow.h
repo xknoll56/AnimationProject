@@ -41,4 +41,14 @@ private:
     bool resized = false;
 };
 
+class CloseEventFilter : public QObject
+{
+public:
+     CloseEventFilter(QObject *parent) : QObject(parent) {}
+
+protected:
+     bool eventFilter(QObject *obj, QEvent *event);
+};
+
+
 #endif // MAINWINDOW_H

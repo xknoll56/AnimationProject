@@ -92,3 +92,12 @@ bool MainWindow::getMouseDown(Qt::MouseButton button)
 {
     return inputsDown[button];
 }
+
+bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
+{
+     if (event->type() == QEvent::Close)
+     {
+          exit(EXIT_SUCCESS);
+     }
+     return QObject::eventFilter(obj, event);
+}
