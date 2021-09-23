@@ -13,6 +13,7 @@ INCLUDEPATH += \
     Dependencies
 
 SOURCES += \
+    Entity.cpp \
     MainWindow.cpp \
     Camera.cpp \
     Mesh.cpp \
@@ -20,6 +21,8 @@ SOURCES += \
     main.cpp
 
 HEADERS += \
+    Common.h \
+    Entity.h \
     MainWindow.h \
     Camera.h \
     Mesh.h \
