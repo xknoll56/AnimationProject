@@ -49,6 +49,8 @@ public:
     static Mesh createSphere();
     static Mesh createCone();
     static Mesh createBoundingCone();
+    static Mesh createCapsule();
+    static Mesh createBoundingCapsule();
     static void initializeStaticArrays();
     void draw();
     void draw(Shader& shader);
@@ -60,6 +62,9 @@ public:
 
 };
 
+static std::vector<glm::vec3> capsuleVerts;
+
+static std::vector<glm::vec3> boundingCapsuleVerts;
 
 static std::vector<glm::vec3> coneVerts;
 

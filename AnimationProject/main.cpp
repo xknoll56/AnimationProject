@@ -259,6 +259,12 @@ Entity createBoundedCubeEntity()
     return Entity(meshes);
 }
 
+Entity createBoundedCapsuleEntity()
+{
+    std::vector<Mesh> capsuleMeshes = {Mesh::createCapsule(), Mesh::createBoundingCapsule()};
+    return Entity(capsuleMeshes);
+}
+
 Entity createBoundedCylinderEntity()
 {
     std::vector<Mesh> meshes = {Mesh::createCylinder(), Mesh::createBoundingCylinder()};
@@ -384,7 +390,7 @@ int main(int argc, char *argv[])
     openglFunctions->glEnable(GL_CULL_FACE);
     openglFunctions->glEnable(GL_LINE_SMOOTH);
     openglFunctions->glEnable(GL_LINE_WIDTH);
-    openglFunctions->glLineWidth(2.0f);
+    openglFunctions->glLineWidth(2.5f);
     openglFunctions->glDisable(GL_LIGHTING);
 
 
@@ -427,32 +433,37 @@ int main(int argc, char *argv[])
     Entity cone = createBoundedConeEntity();
     Entity sphere = createBoundedSphereEntity();
     Entity cylinder = createBoundedCylinderEntity();
+    Entity capsule = createBoundedCapsuleEntity();
     cube.setPosition(glm::vec3(3,0,0));
-    cone.setPosition(glm::vec3(-3, 0, 0));
+    capsule.setPosition(glm::vec3(-3, 0, 0));
     sphere.setPosition(glm::vec3(0,0,3));
     cylinder.setPosition(glm::vec3(0,0,-3));
     unitDirs.addChild(cube);
-    unitDirs.addChild(cone);
+    unitDirs.addChild(capsule);
     unitDirs.addChild(sphere);
     unitDirs.addChild(cylinder);
 
     unitDirs.setPosition(glm::vec3(0,3, 0));
 
 
-    QElapsedTimer timer;
+
+
+
+
+
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
-    timer.start();
-    glm::quat q(glm::vec3(0,0,0));
-
+    long time = elapsedTimer.nsecsElapsed();
+    //app.
     while(window.shouldRun())
     {
 
-        dt = timer.nsecsElapsed()/1000000000.0;
-        timer.restart();
+        long timeNow = elapsedTimer.nsecsElapsed();
+        dt = (timeNow-time)/1000000000.0;
+        time = timeNow;
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
-        openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if(window.windowResized())
         {
@@ -485,22 +496,21 @@ int main(int argc, char *argv[])
             window.mousePos = QCursor::pos();
             cam.smoothRotateYaw(-(float)dt*deltaPos.x());
             cam.smoothRotatePitch(-(float)dt*deltaPos.y());
+//            cam.rotateYaw(-(float)dt*deltaPos.x());
+//            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
         cam.smoothUpdateView();
+        //cam.updateView();
         modelShader->setMat4("view", cam.view);
         gridShader->setMat4("view", cam.view);
 
         unitDirs.rotate(glm::quat(glm::vec3(0, dt,0)));
         float s = glm::cos(elapsedTimer.elapsed()/1000.0f);
-        unitDirs.setScale(glm::vec3(s, s, s));
+       // unitDirs.setScale(glm::vec3(s, s, s));
         unitDirs.draw();
+        //capsule.draw();
 
         plane.draw();
-
-
-//        gridShader->setMat4("model", trans);
-//        gridShader->setVec3("color", glm::vec3(1, 0, 0));
-//        gridMesh.draw();
 
 
         openglFunctions->glDisable(GL_DEPTH_TEST);
@@ -515,9 +525,9 @@ int main(int argc, char *argv[])
 
         window.resetInputs();
         app.processEvents();
+        //openglFunctions->glFinish();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
-        openglFunctions->glFinish();
     }
 
     app.quit();

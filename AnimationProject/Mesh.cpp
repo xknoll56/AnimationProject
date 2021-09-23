@@ -13,6 +13,9 @@ static PrimitiveBufferData planePBD;
 static PrimitiveBufferData planeBoundsPBD;
 static PrimitiveBufferData conePBD;
 static PrimitiveBufferData coneBoundsPBD;
+static PrimitiveBufferData capsulePBD;
+static PrimitiveBufferData capsuleBoundsPBD;
+
 
 //this constructor will contain the vertices packed in with the normals
 Mesh::Mesh(std::vector<glm::vec3> verts, GLenum type)
@@ -156,6 +159,16 @@ Mesh Mesh::createCylinder()
 Mesh Mesh::createSphere()
 {
     return Mesh(spherePBD);
+}
+
+Mesh Mesh::createCapsule()
+{
+    return Mesh(capsulePBD);
+}
+
+Mesh Mesh::createBoundingCapsule()
+{
+    return Mesh(capsuleBoundsPBD);
 }
 
 PrimitiveBufferData Mesh::extractPrimitiveBufferData(const Mesh& mesh)
@@ -386,6 +399,181 @@ void Mesh::initializeStaticArrays()
     verts.push_back(glm::vec3(0, -0.5f, -0.5f));
     boundingConeVerts = verts;
 
+    verts = std::vector<glm::vec3>();
+    //The outer loop will determine the horizontal angle and point height
+    for (int j = 0; j < divs/2; j++)
+    {
+        //The inner loop will determine the vertical angle and horizontal position
+        for (int i = 0; i < 2*divs; i++) {
+
+            //The algoithm works by  calculating a theta and psi polar coordiante angles and doing square patches
+            //along the face of the sphere
+            float theta = (float)i * PI / (float)divs;
+            float theta1 = (float)(i + 1) * PI / (float)divs;
+            float psi = (float)j * PI / (double)divs + PI / 2.0;
+            float psi1 = (float)(j + 1) * PI / (float)divs + PI / 2.0;
+
+            glm::vec3 v3 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi), 0.5f * glm::sin(psi)+0.5f, 0.5f * glm::sin(theta) * glm::cos(psi));
+            glm::vec3 v2 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi1), 0.5f * glm::sin(psi1)+0.5f, 0.5f * glm::sin(theta) * glm::cos(psi1));
+            glm::vec3 v1 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi), 0.5f * glm::sin(psi)+0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi));
+
+            glm::vec3 normal = glm::cross(v2-v1, v3-v1);
+            normal = glm::normalize(normal);
+
+            verts.push_back(v1);
+            verts.push_back(normal);
+            verts.push_back(v2);
+            verts.push_back(normal);
+            verts.push_back(v3);
+            verts.push_back(normal);
+
+            v3 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi1), 0.5f * glm::sin(psi1)+0.5f, 0.5f * glm::sin(theta) * glm::cos(psi1));
+            v2 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi1), 0.5f * glm::sin(psi1)+0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi1));
+            v1 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi), 0.5f * glm::sin(psi)+0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi));
+
+            normal = glm::cross(v2-v1, v3-v1);
+            normal = glm::normalize(normal);
+
+            verts.push_back(v1);
+            verts.push_back(normal);
+            verts.push_back(v2);
+            verts.push_back(normal);
+            verts.push_back(v3);
+            verts.push_back(normal);
+
+        }
+    }
+    for (int i = 0; i < 2*divs; i++)
+    {
+        float theta0 = (float)i * PI / (float)divs;
+        float theta1 = (float)(i + 1) * PI / (float)divs;
+        glm::vec3 v3 = glm::vec3(0.5f*glm::cos(theta0), 0.5f, 0.5f*glm::sin(theta0));
+        glm::vec3 v2 = glm::vec3(0.5f*glm::cos(theta0), -0.5f, 0.5f*glm::sin(theta0));
+        glm::vec3 v1 = glm::vec3(0.5f*glm::cos(theta1), 0.5f, 0.5f*glm::sin(theta1));
+
+        glm::vec3 normal = glm::cross(v2-v1, v3-v1);
+        normal = glm::normalize(normal);
+
+        verts.push_back(v1);
+        verts.push_back(normal);
+        verts.push_back(v2);
+        verts.push_back(normal);
+        verts.push_back(v3);
+        verts.push_back(normal);
+
+        v3 = glm::vec3(0.5f*glm::cos(theta1), 0.5f, 0.5f*glm::sin(theta1));
+        v2 = glm::vec3(0.5f*glm::cos(theta0), -0.5f, 0.5f*glm::sin(theta0));
+        v1 = glm::vec3(0.5f*glm::cos(theta1), -0.5f, 0.5f*glm::sin(theta1));
+
+        normal = glm::cross(v2-v1, v3-v1);
+        normal = glm::normalize(normal);
+
+        verts.push_back(v1);
+        verts.push_back(normal);
+        verts.push_back(v2);
+        verts.push_back(normal);
+        verts.push_back(v3);
+        verts.push_back(normal);
+    }
+    //The outer loop will determine the horizontal angle and point height
+    for (int j = divs/2; j < divs; j++)
+    {
+        //The inner loop will determine the vertical angle and horizontal position
+        for (int i = 0; i < 2*divs; i++) {
+
+            //The algoithm works by  calculating a theta and psi polar coordiante angles and doing square patches
+            //along the face of the sphere
+            float theta = (float)i * PI / (float)divs;
+            float theta1 = (float)(i + 1) * PI / (float)divs;
+            float psi = (float)j * PI / (double)divs + PI / 2.0;
+            float psi1 = (float)(j + 1) * PI / (float)divs + PI / 2.0;
+
+            glm::vec3 v3 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi), 0.5f * glm::sin(psi)-0.5f, 0.5f * glm::sin(theta) * glm::cos(psi));
+            glm::vec3 v2 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi1), 0.5f * glm::sin(psi1)-0.5f, 0.5f * glm::sin(theta) * glm::cos(psi1));
+            glm::vec3 v1 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi), 0.5f * glm::sin(psi)-0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi));
+
+            glm::vec3 normal = glm::cross(v2-v1, v3-v1);
+            normal = glm::normalize(normal);
+
+            verts.push_back(v1);
+            verts.push_back(normal);
+            verts.push_back(v2);
+            verts.push_back(normal);
+            verts.push_back(v3);
+            verts.push_back(normal);
+
+            v3 = glm::vec3(0.5f * glm::cos(theta) * glm::cos(psi1), 0.5f * glm::sin(psi1)-0.5f, 0.5f * glm::sin(theta) * glm::cos(psi1));
+            v2 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi1), 0.5f * glm::sin(psi1)-0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi1));
+            v1 = glm::vec3(0.5f * glm::cos(theta1) * glm::cos(psi), 0.5f * glm::sin(psi)-0.5f, 0.5f * glm::sin(theta1) * glm::cos(psi));
+
+            normal = glm::cross(v2-v1, v3-v1);
+            normal = glm::normalize(normal);
+
+            verts.push_back(v1);
+            verts.push_back(normal);
+            verts.push_back(v2);
+            verts.push_back(normal);
+            verts.push_back(v3);
+            verts.push_back(normal);
+
+        }
+    }
+    capsuleVerts = verts;
+
+    verts = std::vector<glm::vec3>();
+    for (int i = 0; i < 2*divs; i++)
+    {
+        float theta0 = (float)i * PI / (float)divs;
+        float theta1 = (float)(i + 1) * PI / (float)divs;
+        glm::vec3 v1 = glm::vec3(0.505f*glm::cos(theta0), 0.5f, 0.505f*glm::sin(theta0));
+        glm::vec3 v2 = glm::vec3(0.505f*glm::cos(theta1), 0.5f, 0.505f*glm::sin(theta1));
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+
+        v2 = glm::vec3(0.505f*glm::cos(theta0), -0.5f, 0.505f*glm::sin(theta0));
+        v1 = glm::vec3(0.505f*glm::cos(theta1), -0.5f, 0.505f*glm::sin(theta1));
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+
+        theta0 = (float)i * PI*0.5f / (float)divs;
+        theta1 = (float)(i + 1) * PI*0.5f / (float)divs;
+
+        v1 = glm::vec3(0.0f, 0.5f+0.505f*glm::sin(theta0), 0.505f*glm::cos(theta0));
+        v2 = glm::vec3(0.0f, 0.5f+0.505f*glm::sin(theta1), 0.505f*glm::cos(theta1));
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+
+        v1 = glm::vec3(0.0f, -0.5f-0.505f*glm::sin(theta0), 0.505f*glm::cos(theta0));
+        v2 = glm::vec3(0.0f, -0.5f-0.505f*glm::sin(theta1), 0.505f*glm::cos(theta1));
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+
+        v1 = glm::vec3(0.505f*glm::cos(theta0), 0.5f+0.505f*glm::sin(theta0), 0.0f);
+        v2 = glm::vec3(0.505f*glm::cos(theta1), 0.5f+0.505f*glm::sin(theta1), 0.0f);
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+
+        v1 = glm::vec3(0.505f*glm::cos(theta0), -0.5f-0.505f*glm::sin(theta0), 0.0f);
+        v2 = glm::vec3(0.505f*glm::cos(theta1), -0.5f-0.505f*glm::sin(theta1), 0.0f);
+
+        verts.push_back(v1);
+        verts.push_back(v2);
+    }
+    verts.push_back(glm::vec3(-0.505f, -0.5f, 0.0f));
+    verts.push_back(glm::vec3(-0.505f, 0.5f, 0.0f));
+    verts.push_back(glm::vec3(0.505f, -0.5f, 0.0f));
+    verts.push_back(glm::vec3(0.505f, 0.5f, 0.0f));
+    verts.push_back(glm::vec3(0.0f, -0.5f,-0.505f));
+    verts.push_back(glm::vec3(0.0f, 0.5f, -0.505f));
+    verts.push_back(glm::vec3(0.0f,-0.5f, 0.505f));
+    verts.push_back(glm::vec3(0.0f,0.5f, 0.505f));
+    boundingCapsuleVerts = verts;
+
     Mesh cube(cubeVerts, GL_TRIANGLES);
     cubePBD = Mesh::extractPrimitiveBufferData(cube);
     Mesh boundingCube(boundingBoxVerts, GL_LINES);
@@ -410,7 +598,12 @@ void Mesh::initializeStaticArrays()
     conePBD = Mesh::extractPrimitiveBufferData(cone);
     Mesh coneBounds(boundingConeVerts, GL_LINES);
     coneBoundsPBD = Mesh::extractPrimitiveBufferData(coneBounds);
-    }
+
+    Mesh capsule(capsuleVerts, GL_TRIANGLES);
+    capsulePBD = Mesh::extractPrimitiveBufferData(capsule);
+    Mesh capsuleBounds(boundingCapsuleVerts, GL_LINES);
+    capsuleBoundsPBD = Mesh::extractPrimitiveBufferData(capsuleBounds);
+}
 
 
 

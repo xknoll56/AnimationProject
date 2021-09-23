@@ -14,8 +14,8 @@ private:
     glm::vec3 right;
     glm::vec3 pos;
     float speed = 5.0f;
-    float smooth = 0.1f;
-    float rotationSpeed = 0.5f;
+    float smooth = 0.35f;
+    float rotationSpeed = 0.25f;
 
 public:
     Camera();
