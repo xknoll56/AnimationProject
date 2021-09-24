@@ -113,3 +113,7 @@ const glm::vec3& Camera::getUp()
 {
     return up;
 }
+const glm::vec3& Camera::getPosition()
+{
+    return pos;
+}

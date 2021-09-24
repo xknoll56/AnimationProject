@@ -37,6 +37,7 @@ public:
     Mesh(std::vector<float> verts, GLenum type);
     Mesh(const PrimitiveBufferData& pbd);
     Mesh(const Mesh& mesh);
+    Mesh();
 
     static Mesh createCube();
     static Mesh createPlane();
@@ -51,6 +52,7 @@ public:
     static Mesh createBoundingCone();
     static Mesh createCapsule();
     static Mesh createBoundingCapsule();
+    static Mesh createLine();
     static void initializeStaticArrays();
     void draw();
     void draw(Shader& shader);
@@ -62,6 +64,11 @@ public:
 
 };
 
+static std::vector<glm::vec3> lineVerts =
+{
+    glm::vec3(0,0,0),
+    glm::vec3(1,0,0)
+};
 static std::vector<glm::vec3> capsuleVerts;
 
 static std::vector<glm::vec3> boundingCapsuleVerts;

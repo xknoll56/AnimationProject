@@ -15,8 +15,12 @@ static PrimitiveBufferData conePBD;
 static PrimitiveBufferData coneBoundsPBD;
 static PrimitiveBufferData capsulePBD;
 static PrimitiveBufferData capsuleBoundsPBD;
+static PrimitiveBufferData linePBD;
 
+Mesh::Mesh()
+{
 
+}
 //this constructor will contain the vertices packed in with the normals
 Mesh::Mesh(std::vector<glm::vec3> verts, GLenum type)
 {
@@ -169,6 +173,11 @@ Mesh Mesh::createCapsule()
 Mesh Mesh::createBoundingCapsule()
 {
     return Mesh(capsuleBoundsPBD);
+}
+
+Mesh Mesh::createLine()
+{
+    return Mesh(linePBD);
 }
 
 PrimitiveBufferData Mesh::extractPrimitiveBufferData(const Mesh& mesh)
@@ -603,6 +612,9 @@ void Mesh::initializeStaticArrays()
     capsulePBD = Mesh::extractPrimitiveBufferData(capsule);
     Mesh capsuleBounds(boundingCapsuleVerts, GL_LINES);
     capsuleBoundsPBD = Mesh::extractPrimitiveBufferData(capsuleBounds);
+
+    Mesh line(lineVerts, GL_LINES);
+    linePBD = Mesh::extractPrimitiveBufferData(line);
 }
 
 

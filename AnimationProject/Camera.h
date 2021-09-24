@@ -32,6 +32,7 @@ public:
     const glm::vec3& getFwd();
     const glm::vec3& getRight();
     const glm::vec3& getUp();
+    const glm::vec3& getPosition();
     glm::mat4 view;
 };
 
