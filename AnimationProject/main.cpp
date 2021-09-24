@@ -222,27 +222,27 @@ public:
 
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
     {
-            switch(collider->type)
-            {
-            case ColliderType::PLANE:
-                PlaneCollider* pc = dynamic_cast<PlaneCollider*>(collider);
-                float d = glm::dot((pc->point1-start), pc->normal)/glm::dot(dir, pc->normal);
-                glm::vec3 pos = start+dir*d;
-                data.length = d;
-                data.point = pos;
-                data.normal = pc->normal;
-                glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
-                glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
-                glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
-                if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
-                    return true;
-                float mag1 = glm::dot(dir1, dir2);
-                float mag2 = glm::dot(dir1, dir3);
-                float mag3 = glm::dot(dir2, dir3);
-                if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
-                    return true;
-                break;
-            }
+        switch(collider->type)
+        {
+        case ColliderType::PLANE:
+            PlaneCollider* pc = dynamic_cast<PlaneCollider*>(collider);
+            float d = glm::dot((pc->point1-start), pc->normal)/glm::dot(dir, pc->normal);
+            glm::vec3 pos = start+dir*d;
+            data.length = d;
+            data.point = pos;
+            data.normal = pc->normal;
+            glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
+            glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
+            glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
+            if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
+                return true;
+            float mag1 = glm::dot(dir1, dir2);
+            float mag2 = glm::dot(dir1, dir3);
+            float mag3 = glm::dot(dir2, dir3);
+            if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
+                return true;
+            break;
+        }
         return false;
     }
 
@@ -310,30 +310,29 @@ public:
     void spherePlaneCollision(float dt, SphereBody* sphere)
     {
 
-
-        //glm::vec3 nextPos = sphere->peekNextPosition(dt);
         if(Raycast(sphere->position, glm::vec3(0,-1,0), rcd))
         {
-                if(rcd.length<=sphere->radius)
+            if(rcd.length<=sphere->radius)
+            {
+                float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->velocity);
+                if(velNorm<sphere->elasticity)
                 {
-                    float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->velocity);
-                    if(velNorm<sphere->elasticity)
-                    {
-                        sphere->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
-                        sphere->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
-                        sphere->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->velocity/sphere->radius));
-                    }
-                    else
-                    {
-                        sphere->position = glm::vec3(sphere->position.x, 0.05f+sphere->radius, sphere->position.z);
-                        //sphere->addForce(glm::vec3(0, -2.0f*(sphere->velocity.y)/dt, 0));
-                        glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->linearMomentum)*sphere->elasticity*glm::vec3(0,1,0);
-                        glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
-                        sphere->linearMomentum = pPerp-pNorm;
-                        sphere->addTorque(glm::cross(glm::vec3(0,1,0),friction*pPerp));
-
-                    }
+                    sphere->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
+                    sphere->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
+                    sphere->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->velocity/sphere->radius));
+                    sphere->addForce(-sphere->velocity);
                 }
+                else
+                {
+                    sphere->position = glm::vec3(sphere->position.x, 0.05f+sphere->radius, sphere->position.z);
+                    //sphere->addForce(glm::vec3(0, -2.0f*(sphere->velocity.y)/dt, 0));
+                    glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->linearMomentum)*sphere->elasticity*glm::vec3(0,1,0);
+                    glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
+                    sphere->linearMomentum = pPerp-pNorm;
+                    sphere->addTorque(glm::cross(glm::vec3(0,1,0),friction*pPerp));
+
+                }
+            }
         }
     }
     void updateQuantities(float dt)
@@ -349,41 +348,6 @@ public:
         checkForCollisions(dt);
     }
 };
-
-//class RigidBody
-//{
-//private:
-//    //constants
-//    const float mass;
-//    const glm::mat3 inertialTensor;
-//    const glm::mat3 inertialTensorInverse;
-
-//    //state variables
-//    glm::vec3 position;
-//    glm::quat rotation;
-//    glm::vec3 linearMomentum;
-//    glm::vec3 angularMomentum;
-
-//    //derived quantities
-//    glm::mat3 inertiaInverse;
-//    glm::mat3 rotationMatrix;
-//    glm::vec3 velocity;
-//    glm::vec3 angularVelocity;
-
-//    //known quantities
-//    glm::vec3 force;
-//    glm::vec3 torque;
-//public:
-//    void computeQuantities()
-//    {
-//        velocity = linearMomentum/mass;
-//        inertiaInverse = rotationMatrix*inertialTensorInverse*glm::transpose(rotationMatrix);
-//        angularVelocity = inertiaInverse*angularMomentum;
-//        rotationMatrix = glm::toMat3(glm::normalize(rotation));
-//    }
-
-
-//};
 
 
 int main(int argc, char *argv[])
@@ -478,31 +442,42 @@ int main(int argc, char *argv[])
 
     Entity plane = createGridedPlaneEntity(10);
 
-    //    Entity unitDirs = createUnitDirs();
-    //    Entity cube = createBoundedCubeEntity();
-    //    Entity cone = createBoundedConeEntity();
-    //    Entity sphere = createBoundedSphereEntity();
-    //    Entity cylinder = createBoundedCylinderEntity();
-    //    Entity capsule = createBoundedCapsuleEntity();
-    //    cube.setPosition(glm::vec3(3,0,0));
-    //    capsule.setPosition(glm::vec3(-3, 0, 0));
-    //    sphere.setPosition(glm::vec3(0,0,3));
-    //    cylinder.setPosition(glm::vec3(0,0,-3));
-    //    unitDirs.addChild(cube);
-    //    unitDirs.addChild(capsule);
-    //    unitDirs.addChild(sphere);
-    //    unitDirs.addChild(cylinder);
+        Entity unitDirs = createUnitDirs();
+        Entity cube = createBoundedCubeEntity();
+        Entity cone = createBoundedConeEntity();
+        Entity sphere = createBoundedSphereEntity();
+        Entity cylinder = createBoundedCylinderEntity();
+        Entity capsule = createBoundedCapsuleEntity();
+        cube.setPosition(glm::vec3(3,0,0));
+        capsule.setPosition(glm::vec3(-3, 0, 0));
+        sphere.setPosition(glm::vec3(0,0,3));
+        cylinder.setPosition(glm::vec3(0,0,-3));
+        unitDirs.addChild(cube);
+        unitDirs.addChild(capsule);
+        unitDirs.addChild(sphere);
+        unitDirs.addChild(cylinder);
 
-    //    unitDirs.setPosition(glm::vec3(0,3, 0));
+        unitDirs.setPosition(glm::vec3(0,3, 0));
 
-    Entity sphere = createBoundedSphereEntity();
+    //Entity sphere = createBoundedSphereEntity();
     float mass = 1.0f;
     float radius = 1.0f;
     float inertia = (2.0f/5.0f)*mass*radius*radius;
     SphereBody rb(mass, 0.5f);
+    std::vector<SphereBody> rbs;
     std::vector<UniformRigidBody*> bodies = {&rb};
+    for(int i=0; i<15; i++)
+    {
+        rbs.push_back(SphereBody(mass, 0.5f));
+        rbs[rbs.size()-1].position = glm::vec3(7-i, 5, -3);
+        rbs[rbs.size()-1].linearMomentum  = glm::vec3(0, 0.0f, 0);;
+    }
+    for(auto it = rbs.begin();it!=rbs.end();it++)
+    {
+        bodies.push_back(&(*it));
+    }
     PhysicsWorld world(bodies, glm::vec3(0, -1.0f, 0));
-    world.bodies.push_back(&rb);
+
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
     world.colliders.push_back(&p1);
@@ -560,35 +535,51 @@ int main(int argc, char *argv[])
             //            cam.rotateYaw(-(float)dt*deltaPos.x());
             //            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
-        if(window.getKey(Qt::Key_Right))
+//        if(window.getKey(Qt::Key_Right))
+//        {
+//            rb.addForce(5.0f*cam.getRight());
+//        }
+//        if(window.getKey(Qt::Key_Left))
+//        {
+//            rb.addForce(-5.0f*cam.getRight());
+//        }
+//        if(window.getKey(Qt::Key_Up))
+//        {
+//            rb.addForce(glm::cross(glm::vec3(0,5,0), cam.getRight()));
+//        }
+//        if(window.getKey(Qt::Key_Down))
+//        {
+//            rb.addForce(glm::cross(glm::vec3(0,-5,0), cam.getRight()));
+//        }
+//        if(window.getGetDown(Qt::Key_Space))
+//        {
+//            rb.addForce(glm::vec3(0,800,0));
+//        }
+        if(window.getGetDown(Qt::Key_R))
         {
-            rb.addForce(cam.getRight());
-        }
-        if(window.getKey(Qt::Key_Left))
-        {
-            rb.addForce(-cam.getRight());
-        }
-        if(window.getKey(Qt::Key_Up))
-        {
-            rb.addForce(glm::cross(glm::vec3(0,1,0), cam.getRight()));
-        }
-        if(window.getKey(Qt::Key_Down))
-        {
-            rb.addForce(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
-        }
-        if(window.getGetDown(Qt::Key_Space))
-        {
-            rb.addForce(glm::vec3(0,800,0));
+            rb.setVelocity(glm::vec3(0,0,0));
+            rb.position = glm::vec3(0,5,0);
         }
         cam.smoothUpdateView();
         //cam.updateView();
         modelShader->setMat4("view", cam.view);
         gridShader->setMat4("view", cam.view);
 
+        //unitDirs.rotate(glm::quat(glm::vec3(0,dt,0)));
+        //unitDirs.draw();
+
         world.stepWorld(dt);
+
         sphere.setPosition(rb.position);
         sphere.setRotation(rb.rotation);
         sphere.draw();
+
+        for(auto& rb : rbs)
+        {
+            sphere.setPosition(rb.position);
+            sphere.setRotation(rb.rotation);
+            sphere.draw();
+        }
 
 
         plane.draw();
