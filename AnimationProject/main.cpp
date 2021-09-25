@@ -104,7 +104,7 @@ struct UniformRigidBody
     const float inertia;
     float massInv;
     float inertiaInv;
-    float elasticity = 0.4f;
+    float elasticity = 0.25f;
 
     //state variables
     glm::vec3 position;
@@ -121,8 +121,8 @@ struct UniformRigidBody
     glm::vec3 torque;
 
     //applied force/torque will be applie for a single step
-    glm::vec3 appliedForce;
-    glm::vec3 appliedTorque;
+    std::vector<glm::vec3> appliedForces;
+    std::vector<glm::vec3> appliedTorques;
     bool applyForce = false;
     bool applyTorque = false;
 
@@ -140,8 +140,6 @@ struct UniformRigidBody
         angularVelocity = glm::vec3();
         force = glm::vec3();
         torque = glm::vec3();
-        appliedForce = glm::vec3();
-        appliedTorque = glm::vec3();
         type = ColliderType::NONE;
     }
 
@@ -152,13 +150,13 @@ struct UniformRigidBody
 
     void addForce(const glm::vec3& force)
     {
-        appliedForce = force;
+        appliedForces.push_back(force);
         applyForce = true;
     }
 
     void addTorque(const glm::vec3& torque)
     {
-        appliedTorque = torque;
+        appliedTorques.push_back(torque);
         applyTorque = true;
     }
 
@@ -182,13 +180,17 @@ struct UniformRigidBody
 
         if(applyForce)
         {
-            linearMomentum+=dt*appliedForce;
+            for(glm::vec3 force: appliedForces)
+                linearMomentum+=dt*force;
             applyForce = false;
+            appliedForces.clear();
         }
         if(applyTorque)
         {
-            angularMomentum+=dt*appliedTorque;
+            for(glm::vec3 torque: appliedTorques)
+                angularMomentum+=dt*torque;
             applyTorque = false;
+            appliedTorques.clear();
         }
         angularMomentum += torque*dt;
         linearMomentum += force*dt;
@@ -219,6 +221,8 @@ public:
     std::vector<Collider*> colliders;
     RayCastData rcd;
     float friction = 25.0f;
+    float restitutionSlope = 0.085f;
+    float restitutionIntersect = 0.4f;
 
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
     {
@@ -283,6 +287,7 @@ public:
         {
             body->force += body->mass*gravity;
         }
+
     }
 
     PhysicsWorld(std::vector<UniformRigidBody*> bodies)
@@ -293,6 +298,7 @@ public:
         {
             body->force += body->mass*gravity;
         }
+
     }
     void checkForCollisions(float dt)
     {
@@ -303,7 +309,38 @@ public:
             case ColliderType::SPHERE:
                 SphereBody* sphere = dynamic_cast<SphereBody*>(body);
                 spherePlaneCollision(dt, sphere);
+                for(auto& other: bodies)
+                {
+                    if(other!=body)
+                    {
+                        switch(other->type)
+                        {
+                        case ColliderType::SPHERE:
+                            SphereBody* otherSphere = dynamic_cast<SphereBody*>(other);
+                            sphereSphereCollision(dt, sphere, otherSphere);
+                            break;
+                        }
+                    }
+                }
                 break;
+            }
+        }
+    }
+
+    void sphereSphereCollision(float dt, SphereBody* sphere, SphereBody* other)
+    {
+        glm::vec3 dp = other->position-sphere->position;
+        float lSquared = glm::length2(dp);
+        float minDist = other->radius+sphere->radius;
+        if(lSquared<=minDist*minDist)
+        {
+            glm::vec3 relativeMomentum = sphere->linearMomentum-other->linearMomentum;
+            dp = glm::normalize(dp);
+            float mag = glm::dot(dp, relativeMomentum);
+            if(mag>0)
+            {
+                glm::vec3 relativeMomentumNorm = mag*dp;
+                other->addForce((1.0f/dt)*relativeMomentumNorm);
             }
         }
     }
@@ -315,7 +352,8 @@ public:
             if(rcd.length<=sphere->radius)
             {
                 float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->velocity);
-                if(velNorm<sphere->elasticity)
+                float sMax = restitutionSlope*-gravity.y+restitutionIntersect;
+                if(velNorm<sMax)
                 {
                     sphere->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
                     sphere->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
@@ -442,28 +480,29 @@ int main(int argc, char *argv[])
 
     Entity plane = createGridedPlaneEntity(10);
 
-        Entity unitDirs = createUnitDirs();
-        Entity cube = createBoundedCubeEntity();
-        Entity cone = createBoundedConeEntity();
-        Entity sphere = createBoundedSphereEntity();
-        Entity cylinder = createBoundedCylinderEntity();
-        Entity capsule = createBoundedCapsuleEntity();
-        cube.setPosition(glm::vec3(3,0,0));
-        capsule.setPosition(glm::vec3(-3, 0, 0));
-        sphere.setPosition(glm::vec3(0,0,3));
-        cylinder.setPosition(glm::vec3(0,0,-3));
-        unitDirs.addChild(cube);
-        unitDirs.addChild(capsule);
-        unitDirs.addChild(sphere);
-        unitDirs.addChild(cylinder);
+    Entity unitDirs = createUnitDirs();
+    Entity cube = createBoundedCubeEntity();
+    Entity cone = createBoundedConeEntity();
+    Entity sphere = createBoundedSphereEntity();
+    Entity cylinder = createBoundedCylinderEntity();
+    Entity capsule = createBoundedCapsuleEntity();
+    cube.setPosition(glm::vec3(3,0,0));
+    capsule.setPosition(glm::vec3(-3, 0, 0));
+    sphere.setPosition(glm::vec3(0,0,3));
+    cylinder.setPosition(glm::vec3(0,0,-3));
+    unitDirs.addChild(cube);
+    unitDirs.addChild(capsule);
+    unitDirs.addChild(sphere);
+    unitDirs.addChild(cylinder);
 
-        unitDirs.setPosition(glm::vec3(0,3, 0));
+    unitDirs.setPosition(glm::vec3(0,3, 0));
 
     //Entity sphere = createBoundedSphereEntity();
     float mass = 1.0f;
     float radius = 1.0f;
     float inertia = (2.0f/5.0f)*mass*radius*radius;
     SphereBody rb(mass, 0.5f);
+    // SphereBody otherRb(mass, 0.5f);
     std::vector<SphereBody> rbs;
     std::vector<UniformRigidBody*> bodies = {&rb};
     for(int i=0; i<15; i++)
@@ -476,7 +515,7 @@ int main(int argc, char *argv[])
     {
         bodies.push_back(&(*it));
     }
-    PhysicsWorld world(bodies, glm::vec3(0, -1.0f, 0));
+    PhysicsWorld world(bodies, glm::vec3(0, -1.5f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
@@ -485,7 +524,6 @@ int main(int argc, char *argv[])
 
 
     rb.position = glm::vec3(0, 5, 0);
-    rb.linearMomentum = glm::vec3(0, 0.0f, 0);
 
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
@@ -535,26 +573,26 @@ int main(int argc, char *argv[])
             //            cam.rotateYaw(-(float)dt*deltaPos.x());
             //            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
-//        if(window.getKey(Qt::Key_Right))
-//        {
-//            rb.addForce(5.0f*cam.getRight());
-//        }
-//        if(window.getKey(Qt::Key_Left))
-//        {
-//            rb.addForce(-5.0f*cam.getRight());
-//        }
-//        if(window.getKey(Qt::Key_Up))
-//        {
-//            rb.addForce(glm::cross(glm::vec3(0,5,0), cam.getRight()));
-//        }
-//        if(window.getKey(Qt::Key_Down))
-//        {
-//            rb.addForce(glm::cross(glm::vec3(0,-5,0), cam.getRight()));
-//        }
-//        if(window.getGetDown(Qt::Key_Space))
-//        {
-//            rb.addForce(glm::vec3(0,800,0));
-//        }
+        if(window.getKey(Qt::Key_Right))
+        {
+            rb.addForce(5.0f*cam.getRight());
+        }
+        if(window.getKey(Qt::Key_Left))
+        {
+            rb.addForce(-5.0f*cam.getRight());
+        }
+        if(window.getKey(Qt::Key_Up))
+        {
+            rb.addForce(glm::cross(glm::vec3(0,5,0), cam.getRight()));
+        }
+        if(window.getKey(Qt::Key_Down))
+        {
+            rb.addForce(glm::cross(glm::vec3(0,-5,0), cam.getRight()));
+        }
+        if(window.getGetDown(Qt::Key_Space))
+        {
+            rb.addForce(glm::vec3(0,800,0));
+        }
         if(window.getGetDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
@@ -570,10 +608,13 @@ int main(int argc, char *argv[])
 
         world.stepWorld(dt);
 
+        sphere.meshes[1].setColor(glm::vec3(1,0,0));
         sphere.setPosition(rb.position);
         sphere.setRotation(rb.rotation);
         sphere.draw();
 
+
+        sphere.meshes[1].setColor(glm::vec3(0,1,0));
         for(auto& rb : rbs)
         {
             sphere.setPosition(rb.position);
