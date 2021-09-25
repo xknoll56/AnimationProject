@@ -62,31 +62,7 @@ static void drawLine(glm::vec3 from, glm::vec3 to)
     lineMesh.draw(*gridShader);
 }
 
-struct Collider
-{
-    ColliderType type;
 
-    virtual ~Collider()
-    {
-
-    }
-};
-
-struct PlaneCollider: public Collider
-{
-    glm::vec3 normal;
-    glm::vec3 point1, point2, point3;
-
-    PlaneCollider(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3)
-    {
-
-        this->point1 = point1;
-        this->point2 = point2;
-        this->point3 = point3;
-        this->normal = glm::normalize(glm::cross(point2-point1, point3-point1));
-        type = ColliderType::PLANE;
-    }
-};
 
 struct RayCastData
 {
@@ -202,21 +178,59 @@ struct UniformRigidBody
     }
 };
 
-struct SphereBody: public UniformRigidBody
+struct Collider
 {
-    const float radius;
-    SphereBody(float _mass, float _radius): UniformRigidBody(_mass, (2.0f/5.0f)*_mass*_radius*_radius), radius(_radius)
+    ColliderType type;
+    UniformRigidBody* rb = nullptr;
+
+    virtual ~Collider()
     {
-        type = ColliderType::SPHERE;
+
     }
 };
+
+struct PlaneCollider: public Collider
+{
+    glm::vec3 normal;
+    glm::vec3 point1, point2, point3;
+
+    PlaneCollider(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3)
+    {
+
+        this->point1 = point1;
+        this->point2 = point2;
+        this->point3 = point3;
+        this->normal = glm::normalize(glm::cross(point2-point1, point3-point1));
+        type = ColliderType::PLANE;
+    }
+};
+
+
+struct SphereCollider: public Collider
+{
+    float radius;
+
+    SphereCollider(const float radius)
+    {
+        this->radius = radius;
+        type = ColliderType::SPHERE;
+    }
+
+    SphereCollider(const float radius, UniformRigidBody* const rb)
+    {
+        this->radius = radius;
+        type = ColliderType::SPHERE;
+        this->rb = rb;
+    }
+};
+
 
 struct PhysicsWorld
 {
 private:
     //PlaneCollider standardPlane;
 public:
-    std::vector<UniformRigidBody*> bodies;
+    //std::vector<UniformRigidBody*> bodies;
     glm::vec3 gravity;
     std::vector<Collider*> colliders;
     RayCastData rcd;
@@ -279,44 +293,54 @@ public:
         return false;
     }
 
-    PhysicsWorld(std::vector<UniformRigidBody*> bodies, glm::vec3 gravity)
+    PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity)
     {
         this->gravity = gravity;
-        this->bodies = bodies;
-        for(auto& body: bodies)
+        this->colliders.reserve(colliders->size());
+        for(auto& collider: *colliders)
         {
-            body->force += body->mass*gravity;
+            this->colliders.push_back(collider);
+        }
+        for(auto& collider: *colliders)
+        {
+            if(collider->rb!=nullptr)
+                collider->rb->force += collider->rb->mass*gravity;
         }
 
     }
 
-    PhysicsWorld(std::vector<UniformRigidBody*> bodies)
+    PhysicsWorld(std::vector<Collider*>* colliders)
     {
-        this->bodies = bodies;
         gravity = glm::vec3(0, -9.81f, 0);
-        for(auto& body: bodies)
+        this->colliders.reserve(colliders->size());
+        for(auto& collider: *colliders)
         {
-            body->force += body->mass*gravity;
+            this->colliders.push_back(collider);
+        }
+        for(auto& collider: *colliders)
+        {
+            if(collider->rb!=nullptr)
+                collider->rb->force += collider->rb->mass*gravity;
         }
 
     }
     void checkForCollisions(float dt)
     {
-        for(auto& body: bodies)
+        for(auto& collider: colliders)
         {
-            switch(body->type)
+            switch(collider->type)
             {
             case ColliderType::SPHERE:
-                SphereBody* sphere = dynamic_cast<SphereBody*>(body);
+                SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
                 spherePlaneCollision(dt, sphere);
-                for(auto& other: bodies)
+                for(auto& other: colliders)
                 {
-                    if(other!=body)
+                    if(other!=collider)
                     {
                         switch(other->type)
                         {
                         case ColliderType::SPHERE:
-                            SphereBody* otherSphere = dynamic_cast<SphereBody*>(other);
+                            SphereCollider* otherSphere = dynamic_cast<SphereCollider*>(other);
                             sphereSphereCollision(dt, sphere, otherSphere);
                             break;
                         }
@@ -327,47 +351,47 @@ public:
         }
     }
 
-    void sphereSphereCollision(float dt, SphereBody* sphere, SphereBody* other)
+    void sphereSphereCollision(float dt, SphereCollider* sphere, SphereCollider* other)
     {
-        glm::vec3 dp = other->position-sphere->position;
+        glm::vec3 dp = other->rb->position-sphere->rb->position;
         float lSquared = glm::length2(dp);
         float minDist = other->radius+sphere->radius;
         if(lSquared<=minDist*minDist)
         {
-            glm::vec3 relativeMomentum = sphere->linearMomentum-other->linearMomentum;
+            glm::vec3 relativeMomentum = sphere->rb->linearMomentum-other->rb->linearMomentum;
             dp = glm::normalize(dp);
             float mag = glm::dot(dp, relativeMomentum);
             if(mag>0)
             {
                 glm::vec3 relativeMomentumNorm = mag*dp;
-                other->addForce((1.0f/dt)*relativeMomentumNorm);
+                other->rb->addForce((1.0f/dt)*relativeMomentumNorm);
             }
         }
     }
-    void spherePlaneCollision(float dt, SphereBody* sphere)
+    void spherePlaneCollision(float dt, SphereCollider* sphere)
     {
 
-        if(Raycast(sphere->position, glm::vec3(0,-1,0), rcd))
+        if(Raycast(sphere->rb->position, glm::vec3(0,-1,0), rcd))
         {
             if(rcd.length<=sphere->radius)
             {
-                float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->velocity);
+                float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->rb->velocity);
                 float sMax = restitutionSlope*-gravity.y+restitutionIntersect;
                 if(velNorm<sMax)
                 {
-                    sphere->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
-                    sphere->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
-                    sphere->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->velocity/sphere->radius));
-                    sphere->addForce(-sphere->velocity);
+                    sphere->rb->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
+                    sphere->rb->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
+                    sphere->rb->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->rb->velocity/sphere->radius));
+                    sphere->rb->addForce(-sphere->rb->velocity);
                 }
                 else
                 {
-                    sphere->position = glm::vec3(sphere->position.x, 0.05f+sphere->radius, sphere->position.z);
+                    sphere->rb->position = glm::vec3(sphere->rb->position.x, 0.05f+sphere->radius, sphere->rb->position.z);
                     //sphere->addForce(glm::vec3(0, -2.0f*(sphere->velocity.y)/dt, 0));
-                    glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->linearMomentum)*sphere->elasticity*glm::vec3(0,1,0);
-                    glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->linearMomentum), glm::vec3(0,1,0));
-                    sphere->linearMomentum = pPerp-pNorm;
-                    sphere->addTorque(glm::cross(glm::vec3(0,1,0),friction*pPerp));
+                    glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->rb->linearMomentum)*sphere->rb->elasticity*glm::vec3(0,1,0);
+                    glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
+                    sphere->rb->linearMomentum = pPerp-pNorm;
+                    sphere->rb->addTorque(glm::cross(glm::vec3(0,1,0),friction*pPerp));
 
                 }
             }
@@ -375,9 +399,10 @@ public:
     }
     void updateQuantities(float dt)
     {
-        for(const auto& body: bodies)
+        for(const auto& collider: colliders)
         {
-            body->stepQuantities(dt);
+            if(collider->rb!=nullptr)
+                collider->rb->stepQuantities(dt);
         }
     }
     void stepWorld(float dt)
@@ -501,21 +526,39 @@ int main(int argc, char *argv[])
     float mass = 1.0f;
     float radius = 1.0f;
     float inertia = (2.0f/5.0f)*mass*radius*radius;
-    SphereBody rb(mass, 0.5f);
+    UniformRigidBody rb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
-    std::vector<SphereBody> rbs;
-    std::vector<UniformRigidBody*> bodies = {&rb};
+    SphereCollider collider(0.5f);
+    collider.rb = &rb;
+    std::vector<SphereCollider> scs;
+    std::vector<UniformRigidBody> rbs;
+    std::vector<Collider*> colliders;
+    scs.reserve(20);
+    rbs.reserve(20);
+    colliders.reserve(20);
+    colliders.push_back(&collider);
     for(int i=0; i<15; i++)
     {
-        rbs.push_back(SphereBody(mass, 0.5f));
+        rbs.push_back(UniformRigidBody(mass, inertia));
         rbs[rbs.size()-1].position = glm::vec3(7-i, 5, -3);
-        rbs[rbs.size()-1].linearMomentum  = glm::vec3(0, 0.0f, 0);;
+        rbs[rbs.size()-1].linearMomentum  = glm::vec3(0, 0.0f, 0);
+
+        scs.push_back(SphereCollider(0.5f));
+        colliders.push_back(&scs[scs.size()-1]);
+        colliders[colliders.size()-1]->rb = &rbs[rbs.size()-1];
+
     }
-    for(auto it = rbs.begin();it!=rbs.end();it++)
-    {
-        bodies.push_back(&(*it));
-    }
-    PhysicsWorld world(bodies, glm::vec3(0, -1.5f, 0));
+//    for(auto it = rbs.begin();it!=rbs.end();it++)
+//    {
+//        SphereCollider sc(0.5f);
+//        sc.rb = &(*it);
+//        scs.push_back(sc);
+//    }
+//    for(auto it = scs.begin();it!=scs.end();it++)
+//    {
+//        colliders.push_back(&(*it));
+//    }
+    PhysicsWorld world(&colliders, glm::vec3(0, -1.5f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));

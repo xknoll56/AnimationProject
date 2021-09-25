@@ -14,6 +14,7 @@ INCLUDEPATH += \
 
 SOURCES += \
     Entity.cpp \
+    MainDump.cpp \
     MainWindow.cpp \
     Camera.cpp \
     Mesh.cpp \
