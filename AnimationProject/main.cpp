@@ -85,6 +85,7 @@ struct UniformRigidBody
     //state variables
     glm::vec3 position;
     glm::quat rotation;
+    glm::mat3 rotationMatrix;
     glm::vec3 linearMomentum;
     glm::vec3 angularMomentum;
 
@@ -146,6 +147,21 @@ struct UniformRigidBody
         angularMomentum = inertia*angularVelocity;
     }
 
+    glm::vec3 getLocalXAxis()
+    {
+        return glm::vec3(rotationMatrix[0]);
+    }
+
+    glm::vec3 getLocalYAxis()
+    {
+        return glm::vec3(rotationMatrix[1]);
+    }
+
+    glm::vec3 getLocalZAxis()
+    {
+        return glm::vec3(rotationMatrix[2]);
+    }
+
     glm::vec3 peekNextPosition(float dt)
     {
         glm::vec3 tempMomentum = linearMomentum+force*dt;
@@ -174,6 +190,7 @@ struct UniformRigidBody
         velocity = massInv*linearMomentum;
         rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;
         rotation = glm::normalize(rotation);
+        rotationMatrix = glm::toMat3(rotation);
         position+=dt*velocity;
     }
 };
@@ -182,6 +199,7 @@ struct Collider
 {
     ColliderType type;
     UniformRigidBody* rb = nullptr;
+    bool collisionDetected = false;
 
     virtual ~Collider()
     {
@@ -224,6 +242,29 @@ struct SphereCollider: public Collider
     }
 };
 
+struct CubeCollider: public Collider
+{
+    //The sizes from the origin of the cube (halfs)
+    float xSize, ySize, zSize;
+
+    CubeCollider(const glm::vec3& sizes)
+    {
+        xSize = sizes.x;
+        ySize = sizes.y;
+        zSize = sizes.z;
+        type = ColliderType::CUBE;
+    }
+
+    CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb)
+    {
+        xSize = sizes.x;
+        ySize = sizes.y;
+        zSize = sizes.z;
+        this->rb = rb;
+        type = ColliderType::CUBE;
+    }
+};
+
 
 struct PhysicsWorld
 {
@@ -234,7 +275,7 @@ public:
     glm::vec3 gravity;
     std::vector<Collider*> colliders;
     RayCastData rcd;
-    float friction = 25.0f;
+    float friction = 0.4f;
     float restitutionSlope = 0.085f;
     float restitutionIntersect = 0.4f;
 
@@ -249,16 +290,19 @@ public:
             data.length = d;
             data.point = pos;
             data.normal = pc->normal;
-            glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
-            glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
-            glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
-            if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
-                return true;
-            float mag1 = glm::dot(dir1, dir2);
-            float mag2 = glm::dot(dir1, dir3);
-            float mag3 = glm::dot(dir2, dir3);
-            if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
-                return true;
+            if(glm::dot(dir, pos-start)>0)
+            {
+                glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
+                glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
+                glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
+                if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
+                    return true;
+                float mag1 = glm::dot(dir1, dir2);
+                float mag2 = glm::dot(dir1, dir3);
+                float mag3 = glm::dot(dir2, dir3);
+                if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
+                    return true;
+            }
             break;
         }
         return false;
@@ -277,16 +321,19 @@ public:
                 data.length = d;
                 data.point = pos;
                 data.normal = pc->normal;
-                glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
-                glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
-                glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
-                if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
-                    return true;
-                float mag1 = glm::dot(dir1, dir2);
-                float mag2 = glm::dot(dir1, dir3);
-                float mag3 = glm::dot(dir2, dir3);
-                if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
-                    return true;
+                if(glm::dot(dir, pos-start)>0)
+                {
+                    glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
+                    glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
+                    glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
+                    if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
+                        return true;
+                    float mag1 = glm::dot(dir1, dir2);
+                    float mag2 = glm::dot(dir1, dir3);
+                    float mag3 = glm::dot(dir2, dir3);
+                    if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
+                        return true;
+                }
                 break;
             }
         }
@@ -331,6 +378,7 @@ public:
             switch(collider->type)
             {
             case ColliderType::SPHERE:
+            {
                 SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
                 spherePlaneCollision(dt, sphere);
                 for(auto& other: colliders)
@@ -341,31 +389,177 @@ public:
                         {
                         case ColliderType::SPHERE:
                             SphereCollider* otherSphere = dynamic_cast<SphereCollider*>(other);
-                            sphereSphereCollision(dt, sphere, otherSphere);
+                            if(detectSphereSphereCollision(sphere, otherSphere))
+                                sphereSphereCollisionResponse(dt, sphere, otherSphere);
                             break;
                         }
                     }
                 }
                 break;
             }
+            case ColliderType::CUBE:
+            {
+                CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+                for(auto& other: colliders)
+                {
+                    if(other!=collider)
+                    {
+                        switch(other->type)
+                        {
+                        case ColliderType::CUBE:
+                            CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
+                            if(detectCubeCubeCollision(dt, cube, otherCube))
+                            {
+                                //respond
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+            }
         }
     }
 
-    void sphereSphereCollision(float dt, SphereCollider* sphere, SphereCollider* other)
+
+
+    bool detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB)
+    {
+        glm::vec3 aX = glm::normalize(cubeA->rb->getLocalXAxis());
+        glm::vec3 aY = glm::normalize(cubeA->rb->getLocalYAxis());
+        glm::vec3 aZ = glm::normalize(cubeA->rb->getLocalZAxis());
+
+        glm::vec3 bX = glm::normalize(cubeB->rb->getLocalXAxis());
+        glm::vec3 bY = glm::normalize(cubeB->rb->getLocalYAxis());
+        glm::vec3 bZ = glm::normalize(cubeB->rb->getLocalZAxis());
+
+        glm::vec3 T = cubeB->rb->position - cubeA->rb->position;
+
+        float rxx = glm::dot(aX, bX);
+        float rxy = glm::dot(aX, bY);
+        float rxz = glm::dot(aX, bZ);
+
+        float ryx = glm::dot(aY, bX);
+        float ryy = glm::dot(aY, bY);
+        float ryz = glm::dot(aY, bZ);
+
+        float rzx = glm::dot(aZ, bX);
+        float rzy = glm::dot(aZ, bY);
+        float rzz = glm::dot(aZ, bZ);
+
+        cubeA->collisionDetected = false;
+        cubeB->collisionDetected = false;
+        //check for collisions parallel to AX
+        if(glm::abs(glm::dot(T, aX)) > cubeA->xSize + glm::abs(cubeB->xSize*rxx) + glm::abs(cubeB->ySize*rxy) + glm::abs(cubeB->zSize*rxz))
+        {
+            return false;
+        }
+
+        //check for collisions parallel to AY
+        if(glm::abs(glm::dot(T, aY)) > cubeA->ySize + glm::abs(cubeB->xSize*ryx) + glm::abs(cubeB->ySize*ryy) + glm::abs(cubeB->zSize*ryz))
+        {
+            return false;
+        }
+
+        //check for collisions parallel to AZ
+        if(glm::abs(glm::dot(T, aZ)) > cubeA->zSize + glm::abs(cubeB->xSize*rzx) + glm::abs(cubeB->ySize*rzy) + glm::abs(cubeB->zSize*rzz))
+        {
+            return false;
+        }
+
+        //check for collisions parallel to BX
+        if(glm::abs(glm::dot(T, bX)) > glm::abs(cubeA->xSize*rxx) + glm::abs(cubeA->ySize*ryx) + glm::abs(cubeA->zSize*rzx) + cubeB->xSize)
+        {
+            return false;
+        }
+
+        //check for collisions parallel to BY
+        if(glm::abs(glm::dot(T, bY)) > glm::abs(cubeA->xSize*rxy) + glm::abs(cubeA->ySize*ryy) + glm::abs(cubeA->zSize*rzy) + cubeB->ySize)
+        {
+            return false;
+        }
+
+        //check for collisions parallel to BZ
+        if(glm::abs(glm::dot(T, bZ)) > glm::abs(cubeA->xSize*rxz) + glm::abs(cubeA->ySize*ryz) + glm::abs(cubeA->zSize*rzz) + cubeB->zSize)
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aZ)*ryx - glm::dot(T, aY)*rzx) > glm::abs(cubeA->ySize*rzx)+glm::abs(cubeA->zSize*ryx)+glm::abs(cubeB->ySize*rxz)+glm::abs(cubeB->zSize*rxy))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aZ)*ryy - glm::dot(T, aY)*rzy) > glm::abs(cubeA->ySize*rzy)+glm::abs(cubeA->zSize*ryy)+glm::abs(cubeB->xSize*rxz)+glm::abs(cubeB->zSize*rxx))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aZ)*ryz - glm::dot(T, aY)*rzz) > glm::abs(cubeA->ySize*rzz)+glm::abs(cubeA->zSize*ryz)+glm::abs(cubeB->xSize*rxy)+glm::abs(cubeB->ySize*rxx))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aX)*rzx - glm::dot(T, aZ)*rxx) > glm::abs(cubeA->xSize*rzx)+glm::abs(cubeA->zSize*rxx)+glm::abs(cubeB->ySize*ryz)+glm::abs(cubeB->zSize*ryy))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aX)*rzy - glm::dot(T, aZ)*rxy) > glm::abs(cubeA->xSize*rzy)+glm::abs(cubeA->zSize*rxy)+glm::abs(cubeB->xSize*ryz)+glm::abs(cubeB->zSize*ryx))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aX)*rzz - glm::dot(T, aZ)*rxz) > glm::abs(cubeA->xSize*rzz)+glm::abs(cubeA->zSize*rxz)+glm::abs(cubeB->xSize*ryy)+glm::abs(cubeB->ySize*ryx))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aY)*rxx - glm::dot(T, aX)*ryx) > glm::abs(cubeA->xSize*ryx)+glm::abs(cubeA->ySize*rxx)+glm::abs(cubeB->ySize*rzz)+glm::abs(cubeB->zSize*rzy))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aY)*rxy - glm::dot(T, aX)*ryy) > glm::abs(cubeA->xSize*ryy)+glm::abs(cubeA->ySize*rxy)+glm::abs(cubeB->xSize*rzz)+glm::abs(cubeB->zSize*rzx))
+        {
+            return false;
+        }
+
+        if(glm::abs(glm::dot(T, aY)*rxz - glm::dot(T, aX)*ryz) > glm::abs(cubeA->xSize*ryz)+glm::abs(cubeA->ySize*rxz)+glm::abs(cubeB->xSize*rzy)+glm::abs(cubeB->ySize*rzx))
+        {
+            return false;
+        }
+
+        cubeA->collisionDetected = true;
+        cubeB->collisionDetected = true;
+        return true;
+
+
+    }
+
+    bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other)
     {
         glm::vec3 dp = other->rb->position-sphere->rb->position;
         float lSquared = glm::length2(dp);
         float minDist = other->radius+sphere->radius;
-        if(lSquared<=minDist*minDist)
+        bool result = lSquared<=minDist*minDist;
+        sphere->collisionDetected = result;
+        other->collisionDetected = result;
+        return result;
+    }
+
+    void sphereSphereCollisionResponse(float dt, SphereCollider* sphere, SphereCollider* other)
+    {
+
+        glm::vec3 dp = other->rb->position-sphere->rb->position;
+        glm::vec3 relativeMomentum = sphere->rb->linearMomentum-other->rb->linearMomentum;
+        dp = glm::normalize(dp);
+        float mag = glm::dot(dp, relativeMomentum);
+        if(mag>0)
         {
-            glm::vec3 relativeMomentum = sphere->rb->linearMomentum-other->rb->linearMomentum;
-            dp = glm::normalize(dp);
-            float mag = glm::dot(dp, relativeMomentum);
-            if(mag>0)
-            {
-                glm::vec3 relativeMomentumNorm = mag*dp;
-                other->rb->addForce((1.0f/dt)*relativeMomentumNorm);
-            }
+            glm::vec3 relativeMomentumNorm = mag*dp;
+            other->rb->addForce((1.0f/dt)*relativeMomentumNorm);
         }
     }
     void spherePlaneCollision(float dt, SphereCollider* sphere)
@@ -382,7 +576,7 @@ public:
                     sphere->rb->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
                     sphere->rb->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
                     sphere->rb->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->rb->velocity/sphere->radius));
-                    sphere->rb->addForce(-sphere->rb->velocity);
+                    sphere->rb->addForce(-friction*sphere->rb->velocity);
                 }
                 else
                 {
@@ -391,7 +585,7 @@ public:
                     glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->rb->linearMomentum)*sphere->rb->elasticity*glm::vec3(0,1,0);
                     glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
                     sphere->rb->linearMomentum = pPerp-pNorm;
-                    sphere->rb->addTorque(glm::cross(glm::vec3(0,1,0),friction*pPerp));
+                    sphere->rb->addTorque(glm::cross(glm::vec3(0,1,0),friction/dt*pPerp));
 
                 }
             }
@@ -511,54 +705,20 @@ int main(int argc, char *argv[])
     Entity sphere = createBoundedSphereEntity();
     Entity cylinder = createBoundedCylinderEntity();
     Entity capsule = createBoundedCapsuleEntity();
-    cube.setPosition(glm::vec3(3,0,0));
-    capsule.setPosition(glm::vec3(-3, 0, 0));
-    sphere.setPosition(glm::vec3(0,0,3));
-    cylinder.setPosition(glm::vec3(0,0,-3));
-    unitDirs.addChild(cube);
-    unitDirs.addChild(capsule);
-    unitDirs.addChild(sphere);
-    unitDirs.addChild(cylinder);
-
-    unitDirs.setPosition(glm::vec3(0,3, 0));
 
     //Entity sphere = createBoundedSphereEntity();
     float mass = 1.0f;
     float radius = 1.0f;
     float inertia = (2.0f/5.0f)*mass*radius*radius;
     UniformRigidBody rb(mass, inertia);
+    UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
-    SphereCollider collider(0.5f);
+    CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
+    CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
     collider.rb = &rb;
-    std::vector<SphereCollider> scs;
-    std::vector<UniformRigidBody> rbs;
-    std::vector<Collider*> colliders;
-    scs.reserve(20);
-    rbs.reserve(20);
-    colliders.reserve(20);
-    colliders.push_back(&collider);
-    for(int i=0; i<15; i++)
-    {
-        rbs.push_back(UniformRigidBody(mass, inertia));
-        rbs[rbs.size()-1].position = glm::vec3(7-i, 5, -3);
-        rbs[rbs.size()-1].linearMomentum  = glm::vec3(0, 0.0f, 0);
-
-        scs.push_back(SphereCollider(0.5f));
-        colliders.push_back(&scs[scs.size()-1]);
-        colliders[colliders.size()-1]->rb = &rbs[rbs.size()-1];
-
-    }
-//    for(auto it = rbs.begin();it!=rbs.end();it++)
-//    {
-//        SphereCollider sc(0.5f);
-//        sc.rb = &(*it);
-//        scs.push_back(sc);
-//    }
-//    for(auto it = scs.begin();it!=scs.end();it++)
-//    {
-//        colliders.push_back(&(*it));
-//    }
-    PhysicsWorld world(&colliders, glm::vec3(0, -1.5f, 0));
+    otherCollider.rb = &otherRb;
+    std::vector<Collider*> colliders = {&collider, &otherCollider};
+    PhysicsWorld world(&colliders, glm::vec3(0, 0.0f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
@@ -566,12 +726,12 @@ int main(int argc, char *argv[])
     world.colliders.push_back(&p2);
 
 
-    rb.position = glm::vec3(0, 5, 0);
+    rb.position = glm::vec3(0, 2, 0);
+    otherRb.position = glm::vec3(0,2,-5);
 
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
     long time = elapsedTimer.nsecsElapsed();
-    //app.
     while(window.shouldRun())
     {
 
@@ -641,6 +801,10 @@ int main(int argc, char *argv[])
             rb.setVelocity(glm::vec3(0,0,0));
             rb.position = glm::vec3(0,5,0);
         }
+        if(window.getGetDown(Qt::Key_1))
+        {
+            rb.setVelocity(glm::vec3(0,0,0));
+        }
         cam.smoothUpdateView();
         //cam.updateView();
         modelShader->setMat4("view", cam.view);
@@ -651,19 +815,24 @@ int main(int argc, char *argv[])
 
         world.stepWorld(dt);
 
-        sphere.meshes[1].setColor(glm::vec3(1,0,0));
-        sphere.setPosition(rb.position);
-        sphere.setRotation(rb.rotation);
-        sphere.draw();
-
-
-        sphere.meshes[1].setColor(glm::vec3(0,1,0));
-        for(auto& rb : rbs)
+        // cube.meshes[1].setColor(glm::vec3(1,0,0));
+        rb.setAngularVelocity(glm::vec3(0,0,1));
+        otherRb.setAngularVelocity(glm::vec3(0,1,0));
+        if(collider.collisionDetected)
         {
-            sphere.setPosition(rb.position);
-            sphere.setRotation(rb.rotation);
-            sphere.draw();
+            cube.meshes[1].setColor(glm::vec3(1,0,0));
         }
+        else
+        {
+            cube.meshes[1].setColor(glm::vec3(0,1,0));
+        }
+        cube.setPosition(rb.position);
+        cube.setRotation(rb.rotation);
+        cube.draw();
+
+        cube.setPosition(otherRb.position);
+        cube.setRotation(otherRb.rotation);
+        cube.draw();
 
 
         plane.draw();
@@ -675,7 +844,8 @@ int main(int argc, char *argv[])
 
 
 
-
+        std::string vector;
+        //vector = std::to_string(rb.getLocalYAxis().x) + ", " + std::to_string(rb.getLocalYAxis().y) + ", "+ std::to_string(rb.getLocalYAxis().z);
         openglFunctions->glDisable(GL_DEPTH_TEST);
         QPainter painter(paintDevice);
         painter.setWorldMatrixEnabled(false);
@@ -683,7 +853,8 @@ int main(int argc, char *argv[])
         painter.setFont(QFont("Arial", 12));
         QRectF rect(0.0f,0.0f,paintDevice->size().width(), paintDevice->size().height());
         painter.beginNativePainting();
-        painter.drawText(rect, std::to_string(1.0/dt).c_str());
+        //painter.drawText(rect, std::to_string(1.0/dt).c_str());
+        //painter.drawText(rect, vector.c_str());
         painter.endNativePainting();
 
         window.resetInputs();

@@ -1,5 +1,4 @@
 
-
 //int main(int argc, char *argv[])
 //{
 //    QGuiApplication app(argc, argv);
@@ -115,7 +114,7 @@
 //    float inertia = (2.0f/5.0f)*mass*radius*radius;
 //    UniformRigidBody rb(mass, inertia);
 //    // SphereBody otherRb(mass, 0.5f);
-//    SphereCollider collider(0.5f);
+//    SphereCollider collider(1.0f);
 //    collider.rb = &rb;
 //    std::vector<SphereCollider> scs;
 //    std::vector<UniformRigidBody> rbs;
@@ -135,16 +134,16 @@
 //        colliders[colliders.size()-1]->rb = &rbs[rbs.size()-1];
 
 //    }
-////    for(auto it = rbs.begin();it!=rbs.end();it++)
-////    {
-////        SphereCollider sc(0.5f);
-////        sc.rb = &(*it);
-////        scs.push_back(sc);
-////    }
-////    for(auto it = scs.begin();it!=scs.end();it++)
-////    {
-////        colliders.push_back(&(*it));
-////    }
+//    //    for(auto it = rbs.begin();it!=rbs.end();it++)
+//    //    {
+//    //        SphereCollider sc(0.5f);
+//    //        sc.rb = &(*it);
+//    //        scs.push_back(sc);
+//    //    }
+//    //    for(auto it = scs.begin();it!=scs.end();it++)
+//    //    {
+//    //        colliders.push_back(&(*it));
+//    //    }
 //    PhysicsWorld world(&colliders, glm::vec3(0, -1.5f, 0));
 
 //    PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
@@ -158,7 +157,6 @@
 //    QElapsedTimer elapsedTimer;
 //    elapsedTimer.start();
 //    long time = elapsedTimer.nsecsElapsed();
-//    //app.
 //    while(window.shouldRun())
 //    {
 
@@ -241,9 +239,11 @@
 //        sphere.meshes[1].setColor(glm::vec3(1,0,0));
 //        sphere.setPosition(rb.position);
 //        sphere.setRotation(rb.rotation);
+//        sphere.setScale(glm::vec3(2,2,2));
 //        sphere.draw();
 
 
+//        sphere.setScale(glm::vec3(1,1,1));
 //        sphere.meshes[1].setColor(glm::vec3(0,1,0));
 //        for(auto& rb : rbs)
 //        {
