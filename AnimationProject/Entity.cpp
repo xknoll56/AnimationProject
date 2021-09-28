@@ -216,6 +216,18 @@ Entity createBoundedPlaneEntity()
     return Entity(meshes);
 }
 
+Entity createArrow()
+{
+    Entity arrow;
+    Entity cyl = createBoundedCylinderEntity();
+    Entity cone = createBoundedConeEntity();
+    cone.setPosition(glm::vec3(0,1.0f,0.0f));
+    //cyl.setScale()
+    arrow.addChild(cyl);
+    arrow.addChild(cone);
+    return arrow;
+}
+
 Entity createUnitDirs()
 {
     Entity unitDirs;

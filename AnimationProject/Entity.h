@@ -71,5 +71,6 @@ Entity createBoundedConeEntity();
 Entity createGridedPlaneEntity(int size);
 Entity createBoundedPlaneEntity();
 Entity createUnitDirs();
+Entity createArrow();
 
 #endif // ENTITY_H

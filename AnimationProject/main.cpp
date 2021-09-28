@@ -174,28 +174,28 @@ struct UniformRigidBody
 
         if(dynamic)
         {
-        if(applyForce)
-        {
-            for(glm::vec3 force: appliedForces)
-                linearMomentum+=dt*force;
-            applyForce = false;
-            appliedForces.clear();
-        }
-        if(applyTorque)
-        {
-            for(glm::vec3 torque: appliedTorques)
-                angularMomentum+=dt*torque;
-            applyTorque = false;
-            appliedTorques.clear();
-        }
-        angularMomentum += torque*dt;
-        linearMomentum += force*dt;
-        angularVelocity = inertiaInv*angularMomentum;
-        velocity = massInv*linearMomentum;
-        rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;
-        rotation = glm::normalize(rotation);
-        rotationMatrix = glm::toMat3(rotation);
-        position+=dt*velocity;
+            if(applyForce)
+            {
+                for(glm::vec3 force: appliedForces)
+                    linearMomentum+=dt*force;
+                applyForce = false;
+                appliedForces.clear();
+            }
+            if(applyTorque)
+            {
+                for(glm::vec3 torque: appliedTorques)
+                    angularMomentum+=dt*torque;
+                applyTorque = false;
+                appliedTorques.clear();
+            }
+            angularMomentum += torque*dt;
+            linearMomentum += force*dt;
+            angularVelocity = inertiaInv*angularMomentum;
+            velocity = massInv*linearMomentum;
+            rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;
+            rotation = glm::normalize(rotation);
+            rotationMatrix = glm::toMat3(rotation);
+            position+=dt*velocity;
         }
     }
 };
@@ -252,28 +252,25 @@ struct CubeCollider: public Collider
     //The sizes from the origin of the cube (halfs)
     float xSize, ySize, zSize;
     glm::vec3 scale;
-    glm::vec3 transformedVerts[8];
-    glm::vec3 edges[6];
+    glm::vec3 contactVertBuffer[4];
+    glm::vec3 contactEdgeBuffer[4];
+
+    enum ContactDir
+    {
+        LEFT = 0,
+        RIGHT = 1,
+        DOWN = 2,
+        UP = 3,
+        BACK = 4,
+        FORWARD = 5,
+        NONE = 6
+    };
 
     CubeCollider(const glm::vec3& sizes)
     {
         xSize = sizes.x;
         ySize = sizes.y;
         zSize = sizes.z;
-        transformedVerts[0] = glm::vec3(-xSize, -ySize, -zSize);
-        transformedVerts[1] = glm::vec3(-xSize, -ySize, zSize);
-        transformedVerts[2] = glm::vec3(xSize, -ySize, zSize);
-        transformedVerts[3] = glm::vec3(xSize, -ySize, -zSize);
-        transformedVerts[4] = glm::vec3(-xSize, ySize, -zSize);
-        transformedVerts[5] = glm::vec3(-xSize, ySize, zSize);
-        transformedVerts[6] = glm::vec3(xSize, ySize, zSize);
-        transformedVerts[7] = glm::vec3(xSize, ySize, -zSize);
-        edges[0] = glm::vec3(-xSize, 0, 0);
-        edges[1] = glm::vec3(xSize, 0, 0);
-        edges[2] = glm::vec3(0, -ySize, 0);
-        edges[3] = glm::vec3(0, ySize, 0);
-        edges[4] = glm::vec3(0, 0, -zSize);
-        edges[5] = glm::vec3(0, 0, zSize);
         scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
         type = ColliderType::CUBE;
     }
@@ -283,39 +280,141 @@ struct CubeCollider: public Collider
         xSize = sizes.x;
         ySize = sizes.y;
         zSize = sizes.z;
-        this->rb = rb;   
+        this->rb = rb;
         type = ColliderType::CUBE;
-        updateTransformedVerts();
-        updateEdges();
         scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     }
 
-    void updateTransformedVerts()
+    void updateContactVerts(ContactDir dir)
     {
-        glm::vec3 aX = rb->getLocalXAxis();
-        glm::vec3 aY = rb->getLocalYAxis();
-        glm::vec3 aZ = rb->getLocalZAxis();
-        transformedVerts[0] = rb->position-xSize*aX-ySize*aY-zSize*aZ;
-        transformedVerts[1] = rb->position-xSize*aX-ySize*aY+zSize*aZ;
-        transformedVerts[2] = rb->position+xSize*aX-ySize*aY+zSize*aZ;
-        transformedVerts[3] = rb->position+xSize*aX-ySize*aY-zSize*aZ;
-        transformedVerts[4] = rb->position-xSize*aX+ySize*aY-zSize*aZ;
-        transformedVerts[5] = rb->position-xSize*aX+ySize*aY+zSize*aZ;
-        transformedVerts[6] = rb->position+xSize*aX+ySize*aY+zSize*aZ;
-        transformedVerts[7] = rb->position+xSize*aX+ySize*aY-zSize*aZ;
+        glm::vec3 px = xSize*rb->getLocalXAxis();
+        glm::vec3 py = ySize*rb->getLocalYAxis();
+        glm::vec3 pz = zSize*rb->getLocalZAxis();
+
+        switch(dir)
+        {
+        case ContactDir::LEFT:
+            contactVertBuffer[0] = rb->position-px-py-pz;
+            contactVertBuffer[1] = rb->position-px-py+pz;
+            contactVertBuffer[2] = rb->position-px+py-pz;
+            contactVertBuffer[3] = rb->position-px+py+pz;
+            break;
+        case ContactDir::RIGHT:
+            contactVertBuffer[0] = rb->position+px-py-pz;
+            contactVertBuffer[1] = rb->position+px-py+pz;
+            contactVertBuffer[2] = rb->position+px+py-pz;
+            contactVertBuffer[3] = rb->position+px+py+pz;
+            break;
+        case ContactDir::DOWN:
+            contactVertBuffer[0] = rb->position-px-py-pz;
+            contactVertBuffer[1] = rb->position-px-py+pz;
+            contactVertBuffer[2] = rb->position+px-py-pz;
+            contactVertBuffer[3] = rb->position+px-py+pz;
+            break;
+        case ContactDir::UP:
+            contactVertBuffer[0] = rb->position-px+py-pz;
+            contactVertBuffer[1] = rb->position-px+py+pz;
+            contactVertBuffer[2] = rb->position+px+py-pz;
+            contactVertBuffer[3] = rb->position+px+py+pz;
+            break;
+        case ContactDir::BACK:
+            contactVertBuffer[0] = rb->position-px-py-pz;
+            contactVertBuffer[1] = rb->position-px+py-pz;
+            contactVertBuffer[2] = rb->position+px-py-pz;
+            contactVertBuffer[3] = rb->position+px+py-pz;
+            break;
+        case ContactDir::FORWARD:
+            contactVertBuffer[0] = rb->position-px-py+pz;
+            contactVertBuffer[1] = rb->position-px+py+pz;
+            contactVertBuffer[2] = rb->position+px-py+pz;
+            contactVertBuffer[3] = rb->position+px+py+pz;
+            break;
+        }
     }
 
-    void updateEdges()
+    void updateContactEdges(ContactDir normalTo)
     {
-        glm::vec3 aX = rb->getLocalXAxis();
-        glm::vec3 aY = rb->getLocalYAxis();
-        glm::vec3 aZ = rb->getLocalZAxis();
-        edges[0] = rb->position-xSize*aX-zSize*aZ;
-        edges[1] = rb->position-xSize*aX+zSize*aZ;
-        edges[2] = rb->position-ySize*aY;
-        edges[3] = rb->position+ySize*aY;
-        edges[4] = rb->position-zSize*aZ;
-        edges[5] = rb->position+zSize*aZ;
+        glm::vec3 px = xSize*rb->getLocalXAxis();
+        glm::vec3 py = ySize*rb->getLocalYAxis();
+        glm::vec3 pz = zSize*rb->getLocalZAxis();
+        switch(normalTo)
+        {
+        case ContactDir::RIGHT:
+            contactEdgeBuffer[0] = rb->position+py-pz;
+            contactEdgeBuffer[1] = rb->position+py+pz;
+            contactEdgeBuffer[2] = rb->position-py-pz;
+            contactEdgeBuffer[3] = rb->position-py+pz;
+            break;
+        case ContactDir::UP:
+            contactEdgeBuffer[0] = rb->position-px+pz;
+            contactEdgeBuffer[1] = rb->position-px-pz;
+            contactEdgeBuffer[2] = rb->position+px-pz;
+            contactEdgeBuffer[3] = rb->position+px+pz;
+            break;
+        case ContactDir::FORWARD:
+            contactEdgeBuffer[0] = rb->position+py-px;
+            contactEdgeBuffer[1] = rb->position+py+px;
+            contactEdgeBuffer[2] = rb->position-py-px;
+            contactEdgeBuffer[3] = rb->position-py+px;
+            break;
+        }
+    }
+
+    ContactDir flipDir(ContactDir dir, glm::vec3 relPos)
+    {
+        switch(dir)
+        {
+        case ContactDir::RIGHT:
+            if(glm::dot(relPos, rb->getLocalXAxis())<0)
+                return ContactDir::LEFT;
+            else
+                return dir;
+            break;
+        case ContactDir::UP:
+            if(glm::dot(relPos, rb->getLocalYAxis())<0)
+                return ContactDir::DOWN;
+            else
+                return dir;
+            break;
+        case ContactDir::FORWARD:
+            if(glm::dot(relPos, rb->getLocalZAxis())<0)
+                return ContactDir::BACK;
+            else
+                return dir;
+            break;
+        }
+    }
+
+    glm::vec3 getClosestEdge(const glm::vec3& dir)
+    {
+        float min = 100.0f;
+        glm::vec3 minEdge = contactEdgeBuffer[0];
+        for(int i = 0; i<4;i++)
+        {
+            float test = glm::dot(dir, contactEdgeBuffer[i]);
+            if(test<min)
+            {
+                min = test;
+                minEdge = contactEdgeBuffer[i];
+            }
+        }
+        return minEdge;
+    }
+
+    glm::vec3 getClosestVert(const glm::vec3& dir)
+    {
+        float min = 100.0f;
+        glm::vec3 minVert = contactVertBuffer[0];
+        for(int i = 0; i<4;i++)
+        {
+            float test = glm::dot(dir, contactVertBuffer[i]);
+            if(test<min)
+            {
+                min = test;
+                minVert = contactVertBuffer[i];
+            }
+        }
+        return minVert;
     }
 
 };
@@ -337,6 +436,9 @@ struct ContactInfo
     float penetrationDistance;
     glm::vec3 normal;
     std::vector<glm::vec3> points;
+    CubeCollider::ContactDir aDir;
+    CubeCollider::ContactDir bDir;
+    bool faceCollision;
 };
 
 struct PhysicsWorld
@@ -351,7 +453,8 @@ public:
     float friction = 0.4f;
     float restitutionSlope = 0.085f;
     float restitutionIntersect = 0.4f;
-    ContactInfo info;
+    ContactInfo edgeInfo;
+    ContactInfo faceInfo;
 
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
     {
@@ -524,8 +627,8 @@ public:
 
         cubeA->collisionDetected = false;
         cubeB->collisionDetected = false;
-        info.points.clear();
-
+        edgeInfo.points.clear();
+        faceInfo.points.clear();
         std::string s;
         float penetration = glm::abs(glm::dot(T, aX)) - (cubeA->xSize + glm::abs(cubeB->xSize*rxx) + glm::abs(cubeB->ySize*rxy) + glm::abs(cubeB->zSize*rxz));
         //check for collisions parallel to AX
@@ -533,9 +636,11 @@ public:
         {
             return false;
         }
-        info.penetrationDistance = penetration;
-        info.normal = aX;
-        info.points.push_back(cubeA->rb->position+cubeA->xSize*aX);
+        faceInfo.penetrationDistance = penetration;
+        faceInfo.normal = aX;
+        faceInfo.faceCollision = true;
+        faceInfo.aDir = CubeCollider::ContactDir::RIGHT;
+        faceInfo.bDir = CubeCollider::ContactDir::NONE;
 
         penetration = glm::abs(glm::dot(T, aY)) - (cubeA->ySize + glm::abs(cubeB->xSize*ryx) + glm::abs(cubeB->ySize*ryy) + glm::abs(cubeB->zSize*ryz));
         //check for collisions parallel to AY
@@ -543,10 +648,12 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > faceInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = aY;
+            faceInfo.penetrationDistance = penetration;
+            faceInfo.normal = aY;
+            faceInfo.faceCollision = true;
+            faceInfo.aDir = CubeCollider::ContactDir::UP;
         }
 
         penetration = glm::abs(glm::dot(T, aZ)) - (cubeA->zSize + glm::abs(cubeB->xSize*rzx) + glm::abs(cubeB->ySize*rzy) + glm::abs(cubeB->zSize*rzz));
@@ -555,10 +662,12 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > faceInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = aZ;
+            faceInfo.penetrationDistance = penetration;
+            faceInfo.normal = aZ;
+            faceInfo.faceCollision = true;
+            faceInfo.aDir = CubeCollider::ContactDir::FORWARD;
         }
 
         penetration = glm::abs(glm::dot(T, bX)) - (glm::abs(cubeA->xSize*rxx) + glm::abs(cubeA->ySize*ryx) + glm::abs(cubeA->zSize*rzx) + cubeB->xSize);
@@ -567,10 +676,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > faceInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = bX;
+            faceInfo.penetrationDistance = penetration;
+            faceInfo.normal = bX;
+            faceInfo.faceCollision = true;
+            faceInfo.aDir = CubeCollider::ContactDir::NONE;
+            faceInfo.bDir = CubeCollider::ContactDir::RIGHT;
         }
 
         penetration = glm::abs(glm::dot(T, bY)) - (glm::abs(cubeA->xSize*rxy) + glm::abs(cubeA->ySize*ryy) + glm::abs(cubeA->zSize*rzy) + cubeB->ySize);
@@ -579,10 +691,12 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > faceInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = bY;
+            faceInfo.penetrationDistance = penetration;
+            faceInfo.normal = bY;
+            faceInfo.faceCollision = true;
+            faceInfo.bDir = CubeCollider::ContactDir::UP;
         }
 
         penetration = glm::abs(glm::dot(T, bZ)) - (glm::abs(cubeA->xSize*rxz) + glm::abs(cubeA->ySize*ryz) + glm::abs(cubeA->zSize*rzz) + cubeB->zSize);
@@ -591,10 +705,12 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > faceInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = bZ;
+            faceInfo.penetrationDistance = penetration;
+            faceInfo.normal = bZ;
+            faceInfo.faceCollision = true;
+            faceInfo.bDir = CubeCollider::ContactDir::FORWARD;
         }
 
         penetration = glm::abs(glm::dot(T, aZ)*ryx - glm::dot(T, aY)*rzx) - (glm::abs(cubeA->ySize*rzx)+glm::abs(cubeA->zSize*ryx)+glm::abs(cubeB->ySize*rxz)+glm::abs(cubeB->zSize*rxy));
@@ -602,10 +718,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aX, bX);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aX, bX);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
+            edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
 
         }
 
@@ -614,10 +733,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aX, bY);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aX, bY);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
+            edgeInfo.bDir = CubeCollider::ContactDir::UP;
         }
 
         penetration = glm::abs(glm::dot(T, aZ)*ryz - glm::dot(T, aY)*rzz) - (glm::abs(cubeA->ySize*rzz)+glm::abs(cubeA->zSize*ryz)+glm::abs(cubeB->xSize*rxy)+glm::abs(cubeB->ySize*rxx));
@@ -625,10 +747,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aX, bZ);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aX, bZ);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
+            edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
         }
 
         penetration = glm::abs(glm::dot(T, aX)*rzx - glm::dot(T, aZ)*rxx) - (glm::abs(cubeA->xSize*rzx)+glm::abs(cubeA->zSize*rxx)+glm::abs(cubeB->ySize*ryz)+glm::abs(cubeB->zSize*ryy));
@@ -636,10 +761,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aY, bX);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aY, bX);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::UP;
+            edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
         }
 
         penetration = glm::abs(glm::dot(T, aX)*rzy - glm::dot(T, aZ)*rxy) - (glm::abs(cubeA->xSize*rzy)+glm::abs(cubeA->zSize*rxy)+glm::abs(cubeB->xSize*ryz)+glm::abs(cubeB->zSize*ryx));
@@ -647,10 +775,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aY, bY);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aY, bY);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::UP;
+            edgeInfo.bDir = CubeCollider::ContactDir::UP;
         }
 
         penetration = glm::abs(glm::dot(T, aX)*rzz - glm::dot(T, aZ)*rxz) - (glm::abs(cubeA->xSize*rzz)+glm::abs(cubeA->zSize*rxz)+glm::abs(cubeB->xSize*ryy)+glm::abs(cubeB->ySize*ryx));
@@ -658,10 +789,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aY, bZ);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aY, bZ);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::UP;
+            edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
         }
 
         penetration = glm::abs(glm::dot(T, aY)*rxx - glm::dot(T, aX)*ryx) - (glm::abs(cubeA->xSize*ryx)+glm::abs(cubeA->ySize*rxx)+glm::abs(cubeB->ySize*rzz)+glm::abs(cubeB->zSize*rzy));
@@ -669,10 +803,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aZ, bX);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aZ, bX);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
+            edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
         }
 
         penetration = glm::abs(glm::dot(T, aY)*rxy - glm::dot(T, aX)*ryy) - (glm::abs(cubeA->xSize*ryy)+glm::abs(cubeA->ySize*rxy)+glm::abs(cubeB->xSize*rzz)+glm::abs(cubeB->zSize*rzx));
@@ -680,10 +817,13 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aZ, bY);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aZ, bY);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
+            edgeInfo.bDir = CubeCollider::ContactDir::UP;
         }
 
         penetration = glm::abs(glm::dot(T, aY)*rxz - glm::dot(T, aX)*ryz) - (glm::abs(cubeA->xSize*ryz)+glm::abs(cubeA->ySize*rxz)+glm::abs(cubeB->xSize*rzy)+glm::abs(cubeB->ySize*rzx));
@@ -691,12 +831,50 @@ public:
         {
             return false;
         }
-        if(penetration > info.penetrationDistance)
+        if(penetration > edgeInfo.penetrationDistance && penetration < 0.0)
         {
-            info.penetrationDistance = penetration;
-            info.normal = glm::cross(aZ, bZ);
+            edgeInfo.penetrationDistance = penetration;
+            edgeInfo.normal = glm::cross(aZ, bZ);
+            edgeInfo.faceCollision = false;
+            edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
+            edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
         }
-        qDebug() << "distance: " << info.penetrationDistance;
+
+        //qDebug() << "edge pen: " << info.edgePenetrationDistance;
+        //qDebug() << "face pen: " << info.planePenetrationDistance;
+
+        if(faceInfo.penetrationDistance>edgeInfo.penetrationDistance)
+        {
+            if(faceInfo.aDir!=CubeCollider::ContactDir::NONE)
+            {
+                faceInfo.bDir = cubeA->flipDir(faceInfo.bDir, -T);
+                //faceInfo.normal = glm::sign(glm::dot(faceInfo.normal,T))*faceInfo.normal;
+                cubeB->updateContactVerts(faceInfo.bDir);
+                faceInfo.points.push_back(cubeB->getClosestVert(-T));
+               // for(int i = 0;i<4;i++)
+                    //faceInfo.points.push_back(cubeA->contactVertBuffer[i]);
+            }
+            else
+            {
+                faceInfo.aDir = cubeA->flipDir(faceInfo.aDir, T);
+                //faceInfo.normal = glm::sign(glm::dot(faceInfo.normal,T))*faceInfo.normal;
+                cubeA->updateContactVerts(faceInfo.aDir);
+                faceInfo.points.push_back(cubeA->getClosestVert(T));
+               //for(int i = 0;i<4;i++)
+                    //faceInfo.points.push_back(cubeB->contactVertBuffer[i]);
+            }
+        }
+        else
+        {
+            //edgeInfo.normal = glm::sign(glm::dot(edgeInfo.normal,T))*edgeInfo.normal;
+            cubeA->updateContactEdges(edgeInfo.aDir);
+            //for(int i = 0;i<4;i++)
+                edgeInfo.points.push_back(cubeA->getClosestEdge(-T));
+
+            cubeB->updateContactEdges(edgeInfo.bDir);
+            //for(int i = 0;i<4;i++)
+                edgeInfo.points.push_back(cubeB->getClosestEdge(T));
+        }
         cubeA->collisionDetected = true;
         cubeB->collisionDetected = true;
         return true;
@@ -876,6 +1054,7 @@ int main(int argc, char *argv[])
     Entity sphere = createBoundedSphereEntity();
     Entity cylinder = createBoundedCylinderEntity();
     Entity capsule = createBoundedCapsuleEntity();
+    Entity arrow = createArrow();
 
     //Entity sphere = createBoundedSphereEntity();
     float mass = 1.0f;
@@ -884,7 +1063,7 @@ int main(int argc, char *argv[])
     UniformRigidBody rb(mass, inertia);
     UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
-    CubeCollider collider(glm::vec3(3.0f,0.5f,1.5f));
+    CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
     CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
@@ -898,7 +1077,7 @@ int main(int argc, char *argv[])
 
 
     rb.position = glm::vec3(0, 2, 0);
-    otherRb.position = glm::vec3(0,2,-5);
+    otherRb.position = glm::vec3(0,2,-2);
 
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
@@ -988,11 +1167,28 @@ int main(int argc, char *argv[])
         world.stepWorld(dt);
 
         // cube.meshes[1].setColor(glm::vec3(1,0,0));
-        rb.setAngularVelocity(glm::vec3(0,0,1));
-        otherRb.setAngularVelocity(glm::vec3(0,1,0));
+        //rb.setAngularVelocity(glm::vec3(0,0,1));
+        //otherRb.setAngularVelocity(glm::vec3(0,1,0));
+        rb.rotation = glm::quat(glm::vec3(0, PI/4.0f, 0.0f));
+        otherRb.rotation = glm::quat(glm::vec3(PI/4.0f, 0, 0));
         if(collider.collisionDetected)
         {
             cube.meshes[1].setColor(glm::vec3(1,0,0));
+//            if(world.info.faceCollision)
+//            {
+            for(int i =0;i<world.faceInfo.points.size();i++)
+            {
+                point.setPosition(world.faceInfo.points[i]);
+                point.draw();
+                drawLine(rb.position, rb.position+2.0f*world.faceInfo.normal);
+            }
+            for(int i =0;i<world.edgeInfo.points.size();i++)
+            {
+                point.setPosition(world.edgeInfo.points[i]);
+                point.draw();
+                drawLine(rb.position, rb.position+2.0f*world.edgeInfo.normal);
+            }
+            //}
         }
         else
         {
@@ -1003,19 +1199,20 @@ int main(int argc, char *argv[])
         cube.setScale(collider.scale);
         cube.draw();
 
-        collider.updateTransformedVerts();
-        for(int i =0; i<8; i++)
-        {
+        arrow.draw();
+//        collider.updateContactVerts(CubeCollider::ContactDir::BACK);
+//        for(int i =0; i<4; i++)
+//        {
 
-            point.setPosition(collider.transformedVerts[i]);
-            point.draw();
-        }
-        collider.updateEdges();
-        for(int i =0;i<6;i++)
-        {
-            point.setPosition(collider.edges[i]);
-            point.draw();
-        }
+//            point.setPosition(collider.contactVertBuffer[i]);
+//            point.draw();
+//        }
+//        collider.updateContactEdges(CubeCollider::ContactDir::BACK);
+//        for(int i =0;i<4;i++)
+//        {
+//            point.setPosition(collider.contactEdgeBuffer[i]);
+//            point.draw();
+//        }
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);
@@ -1023,9 +1220,9 @@ int main(int argc, char *argv[])
 
 
         plane.draw();
-        RayCastData rcd;
-        if(world.Raycast(rb.position, glm::vec3(0,-1,0), rcd))
-            drawLine(rb.position, rcd.point);
+       // RayCastData rcd;
+        ///if(world.Raycast(rb.position, 5.0f*world.info.normal, rcd))
+
         //drawLine(glm::vec3(0, 5.0, 0), glm::vec3(5, -5.0, -5));
         //glm::mat4 ok = glm::translate(trans, glm::vec3(0, 2, 0));
 
