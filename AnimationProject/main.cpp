@@ -42,7 +42,8 @@ enum ColliderType
     SPHERE = 0,
     CUBE = 1,
     PLANE = 2,
-    NONE = 3
+    QUAD = 3,
+    NONE = 4
 };
 
 static void drawLine(glm::vec3 from, glm::vec3 to)
@@ -102,6 +103,7 @@ struct UniformRigidBody
     std::vector<glm::vec3> appliedTorques;
     bool applyForce = false;
     bool applyTorque = false;
+    bool dynamic = true;
 
     ColliderType type;
 
@@ -170,6 +172,8 @@ struct UniformRigidBody
     void stepQuantities(float dt)
     {
 
+        if(dynamic)
+        {
         if(applyForce)
         {
             for(glm::vec3 force: appliedForces)
@@ -192,6 +196,7 @@ struct UniformRigidBody
         rotation = glm::normalize(rotation);
         rotationMatrix = glm::toMat3(rotation);
         position+=dt*velocity;
+        }
     }
 };
 
@@ -246,12 +251,30 @@ struct CubeCollider: public Collider
 {
     //The sizes from the origin of the cube (halfs)
     float xSize, ySize, zSize;
+    glm::vec3 scale;
+    glm::vec3 transformedVerts[8];
+    glm::vec3 edges[6];
 
     CubeCollider(const glm::vec3& sizes)
     {
         xSize = sizes.x;
         ySize = sizes.y;
         zSize = sizes.z;
+        transformedVerts[0] = glm::vec3(-xSize, -ySize, -zSize);
+        transformedVerts[1] = glm::vec3(-xSize, -ySize, zSize);
+        transformedVerts[2] = glm::vec3(xSize, -ySize, zSize);
+        transformedVerts[3] = glm::vec3(xSize, -ySize, -zSize);
+        transformedVerts[4] = glm::vec3(-xSize, ySize, -zSize);
+        transformedVerts[5] = glm::vec3(-xSize, ySize, zSize);
+        transformedVerts[6] = glm::vec3(xSize, ySize, zSize);
+        transformedVerts[7] = glm::vec3(xSize, ySize, -zSize);
+        edges[0] = glm::vec3(-xSize, 0, 0);
+        edges[1] = glm::vec3(xSize, 0, 0);
+        edges[2] = glm::vec3(0, -ySize, 0);
+        edges[3] = glm::vec3(0, ySize, 0);
+        edges[4] = glm::vec3(0, 0, -zSize);
+        edges[5] = glm::vec3(0, 0, zSize);
+        scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
         type = ColliderType::CUBE;
     }
 
@@ -260,11 +283,61 @@ struct CubeCollider: public Collider
         xSize = sizes.x;
         ySize = sizes.y;
         zSize = sizes.z;
-        this->rb = rb;
+        this->rb = rb;   
         type = ColliderType::CUBE;
+        updateTransformedVerts();
+        updateEdges();
+        scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
+    }
+
+    void updateTransformedVerts()
+    {
+        glm::vec3 aX = rb->getLocalXAxis();
+        glm::vec3 aY = rb->getLocalYAxis();
+        glm::vec3 aZ = rb->getLocalZAxis();
+        transformedVerts[0] = rb->position-xSize*aX-ySize*aY-zSize*aZ;
+        transformedVerts[1] = rb->position-xSize*aX-ySize*aY+zSize*aZ;
+        transformedVerts[2] = rb->position+xSize*aX-ySize*aY+zSize*aZ;
+        transformedVerts[3] = rb->position+xSize*aX-ySize*aY-zSize*aZ;
+        transformedVerts[4] = rb->position-xSize*aX+ySize*aY-zSize*aZ;
+        transformedVerts[5] = rb->position-xSize*aX+ySize*aY+zSize*aZ;
+        transformedVerts[6] = rb->position+xSize*aX+ySize*aY+zSize*aZ;
+        transformedVerts[7] = rb->position+xSize*aX+ySize*aY-zSize*aZ;
+    }
+
+    void updateEdges()
+    {
+        glm::vec3 aX = rb->getLocalXAxis();
+        glm::vec3 aY = rb->getLocalYAxis();
+        glm::vec3 aZ = rb->getLocalZAxis();
+        edges[0] = rb->position-xSize*aX-zSize*aZ;
+        edges[1] = rb->position-xSize*aX+zSize*aZ;
+        edges[2] = rb->position-ySize*aY;
+        edges[3] = rb->position+ySize*aY;
+        edges[4] = rb->position-zSize*aZ;
+        edges[5] = rb->position+zSize*aZ;
+    }
+
+};
+
+struct QuadCollider: public Collider
+{
+    float xSize, zSize;
+
+    QuadCollider(const float xSize, const float zSize)
+    {
+        this->xSize = xSize;
+        this->zSize = zSize;
+        type = ColliderType::QUAD;
     }
 };
 
+struct ContactInfo
+{
+    float penetrationDistance;
+    glm::vec3 normal;
+    std::vector<glm::vec3> points;
+};
 
 struct PhysicsWorld
 {
@@ -278,6 +351,7 @@ public:
     float friction = 0.4f;
     float restitutionSlope = 0.085f;
     float restitutionIntersect = 0.4f;
+    ContactInfo info;
 
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
     {
@@ -450,87 +524,179 @@ public:
 
         cubeA->collisionDetected = false;
         cubeB->collisionDetected = false;
+        info.points.clear();
+
+        std::string s;
+        float penetration = glm::abs(glm::dot(T, aX)) - (cubeA->xSize + glm::abs(cubeB->xSize*rxx) + glm::abs(cubeB->ySize*rxy) + glm::abs(cubeB->zSize*rxz));
         //check for collisions parallel to AX
-        if(glm::abs(glm::dot(T, aX)) > cubeA->xSize + glm::abs(cubeB->xSize*rxx) + glm::abs(cubeB->ySize*rxy) + glm::abs(cubeB->zSize*rxz))
+        if(penetration>0)
         {
             return false;
         }
+        info.penetrationDistance = penetration;
+        info.normal = aX;
+        info.points.push_back(cubeA->rb->position+cubeA->xSize*aX);
 
+        penetration = glm::abs(glm::dot(T, aY)) - (cubeA->ySize + glm::abs(cubeB->xSize*ryx) + glm::abs(cubeB->ySize*ryy) + glm::abs(cubeB->zSize*ryz));
         //check for collisions parallel to AY
-        if(glm::abs(glm::dot(T, aY)) > cubeA->ySize + glm::abs(cubeB->xSize*ryx) + glm::abs(cubeB->ySize*ryy) + glm::abs(cubeB->zSize*ryz))
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = aY;
+        }
 
+        penetration = glm::abs(glm::dot(T, aZ)) - (cubeA->zSize + glm::abs(cubeB->xSize*rzx) + glm::abs(cubeB->ySize*rzy) + glm::abs(cubeB->zSize*rzz));
         //check for collisions parallel to AZ
-        if(glm::abs(glm::dot(T, aZ)) > cubeA->zSize + glm::abs(cubeB->xSize*rzx) + glm::abs(cubeB->ySize*rzy) + glm::abs(cubeB->zSize*rzz))
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = aZ;
+        }
 
+        penetration = glm::abs(glm::dot(T, bX)) - (glm::abs(cubeA->xSize*rxx) + glm::abs(cubeA->ySize*ryx) + glm::abs(cubeA->zSize*rzx) + cubeB->xSize);
         //check for collisions parallel to BX
-        if(glm::abs(glm::dot(T, bX)) > glm::abs(cubeA->xSize*rxx) + glm::abs(cubeA->ySize*ryx) + glm::abs(cubeA->zSize*rzx) + cubeB->xSize)
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = bX;
+        }
 
+        penetration = glm::abs(glm::dot(T, bY)) - (glm::abs(cubeA->xSize*rxy) + glm::abs(cubeA->ySize*ryy) + glm::abs(cubeA->zSize*rzy) + cubeB->ySize);
         //check for collisions parallel to BY
-        if(glm::abs(glm::dot(T, bY)) > glm::abs(cubeA->xSize*rxy) + glm::abs(cubeA->ySize*ryy) + glm::abs(cubeA->zSize*rzy) + cubeB->ySize)
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = bY;
+        }
 
+        penetration = glm::abs(glm::dot(T, bZ)) - (glm::abs(cubeA->xSize*rxz) + glm::abs(cubeA->ySize*ryz) + glm::abs(cubeA->zSize*rzz) + cubeB->zSize);
         //check for collisions parallel to BZ
-        if(glm::abs(glm::dot(T, bZ)) > glm::abs(cubeA->xSize*rxz) + glm::abs(cubeA->ySize*ryz) + glm::abs(cubeA->zSize*rzz) + cubeB->zSize)
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = bZ;
+        }
 
-        if(glm::abs(glm::dot(T, aZ)*ryx - glm::dot(T, aY)*rzx) > glm::abs(cubeA->ySize*rzx)+glm::abs(cubeA->zSize*ryx)+glm::abs(cubeB->ySize*rxz)+glm::abs(cubeB->zSize*rxy))
+        penetration = glm::abs(glm::dot(T, aZ)*ryx - glm::dot(T, aY)*rzx) - (glm::abs(cubeA->ySize*rzx)+glm::abs(cubeA->zSize*ryx)+glm::abs(cubeB->ySize*rxz)+glm::abs(cubeB->zSize*rxy));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aX, bX);
 
-        if(glm::abs(glm::dot(T, aZ)*ryy - glm::dot(T, aY)*rzy) > glm::abs(cubeA->ySize*rzy)+glm::abs(cubeA->zSize*ryy)+glm::abs(cubeB->xSize*rxz)+glm::abs(cubeB->zSize*rxx))
+        }
+
+        penetration = glm::abs(glm::dot(T, aZ)*ryy - glm::dot(T, aY)*rzy) - (glm::abs(cubeA->ySize*rzy)+glm::abs(cubeA->zSize*ryy)+glm::abs(cubeB->xSize*rxz)+glm::abs(cubeB->zSize*rxx));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aX, bY);
+        }
 
-        if(glm::abs(glm::dot(T, aZ)*ryz - glm::dot(T, aY)*rzz) > glm::abs(cubeA->ySize*rzz)+glm::abs(cubeA->zSize*ryz)+glm::abs(cubeB->xSize*rxy)+glm::abs(cubeB->ySize*rxx))
+        penetration = glm::abs(glm::dot(T, aZ)*ryz - glm::dot(T, aY)*rzz) - (glm::abs(cubeA->ySize*rzz)+glm::abs(cubeA->zSize*ryz)+glm::abs(cubeB->xSize*rxy)+glm::abs(cubeB->ySize*rxx));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aX, bZ);
+        }
 
-        if(glm::abs(glm::dot(T, aX)*rzx - glm::dot(T, aZ)*rxx) > glm::abs(cubeA->xSize*rzx)+glm::abs(cubeA->zSize*rxx)+glm::abs(cubeB->ySize*ryz)+glm::abs(cubeB->zSize*ryy))
+        penetration = glm::abs(glm::dot(T, aX)*rzx - glm::dot(T, aZ)*rxx) - (glm::abs(cubeA->xSize*rzx)+glm::abs(cubeA->zSize*rxx)+glm::abs(cubeB->ySize*ryz)+glm::abs(cubeB->zSize*ryy));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aY, bX);
+        }
 
-        if(glm::abs(glm::dot(T, aX)*rzy - glm::dot(T, aZ)*rxy) > glm::abs(cubeA->xSize*rzy)+glm::abs(cubeA->zSize*rxy)+glm::abs(cubeB->xSize*ryz)+glm::abs(cubeB->zSize*ryx))
+        penetration = glm::abs(glm::dot(T, aX)*rzy - glm::dot(T, aZ)*rxy) - (glm::abs(cubeA->xSize*rzy)+glm::abs(cubeA->zSize*rxy)+glm::abs(cubeB->xSize*ryz)+glm::abs(cubeB->zSize*ryx));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aY, bY);
+        }
 
-        if(glm::abs(glm::dot(T, aX)*rzz - glm::dot(T, aZ)*rxz) > glm::abs(cubeA->xSize*rzz)+glm::abs(cubeA->zSize*rxz)+glm::abs(cubeB->xSize*ryy)+glm::abs(cubeB->ySize*ryx))
+        penetration = glm::abs(glm::dot(T, aX)*rzz - glm::dot(T, aZ)*rxz) - (glm::abs(cubeA->xSize*rzz)+glm::abs(cubeA->zSize*rxz)+glm::abs(cubeB->xSize*ryy)+glm::abs(cubeB->ySize*ryx));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aY, bZ);
+        }
 
-        if(glm::abs(glm::dot(T, aY)*rxx - glm::dot(T, aX)*ryx) > glm::abs(cubeA->xSize*ryx)+glm::abs(cubeA->ySize*rxx)+glm::abs(cubeB->ySize*rzz)+glm::abs(cubeB->zSize*rzy))
+        penetration = glm::abs(glm::dot(T, aY)*rxx - glm::dot(T, aX)*ryx) - (glm::abs(cubeA->xSize*ryx)+glm::abs(cubeA->ySize*rxx)+glm::abs(cubeB->ySize*rzz)+glm::abs(cubeB->zSize*rzy));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aZ, bX);
+        }
 
-        if(glm::abs(glm::dot(T, aY)*rxy - glm::dot(T, aX)*ryy) > glm::abs(cubeA->xSize*ryy)+glm::abs(cubeA->ySize*rxy)+glm::abs(cubeB->xSize*rzz)+glm::abs(cubeB->zSize*rzx))
+        penetration = glm::abs(glm::dot(T, aY)*rxy - glm::dot(T, aX)*ryy) - (glm::abs(cubeA->xSize*ryy)+glm::abs(cubeA->ySize*rxy)+glm::abs(cubeB->xSize*rzz)+glm::abs(cubeB->zSize*rzx));
+        if(penetration>0)
         {
             return false;
         }
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aZ, bY);
+        }
 
-        if(glm::abs(glm::dot(T, aY)*rxz - glm::dot(T, aX)*ryz) > glm::abs(cubeA->xSize*ryz)+glm::abs(cubeA->ySize*rxz)+glm::abs(cubeB->xSize*rzy)+glm::abs(cubeB->ySize*rzx))
+        penetration = glm::abs(glm::dot(T, aY)*rxz - glm::dot(T, aX)*ryz) - (glm::abs(cubeA->xSize*ryz)+glm::abs(cubeA->ySize*rxz)+glm::abs(cubeB->xSize*rzy)+glm::abs(cubeB->ySize*rzx));
+        if(penetration>0)
         {
             return false;
         }
-
+        if(penetration > info.penetrationDistance)
+        {
+            info.penetrationDistance = penetration;
+            info.normal = glm::cross(aZ, bZ);
+        }
+        qDebug() << "distance: " << info.penetrationDistance;
         cubeA->collisionDetected = true;
         cubeB->collisionDetected = true;
         return true;
@@ -605,6 +771,7 @@ public:
         checkForCollisions(dt);
     }
 };
+
 
 
 int main(int argc, char *argv[])
@@ -696,6 +863,10 @@ int main(int argc, char *argv[])
     Mesh::initializeStaticArrays();
     lineMesh = Mesh::createLine();
     lineMesh.setColor(glm::vec3(0,0,1));
+    Mesh pointMesh = Mesh::createSphere();
+    pointMesh.setColor(glm::vec3(0.3,0.45,0.3));
+    Entity point(pointMesh);
+    point.setScale(glm::vec3(0.2,0.2,0.2));
 
     Entity plane = createGridedPlaneEntity(10);
 
@@ -713,7 +884,7 @@ int main(int argc, char *argv[])
     UniformRigidBody rb(mass, inertia);
     UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
-    CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
+    CubeCollider collider(glm::vec3(3.0f,0.5f,1.5f));
     CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
@@ -776,21 +947,22 @@ int main(int argc, char *argv[])
             //            cam.rotateYaw(-(float)dt*deltaPos.x());
             //            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
+        rb.setVelocity(glm::vec3(0,0,0));
         if(window.getKey(Qt::Key_Right))
         {
-            rb.addForce(5.0f*cam.getRight());
+            rb.setVelocity(1.0f*cam.getRight());
         }
         if(window.getKey(Qt::Key_Left))
         {
-            rb.addForce(-5.0f*cam.getRight());
+            rb.setVelocity(-1.0f*cam.getRight());
         }
         if(window.getKey(Qt::Key_Up))
         {
-            rb.addForce(glm::cross(glm::vec3(0,5,0), cam.getRight()));
+            rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
         }
         if(window.getKey(Qt::Key_Down))
         {
-            rb.addForce(glm::cross(glm::vec3(0,-5,0), cam.getRight()));
+            rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
         }
         if(window.getGetDown(Qt::Key_Space))
         {
@@ -828,10 +1000,25 @@ int main(int argc, char *argv[])
         }
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
+        cube.setScale(collider.scale);
         cube.draw();
 
+        collider.updateTransformedVerts();
+        for(int i =0; i<8; i++)
+        {
+
+            point.setPosition(collider.transformedVerts[i]);
+            point.draw();
+        }
+        collider.updateEdges();
+        for(int i =0;i<6;i++)
+        {
+            point.setPosition(collider.edges[i]);
+            point.draw();
+        }
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
+        cube.setScale(otherCollider.scale);
         cube.draw();
 
 
