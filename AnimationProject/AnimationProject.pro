@@ -13,21 +13,27 @@ INCLUDEPATH += \
     Dependencies
 
 SOURCES += \
+    Collider.cpp \
     Entity.cpp \
     MainDump.cpp \
     MainWindow.cpp \
     Camera.cpp \
     Mesh.cpp \
+    PhysicsWorld.cpp \
     Shader.cpp \
+    UniformRigidBody.cpp \
     main.cpp
 
 HEADERS += \
+    Collider.h \
     Common.h \
     Entity.h \
     MainWindow.h \
     Camera.h \
     Mesh.h \
-    Shader.h
+    PhysicsWorld.h \
+    Shader.h \
+    UniformRigidBody.h
 
 FORMS +=
 
