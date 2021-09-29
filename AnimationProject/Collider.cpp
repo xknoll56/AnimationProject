@@ -93,6 +93,16 @@ glm::vec3 CubeCollider::getContactDirNormalByIndex(int i)
         return rb->getLocalZAxis();
 }
 
+float CubeCollider::getContactSizeByIndex(int i)
+{
+    if(i<4)
+        return xSize;
+    else if(i<8)
+        return ySize;
+    else
+        return zSize;
+}
+
 CubeCollider::ContactDir CubeCollider::flipDir(ContactDir dir, glm::vec3 relPos)
 {
     switch(dir)

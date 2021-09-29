@@ -172,11 +172,11 @@ int main(int argc, char *argv[])
     UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
-    CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
+    CubeCollider otherCollider(glm::vec3(20.0f,0.1f,20.0f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
     std::vector<Collider*> colliders = {&collider, &otherCollider};
-    PhysicsWorld world(&colliders, glm::vec3(0, 0.0f, 0));
+    PhysicsWorld world(&colliders, glm::vec3(0, -1.0f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
@@ -184,10 +184,11 @@ int main(int argc, char *argv[])
     world.colliders.push_back(&p2);
 
 
-    rb.position = glm::vec3(0, 1, 0);
+    rb.position = glm::vec3(0, 5, 0);
     rb.dynamic = true;
-    otherRb.position = glm::vec3(0,1,-2);
-    //rb.rotation = glm::quat(glm::vec3(PI/4.0f,0.0f, 0.0f));
+    otherRb.position = glm::vec3(0,-0.1f,0);
+    otherRb.dynamic = false;
+    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
     //otherRb.rotation = glm::quat(glm::vec3(0.0f, PI/4.0f, 0));
 
     QElapsedTimer elapsedTimer;
@@ -197,8 +198,8 @@ int main(int argc, char *argv[])
     {
 
         long timeNow = elapsedTimer.nsecsElapsed();
-        dt = (timeNow-time)/1000000000.0f;
-        time = timeNow;
+        dt = elapsedTimer.nsecsElapsed()/1000000000.0f;
+        elapsedTimer.restart();
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -289,6 +290,7 @@ int main(int argc, char *argv[])
         //unitDirs.rotate(glm::quat(glm::vec3(0,dt,0)));
         //unitDirs.draw();
 
+       // world.stepWorld(0.0025f);
         world.stepWorld(dt);
 
         // cube.meshes[1].setColor(glm::vec3(1,0,0));

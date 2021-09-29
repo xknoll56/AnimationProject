@@ -63,6 +63,7 @@ struct CubeCollider: public Collider
     void updateContactVerts();
     void updateContactEdges();
     glm::vec3 getContactDirNormalByIndex(int i);
+    float getContactSizeByIndex(int i);
     ContactDir flipDir(ContactDir dir, glm::vec3 relPos);
     glm::vec3 getClosestEdge(const glm::vec3& dir, ContactDir normalTo);
     glm::vec3 getClosestVert(const glm::vec3& dir);

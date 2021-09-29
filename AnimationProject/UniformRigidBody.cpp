@@ -14,6 +14,8 @@ UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), in
     angularVelocity = glm::vec3();
     force = glm::vec3();
     torque = glm::vec3();
+    rotation = glm::normalize(rotation);
+    rotationMatrix = glm::toMat3(rotation);
 }
 
 UniformRigidBody::~UniformRigidBody()
