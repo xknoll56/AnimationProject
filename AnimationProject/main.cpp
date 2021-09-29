@@ -185,7 +185,10 @@ int main(int argc, char *argv[])
 
 
     rb.position = glm::vec3(0, 1, 0);
+    rb.dynamic = true;
     otherRb.position = glm::vec3(0,1,-2);
+    rb.rotation = glm::quat(glm::vec3(PI/4.0f,0.0f, 0.0f));
+    otherRb.rotation = glm::quat(glm::vec3(0.0f, PI/4.0f, 0));
 
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
@@ -238,10 +241,12 @@ int main(int argc, char *argv[])
         if(window.getKey(Qt::Key_Right))
         {
             rb.setVelocity(1.0f*cam.getRight());
+            //rb.addForce(2.0f*cam.getRight());
         }
         if(window.getKey(Qt::Key_Left))
         {
-            rb.setVelocity(-1.0f*cam.getRight());
+           rb.setVelocity(-1.0f*cam.getRight());
+           // rb.addForce(-2.0f*cam.getRight());
         }
         if(window.getKey(Qt::Key_E))
         {
@@ -254,10 +259,14 @@ int main(int argc, char *argv[])
         if(window.getKey(Qt::Key_Up))
         {
             rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
+            //rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
+
         }
         if(window.getKey(Qt::Key_Down))
         {
             rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
+            //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
+
         }
         if(window.getGetDown(Qt::Key_Space))
         {
@@ -285,8 +294,7 @@ int main(int argc, char *argv[])
         // cube.meshes[1].setColor(glm::vec3(1,0,0));
         //rb.setAngularVelocity(glm::vec3(0,0,1));
         //otherRb.setAngularVelocity(glm::vec3(0,1,0));
-        rb.rotation = glm::quat(glm::vec3(PI/4.0f,0.0f, 0.0f));
-        otherRb.rotation = glm::quat(glm::vec3(0.0f, PI/4.0f, 0));
+
         if(collider.collisionDetected)
         {
             cube.meshes[1].setColor(glm::vec3(1,0,0));

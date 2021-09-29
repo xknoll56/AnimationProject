@@ -1,4 +1,5 @@
 #include "PhysicsWorld.h"
+#include <QDebug>
 
 PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity)
 {
@@ -421,6 +422,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
             faceInfo.normal = glm::sign(glm::dot(faceInfo.normal,-T))*faceInfo.normal;
             cubeA->updateContactVerts();
             faceInfo.points.push_back(cubeA->rb->position+cubeA->getClosestVert(faceInfo.normal));
+            faceInfo.normal = -faceInfo.normal;
         }
         else
         {
@@ -429,6 +431,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
             cubeB->updateContactVerts();
             faceInfo.points.push_back(cubeB->rb->position+cubeB->getClosestVert(faceInfo.normal));
         }
+       // cubeB->rb->addForce(faceInfo.normal/dt);
     }
     else
     {
@@ -453,7 +456,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         pB = cubeB->rb->position + cubeB->contactEdgeBuffer[0];
 
         glm::vec3 point = pA;
-        float dist = 100.0f;
+        float dist = 0.15f;
         for(int i = 0;i<12;i++)
         {
             for(int j =0;j<12;j++)
@@ -465,16 +468,21 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
                 float check = closestDistanceBetweenLines(pA, pB, edgeADir, edgeBDir);
                 if(check < dist)
                 {
-                    dist = check;
-                    p0 = pA;
-                    p1 = pB;
-                    e0 = edgeADir;
-                    e1 = edgeBDir;
+                    //dist = check;
+//                    p0 = pA;
+//                    p1 = pB;
+//                    e0 = edgeADir;
+//                    e1 = edgeBDir;
+                    edgeInfo.points.push_back(closestPointBetweenLines(pA, pB, edgeADir, edgeBDir));
                 }
             }
         }
 
-        edgeInfo.points.push_back(closestPointBetweenLines(p0, p1, e0, e1));
+        edgeInfo.normal = -edgeInfo.normal;
+
+
+       //cubeB->rb->addForce(edgeInfo.normal/dt);
+
     }
     cubeA->collisionDetected = true;
     cubeB->collisionDetected = true;

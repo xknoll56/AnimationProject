@@ -36,6 +36,7 @@ struct PhysicsWorld
     PhysicsWorld(std::vector<Collider*>* colliders);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data);
+    bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, CubeCollider* cubeCollider);
     void checkForCollisions(float dt);
     glm::vec3 closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v);
     float closestDistanceBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v);
