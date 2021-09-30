@@ -172,11 +172,13 @@ int main(int argc, char *argv[])
     UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
-    CubeCollider otherCollider(glm::vec3(20.0f,0.1f,20.0f));
+   // CubeCollider otherCollider(glm::vec3(10.0f,0.1f,10.0f));
+    CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
+
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
     std::vector<Collider*> colliders = {&collider, &otherCollider};
-    PhysicsWorld world(&colliders, glm::vec3(0, -1.0f, 0));
+    PhysicsWorld world(&colliders, glm::vec3(0, 0.0f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
@@ -186,9 +188,11 @@ int main(int argc, char *argv[])
 
     rb.position = glm::vec3(0, 5, 0);
     rb.dynamic = true;
-    otherRb.position = glm::vec3(0,-0.1f,0);
-    otherRb.dynamic = false;
+    otherRb.position = glm::vec3(0,5,2);
+    otherRb.dynamic = true;
     rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
+    //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
+
     //otherRb.rotation = glm::quat(glm::vec3(0.0f, PI/4.0f, 0));
 
     QElapsedTimer elapsedTimer;
@@ -238,7 +242,7 @@ int main(int argc, char *argv[])
             //            cam.rotateYaw(-(float)dt*deltaPos.x());
             //            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
-        //rb.setVelocity(glm::vec3(0,0,0));
+       // rb.setVelocity(glm::vec3(0,0,0));
         if(window.getKey(Qt::Key_Right))
         {
             //rb.setVelocity(1.0f*cam.getRight());
@@ -246,7 +250,7 @@ int main(int argc, char *argv[])
         }
         if(window.getKey(Qt::Key_Left))
         {
-           //rb.setVelocity(-1.0f*cam.getRight());
+            //rb.setVelocity(-1.0f*cam.getRight());
             rb.addForce(-2.0f*cam.getRight());
         }
         if(window.getKey(Qt::Key_E))
@@ -259,7 +263,7 @@ int main(int argc, char *argv[])
         }
         if(window.getKey(Qt::Key_Up))
         {
-            //rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
+           //rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
             rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
 
         }
@@ -276,7 +280,12 @@ int main(int argc, char *argv[])
         if(window.getGetDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
-            rb.position = glm::vec3(0,5,0);
+            rb.position = glm::vec3(0,2,0);
+            rb.setAngularVelocity(glm::vec3(0,0,0));
+
+            otherRb.setVelocity(glm::vec3(0,0,0));
+            otherRb.position = glm::vec3(0,2,2);
+            otherRb.setAngularVelocity(glm::vec3(0,0,0));
         }
         if(window.getGetDown(Qt::Key_1))
         {
@@ -290,11 +299,11 @@ int main(int argc, char *argv[])
         //unitDirs.rotate(glm::quat(glm::vec3(0,dt,0)));
         //unitDirs.draw();
 
-       // world.stepWorld(0.0025f);
+        //world.stepWorld(0.0009f);
         world.stepWorld(dt);
 
         // cube.meshes[1].setColor(glm::vec3(1,0,0));
-       // rb.setAngularVelocity(glm::vec3(0.5,0.25,0.75));
+        //rb.setAngularVelocity(glm::vec3(0.5,0.25,0.75));
         //otherRb.setAngularVelocity(glm::vec3(0,1,0));
 
         if(collider.collisionDetected)

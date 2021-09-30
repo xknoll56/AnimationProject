@@ -93,4 +93,9 @@ void UniformRigidBody::stepQuantities(float dt)
         rotationMatrix = glm::toMat3(rotation);
         position+=dt*velocity;
     }
+    else
+    {
+        angularMomentum = glm::vec3();
+        linearMomentum = glm::vec3();
+    }
 }

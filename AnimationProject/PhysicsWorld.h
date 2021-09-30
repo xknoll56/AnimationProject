@@ -41,6 +41,8 @@ struct PhysicsWorld
     glm::vec3 closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v);
     float closestDistanceBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v, float s0, float s1);
     bool detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB);
+    void cubeCubeCollisionResponse(float dt, CubeCollider* cubeA, CubeCollider* cubeB);
+     void cubeCubeCollisionResponseAlt(float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);
     void sphereSphereCollisionResponse(float dt, SphereCollider* sphere, SphereCollider* other);
     void spherePlaneCollision(float dt, SphereCollider* sphere);
