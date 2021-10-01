@@ -172,13 +172,13 @@ int main(int argc, char *argv[])
     UniformRigidBody otherRb(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     CubeCollider collider(glm::vec3(0.5f,0.5f,0.5f));
-   // CubeCollider otherCollider(glm::vec3(10.0f,0.1f,10.0f));
-    CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
+    CubeCollider otherCollider(glm::vec3(10.0f,0.1f,10.0f));
+    //CubeCollider otherCollider(glm::vec3(0.5f,0.5f,0.5f));
 
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
     std::vector<Collider*> colliders = {&collider, &otherCollider};
-    PhysicsWorld world(&colliders, glm::vec3(0, 0.0f, 0));
+    PhysicsWorld world(&colliders, glm::vec3(0, -1.0f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
@@ -188,8 +188,8 @@ int main(int argc, char *argv[])
 
     rb.position = glm::vec3(0, 5, 0);
     rb.dynamic = true;
-    otherRb.position = glm::vec3(0,5,2);
-    otherRb.dynamic = true;
+    otherRb.position = glm::vec3(0,-0.1f,0);
+    otherRb.dynamic = false;
     rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
     //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
 
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
             //            cam.rotateYaw(-(float)dt*deltaPos.x());
             //            cam.rotatePitch(-(float)dt*deltaPos.y());
         }
-       // rb.setVelocity(glm::vec3(0,0,0));
+        //rb.setVelocity(glm::vec3(0,0,0));
         if(window.getKey(Qt::Key_Right))
         {
             //rb.setVelocity(1.0f*cam.getRight());
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
         }
         if(window.getKey(Qt::Key_Up))
         {
-           //rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
+            //rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
             rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
 
         }
@@ -309,21 +309,15 @@ int main(int argc, char *argv[])
         if(collider.collisionDetected)
         {
             cube.meshes[1].setColor(glm::vec3(1,0,0));
-            //            if(world.info.faceCollision)
-            //            {
-            for(int i =0;i<world.faceInfo.points.size();i++)
+
+            for(int i =0;i<world.contactInfo.points.size();i++)
             {
-                point.setPosition(world.faceInfo.points[i]);
+                point.setPosition(world.contactInfo.points[i]);
                 point.draw();
-                drawLine(rb.position, rb.position+2.0f*world.faceInfo.normal);
+
             }
-            for(int i =0;i<world.edgeInfo.points.size();i++)
-            {
-                point.setPosition(world.edgeInfo.points[i]);
-                point.draw();
-                drawLine(rb.position, rb.position+2.0f*world.edgeInfo.normal);
-            }
-            //}
+             drawLine(rb.position, rb.position+2.0f*world.contactInfo.normal);
+
         }
         else
         {
@@ -378,7 +372,7 @@ int main(int argc, char *argv[])
 
         window.resetInputs();
         app.processEvents();
-        openglFunctions->glFinish();
+       // openglFunctions->glFinish();
         context->makeCurrent(&window);
         context->swapBuffers(&window);
     }

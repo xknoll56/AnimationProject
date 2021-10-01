@@ -69,18 +69,18 @@ void CubeCollider::updateContactEdges()
     glm::vec3 py = ySize*rb->getLocalYAxis();
     glm::vec3 pz = zSize*rb->getLocalZAxis();
 
-        contactEdgeBuffer[0] = +py-pz;
-        contactEdgeBuffer[1] = +py+pz;
-        contactEdgeBuffer[2] = -py-pz;
-        contactEdgeBuffer[3] = -py+pz;
-        contactEdgeBuffer[4] = -px+pz;
-        contactEdgeBuffer[5] = -px-pz;
-        contactEdgeBuffer[6] = +px-pz;
-        contactEdgeBuffer[7] = +px+pz;
-        contactEdgeBuffer[8] = +py-px;
-        contactEdgeBuffer[9] = +py+px;
-        contactEdgeBuffer[10] = -py-px;
-        contactEdgeBuffer[11] = -py+px;
+    contactEdgeBuffer[0] = +py-pz;
+    contactEdgeBuffer[1] = +py+pz;
+    contactEdgeBuffer[2] = -py-pz;
+    contactEdgeBuffer[3] = -py+pz;
+    contactEdgeBuffer[4] = -px+pz;
+    contactEdgeBuffer[5] = -px-pz;
+    contactEdgeBuffer[6] = +px-pz;
+    contactEdgeBuffer[7] = +px+pz;
+    contactEdgeBuffer[8] = +py-px;
+    contactEdgeBuffer[9] = +py+px;
+    contactEdgeBuffer[10] = -py-px;
+    contactEdgeBuffer[11] = -py+px;
 }
 
 glm::vec3 CubeCollider::getContactDirNormalByIndex(int i)
