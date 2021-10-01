@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
     std::vector<Collider*> colliders = {&collider, &otherCollider};
-    PhysicsWorld world(&colliders, glm::vec3(0, -1.0f, 0));
+    PhysicsWorld world(&colliders, glm::vec3(0, -10.0f, 0));
 
     PlaneCollider p1(glm::vec3(-10, 0, -10), glm::vec3(-10, 0, 10), glm::vec3(10, 0, 10));
     PlaneCollider p2(glm::vec3(-10, 0, -10), glm::vec3(10, 0, 10), glm::vec3(10, 0, -10));
