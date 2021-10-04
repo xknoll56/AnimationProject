@@ -29,7 +29,8 @@ struct PhysicsWorld
     float friction = 0.4f;
     float restitutionSlope = 0.085f;
     float restitutionIntersect = 0.4f;
-    ContactInfo contactInfo;
+    ContactInfo faceInfo;
+    ContactInfo edgeInfo;
 
     PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity);
     PhysicsWorld(std::vector<Collider*>* colliders);
