@@ -1,5 +1,3 @@
-#ifndef DEBUG_H
-#define DEBUG_H
 
 #include "Mesh.h"
 #include "glm/glm.hpp"
@@ -25,5 +23,3 @@ void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to)
     line.draw(*gridShader);
 }
 
-
-#endif // DEBUG_H

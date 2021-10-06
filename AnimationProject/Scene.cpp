@@ -96,7 +96,7 @@ void Scene::start()
      otherRb.dynamic = false;
      rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
 
-     std::vector<Collider*> colliders = {&collider, &otherCollider};
+     std::vector<Collider*> colliders = {&otherCollider, &collider};
      world.setColliders(&colliders);
      world.gravity = glm::vec3(0,-1,0);
  }
@@ -156,27 +156,20 @@ void Scene::start()
 
 
      //world.stepWorld(0.0009f);
-     world.stepWorld(dt);
+     world.stepWorld(dt/2.0f);
 
      if(collider.collisionDetected)
      {
          cube.meshes[1].setColor(glm::vec3(1,0,0));
 
-         for(int i =0;i<world.faceInfo.points.size();i++)
+         for(int i =0;i<world.contacts.size();i++)
          {
-             point.setPosition(world.faceInfo.points[i]);
+             point.setPosition(world.contacts[i].points[i]);
              point.draw();
-             drawLine(lineMesh, rb.position, rb.position+2.0f*world.faceInfo.normal);
+             drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
 
          }
 
-         for(int i =0;i<world.edgeInfo.points.size();i++)
-         {
-             point.setPosition(world.edgeInfo.points[i]);
-             point.draw();
-             drawLine(lineMesh, rb.position, rb.position+2.0f*world.edgeInfo.normal);
-
-         }
 
      }
      else

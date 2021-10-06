@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "MainWindow.h"
 
+extern void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to);
 
 
 class Scene
