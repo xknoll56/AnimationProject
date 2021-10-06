@@ -38,6 +38,33 @@ CubeCollider::CubeCollider(const glm::vec3& sizes)
     type = ColliderType::CUBE;
 }
 
+CubeCollider::CubeCollider()
+{
+    xSize = 0.5f;
+    ySize = 0.5f;
+    zSize = 0.5f;
+    scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
+    type = ColliderType::CUBE;
+}
+CubeCollider::CubeCollider(const CubeCollider& other)
+{
+    xSize = other.xSize;
+    ySize = other.ySize;
+    zSize = other.zSize;
+    scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
+    type = ColliderType::CUBE;
+}
+
+CubeCollider& CubeCollider::operator= (const CubeCollider& other)
+{
+    xSize = other.xSize;
+    ySize = other.ySize;
+    zSize = other.zSize;
+    scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
+    type = ColliderType::CUBE;
+    return *this;
+}
+
 CubeCollider::CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb)
 {
     xSize = sizes.x;

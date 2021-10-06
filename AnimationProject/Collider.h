@@ -19,7 +19,23 @@ struct Collider
     ColliderType type;
     UniformRigidBody* rb = nullptr;
     bool collisionDetected = false;
-
+    Collider()
+    {
+        type = ColliderType::NONE;
+    }
+    Collider(const Collider& other)
+    {
+        type = other.type;
+        rb = other.rb;
+        collisionDetected = other.collisionDetected;
+    }
+    Collider& operator= (const Collider& other)
+    {
+        type = other.type;
+        rb = other.rb;
+        collisionDetected = other.collisionDetected;
+        return *this;
+    }
     virtual ~Collider();
 };
 
@@ -58,8 +74,11 @@ struct CubeCollider: public Collider
         NONE = 6
     };
 
+    CubeCollider();
+    CubeCollider(const CubeCollider& other);
     CubeCollider(const glm::vec3& sizes);
     CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb);
+    CubeCollider& operator= (const CubeCollider& other);
     void updateContactVerts();
     void updateContactEdges();
     glm::vec3 getContactDirNormalByIndex(int i);

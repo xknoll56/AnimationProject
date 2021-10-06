@@ -40,6 +40,9 @@ struct UniformRigidBody
 
 
     UniformRigidBody(float _mass, float _inertia);
+    UniformRigidBody();
+    UniformRigidBody(const UniformRigidBody& other);
+    UniformRigidBody& operator= (const UniformRigidBody& other);
     virtual ~UniformRigidBody();
     void addForce(const glm::vec3& force);
     void addTorque(const glm::vec3& torque);

@@ -33,6 +33,25 @@ PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders)
 
 }
 
+PhysicsWorld::PhysicsWorld()
+{
+    gravity = glm::vec3(0, -9.81f, 0);
+}
+
+void PhysicsWorld::setColliders(std::vector<Collider *> *colliders)
+{
+    this->colliders.reserve(colliders->size());
+    for(auto& collider: *colliders)
+    {
+        this->colliders.push_back(collider);
+    }
+    for(auto& collider: *colliders)
+    {
+        if(collider->rb!=nullptr)
+            collider->rb->force += collider->rb->mass*gravity;
+    }
+}
+
 bool PhysicsWorld::Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
 {
     switch(collider->type)

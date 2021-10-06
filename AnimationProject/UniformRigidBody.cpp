@@ -18,6 +18,56 @@ UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), in
     rotationMatrix = glm::toMat3(rotation);
 }
 
+UniformRigidBody::UniformRigidBody(const UniformRigidBody& other): mass(other.mass), inertia(other.inertia)
+{
+    massInv = 1.0f/other.mass;
+    inertiaInv = 1.0f/other.inertia;
+    position = other.position;
+    rotation = other.rotation;
+    linearMomentum = other.linearMomentum;
+    angularMomentum = other.angularMomentum;
+    velocity = other.velocity;
+    angularVelocity = other.angularVelocity;
+    force = other.force;
+    torque = other.torque;
+    rotation = glm::normalize(rotation);
+    rotationMatrix = glm::toMat3(rotation);
+}
+
+UniformRigidBody& UniformRigidBody::operator= (const UniformRigidBody& other)
+{
+    massInv = 1.0f/other.mass;
+    inertiaInv = 1.0f/other.inertia;
+    position = other.position;
+    rotation = other.rotation;
+    linearMomentum = other.linearMomentum;
+    angularMomentum = other.angularMomentum;
+    velocity = other.velocity;
+    angularVelocity = other.angularVelocity;
+    force = other.force;
+    torque = other.torque;
+    rotation = glm::normalize(rotation);
+    rotationMatrix = glm::toMat3(rotation);
+    return *this;
+}
+
+UniformRigidBody::UniformRigidBody(): mass(1.0f), inertia(1.0f)
+{
+    massInv = 1.0f/mass;
+    inertiaInv = 1.0f/inertia;
+    position = glm::vec3();
+    rotation = glm::quat(glm::vec3(0,0,0));
+    linearMomentum = glm::vec3();
+    angularMomentum = glm::vec3();
+    velocity = glm::vec3();
+    angularVelocity = glm::vec3();
+    force = glm::vec3();
+    torque = glm::vec3();
+    rotation = glm::normalize(rotation);
+    rotationMatrix = glm::toMat3(rotation);
+}
+
+
 UniformRigidBody::~UniformRigidBody()
 {
 

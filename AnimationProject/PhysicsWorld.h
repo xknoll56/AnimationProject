@@ -34,6 +34,8 @@ struct PhysicsWorld
 
     PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity);
     PhysicsWorld(std::vector<Collider*>* colliders);
+    PhysicsWorld();
+    void setColliders(std::vector<Collider*>* colliders);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, CubeCollider* cubeCollider);
