@@ -604,7 +604,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(float dt, CubeCollider* cubeA, Cube
     float mag = glm::dot(-vRel, info.normal);
     glm::vec3 radius = info.points[0]-cubeB->rb->position;
 
-    //if(mag>0)
+    if(mag>0)
     {
         glm::vec3 fParallel = cubeB->rb->elasticity*mag*info.normal/dt;
         glm::vec3 fTotal = fParallel;
@@ -612,7 +612,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(float dt, CubeCollider* cubeA, Cube
         {
 
 
-            glm::vec3 fPerp = -glm::cross(radius, glm::cross(vRel-cubeB->rb->linearMomentum, radius));
+            glm::vec3 fPerp = glm::cross(radius, glm::cross(vRel-cubeB->rb->linearMomentum, radius));
             // glm::vec3 fFric = 0.01f*vRel/dt;
             fTotal = fParallel-fPerp;
         }

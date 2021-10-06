@@ -15,11 +15,13 @@ INCLUDEPATH += \
 SOURCES += \
     Collider.cpp \
     Entity.cpp \
+    MainApplication.cpp \
     MainDump.cpp \
     MainWindow.cpp \
     Camera.cpp \
     Mesh.cpp \
     PhysicsWorld.cpp \
+    Scene.cpp \
     Shader.cpp \
     UniformRigidBody.cpp \
     main.cpp
@@ -27,11 +29,14 @@ SOURCES += \
 HEADERS += \
     Collider.h \
     Common.h \
+    Debug.h \
     Entity.h \
+    MainApplication.h \
     MainWindow.h \
     Camera.h \
     Mesh.h \
     PhysicsWorld.h \
+    Scene.h \
     Shader.h \
     UniformRigidBody.h
 
