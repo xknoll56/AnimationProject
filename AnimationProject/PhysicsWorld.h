@@ -42,12 +42,12 @@ struct PhysicsWorld
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data);
     bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, CubeCollider* cubeCollider);
     void checkForCollisions(float dt);
-    glm::vec3 closestPointBetweenLines(glm::vec3 p0,  glm::vec3 p1, const glm::vec3& u, const glm::vec3& v);
+    glm::vec3 closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v);
     float closestDistanceBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v, float s0, float s1);
     bool closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v, float s0, float s1);
     bool detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo);
     void determineCubeCubeContactPoints(ContactInfo& info, CubeCollider* cubeA, CubeCollider* cubeB);
-    void determineCubeCubePetrusionVerts(ContactInfo& info, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir);
+    void determineCubeCubePetrusionVerts(ContactInfo& info,const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir);
     void cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     void cubeCubeCollisionResponseAlt(float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);

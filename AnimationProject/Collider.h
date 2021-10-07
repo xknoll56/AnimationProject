@@ -65,13 +65,10 @@ struct CubeCollider: public Collider
     glm::vec3 contactVertBuffer[8];
     enum ContactDir
     {
-        LEFT = 0,
-        RIGHT = 1,
-        DOWN = 2,
-        UP = 3,
-        BACK = 4,
-        FORWARD = 5,
-        NONE = 6
+        RIGHT = 0,
+        UP = 1,
+        FORWARD = 2,
+        NONE = 3
     };
     struct EdgeIndices
     {
