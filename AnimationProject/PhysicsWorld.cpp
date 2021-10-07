@@ -127,6 +127,7 @@ bool PhysicsWorld::Raycast(const glm::vec3& start, const glm::vec3& dir, RayCast
 
 void PhysicsWorld::checkForCollisions(float dt)
 {
+    contacts.clear();
     for(auto& collider: colliders)
     {
         switch(collider->type)
@@ -179,7 +180,7 @@ void PhysicsWorld::checkForCollisions(float dt)
         CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
         cubeCubeCollisionResponse(info, dt, cube, otherCube);
     }
-    contacts.clear();
+
 }
 
 glm::vec3 PhysicsWorld::closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v)
@@ -499,6 +500,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
                 faceInfo.points.push_back(cubeB->rb->position+cubeB->getClosestVert(faceInfo.normal));
             }
 
+            faceInfo.normal = -faceInfo.normal;
+
         }
         faceInfo.a = cubeA;
         faceInfo.b = cubeB;
@@ -507,6 +510,21 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     else
     {
         faceInfo.faceCollision = false;
+        edgeInfo.normal = glm::sign(glm::dot(edgeInfo.normal,T))*edgeInfo.normal;
+        edgeInfo.normal = glm::normalize(edgeInfo.normal);
+//        if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
+//        {
+//            cubeA->rb->position -= edgeInfo.normal*edgeInfo.penetrationDistance;
+//        }
+//        else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
+//        {
+//            cubeB->rb->position -= edgeInfo.normal*edgeInfo.penetrationDistance;
+//        }
+//        else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
+//        {
+//            cubeA->rb->position += 0.5f*edgeInfo.normal*edgeInfo.penetrationDistance;
+//            cubeB->rb->position -= 0.5f*edgeInfo.normal*edgeInfo.penetrationDistance;
+//        }
         glm::vec3 edgeADir = cubeA->rb->getLocalXAxis();
         glm::vec3 p0, pA, e0;
         pA = cubeA->rb->position + cubeA->contactEdgeBuffer[0];
@@ -541,10 +559,10 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         }
         if(dist<0.2f)
         {
-        edgeInfo.normal = glm::cross(e0, e1);
+        //edgeInfo.normal = glm::cross(e0, e1);
         edgeInfo.normal = glm::sign(glm::dot(edgeInfo.normal,T))*edgeInfo.normal;
         edgeInfo.normal = glm::normalize(edgeInfo.normal);
-        edgeInfo.points.push_back(closestPointBetweenLines(p0, p1, e0, e1));
+        edgeInfo.points.push_back(closestPointBetweenLines(p0,p1, e0, e1));
         edgeInfo.a = cubeA;
         edgeInfo.b = cubeB;
         contacts.push_back(edgeInfo);
@@ -616,21 +634,20 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
 void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB)
 {
 
-    if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
-    {
-        cubeA->rb->position -= info.normal*info.penetrationDistance;
-    }
-    else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
-    {
-        cubeB->rb->position -= info.normal*info.penetrationDistance;
-    }
-    else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
-    {
-        cubeA->rb->position -= 0.5f*info.normal*info.penetrationDistance;
-        cubeB->rb->position -= 0.5f*info.normal*info.penetrationDistance;
-    }
-    qDebug() << info.normal.x << " " << info.normal.y << " " << info.normal.z;
-    //info.normal = -info.normal;
+//    if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
+//    {
+//        cubeA->rb->position -= info.normal*info.penetrationDistance;
+//    }
+//    else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
+//    {
+//        cubeB->rb->position -= info.normal*info.penetrationDistance;
+//    }
+//    else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
+//    {
+//        cubeA->rb->position += 0.5f*info.normal*info.penetrationDistance;
+//        cubeB->rb->position -= 0.5f*info.normal*info.penetrationDistance;
+//    }
+
     float epsilon = 0.5f;
     glm::vec3 ra = info.points[0]-cubeA->rb->position;
     glm::vec3 rb = info.points[0]-cubeB->rb->position;
@@ -646,43 +663,11 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
     float j = numerator/(t1+t2+t3+t4);
     glm::vec3 force = j*info.normal/dt;
-    qDebug() << force.x << " " << force.y << " " << force.z;
     cubeA->rb->addForce(force);
     cubeB->rb->addForce(-force);
     cubeA->rb->addTorque(glm::cross(ra, force));
     cubeB->rb->addTorque(-glm::cross(rb, force));
-//    info.normal = glm::normalize(info.normal);
-//    if(cubeB->rb->dynamic)
-//    {
-//        cubeB->rb->position -= 0.99f*info.normal*info.penetrationDistance;
-//    }
 
-//    glm::vec3 vRel = cubeB->rb->linearMomentum+glm::cross(cubeB->rb->angularMomentum, info.points[0]-cubeB->rb->position)-(cubeA->rb->linearMomentum+glm::cross(cubeA->rb->angularMomentum, info.points[0]-cubeA->rb->position));
-//    float mag = glm::dot(-vRel, info.normal);
-//    glm::vec3 radius = info.points[0]-cubeB->rb->position;
-
-//    if(mag>0)
-//    {
-//        glm::vec3 fParallel = cubeB->rb->elasticity*mag*info.normal/dt;
-//        glm::vec3 fTotal = fParallel;
-//        if(info.points.size()>0)
-//        {
-
-
-//            glm::vec3 fPerp = glm::cross(radius, glm::cross(vRel-cubeB->rb->linearMomentum, radius));
-//            // glm::vec3 fFric = 0.01f*vRel/dt;
-//            fTotal = fParallel-fPerp;
-//        }
-
-//        cubeB->rb->addForce(fTotal);
-
-//        if(info.points.size()>0)
-//        {
-//            glm::vec3 torque = glm::cross(-fParallel, info.points[0]-cubeB->rb->position);
-//            //qDebug() << torque.x << " " << torque.y << " " << torque.z;
-//            cubeB->rb->addTorque(torque);
-//        }
-//    }
 
 }
 
