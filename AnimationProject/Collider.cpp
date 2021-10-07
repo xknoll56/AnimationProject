@@ -36,6 +36,7 @@ CubeCollider::CubeCollider(const glm::vec3& sizes)
     zSize = sizes.z;
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
+    initEdges();
 }
 
 CubeCollider::CubeCollider()
@@ -45,6 +46,7 @@ CubeCollider::CubeCollider()
     zSize = 0.5f;
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
+    initEdges();
 }
 CubeCollider::CubeCollider(const CubeCollider& other)
 {
@@ -53,6 +55,7 @@ CubeCollider::CubeCollider(const CubeCollider& other)
     zSize = other.zSize;
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
+    initEdges();
 }
 
 CubeCollider& CubeCollider::operator= (const CubeCollider& other)
@@ -62,6 +65,7 @@ CubeCollider& CubeCollider::operator= (const CubeCollider& other)
     zSize = other.zSize;
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
+    initEdges();
     return *this;
 }
 
@@ -73,6 +77,26 @@ CubeCollider::CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb)
     this->rb = rb;
     type = ColliderType::CUBE;
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
+    initEdges();
+
+}
+
+void CubeCollider::initEdges()
+{
+    edges[0] = {0,1, zSize};
+    edges[1] = {1,2, xSize};
+    edges[2] = {2,3, zSize};
+    edges[3] = {3,0, xSize};
+
+    edges[4] = {0,4, ySize};
+    edges[5] = {1,5, ySize};
+    edges[6] = {2,6, ySize};
+    edges[7] = {3,7, ySize};
+
+    edges[8] = {4,5, zSize};
+    edges[9] = {5,6, xSize};
+    edges[10] = {6,7, zSize};
+    edges[11] = {7,4, xSize};
 }
 
 void CubeCollider::updateContactVerts()
@@ -80,124 +104,77 @@ void CubeCollider::updateContactVerts()
     glm::vec3 px = xSize*rb->getLocalXAxis();
     glm::vec3 py = ySize*rb->getLocalYAxis();
     glm::vec3 pz = zSize*rb->getLocalZAxis();
-    contactVertBuffer[0] = -px-py-pz;
-    contactVertBuffer[1] = -px-py+pz;
-    contactVertBuffer[2] = -px+py-pz;
-    contactVertBuffer[3] = -px+py+pz;
-    contactVertBuffer[4] = +px-py-pz;
-    contactVertBuffer[5] = +px-py+pz;
-    contactVertBuffer[6] = +px+py-pz;
-    contactVertBuffer[7] = +px+py+pz;
+    contactVertBuffer[0] = rb->position + -px-py-pz;
+    contactVertBuffer[1] = rb->position + -px-py+pz;
+    contactVertBuffer[2] = rb->position + +px-py+pz;
+    contactVertBuffer[3] = rb->position + +px-py-pz;
+    contactVertBuffer[4] = rb->position + -px+py-pz;
+    contactVertBuffer[5] = rb->position + -px+py+pz;
+    contactVertBuffer[6] = rb->position + +px+py+pz;
+    contactVertBuffer[7] = rb->position + +px+py-pz;
 }
 
-void CubeCollider::updateContactEdges()
-{
-    glm::vec3 px = xSize*rb->getLocalXAxis();
-    glm::vec3 py = ySize*rb->getLocalYAxis();
-    glm::vec3 pz = zSize*rb->getLocalZAxis();
 
-    contactEdgeBuffer[0] = +py-pz;
-    contactEdgeBuffer[1] = +py+pz;
-    contactEdgeBuffer[2] = -py-pz;
-    contactEdgeBuffer[3] = -py+pz;
-    contactEdgeBuffer[4] = -px+pz;
-    contactEdgeBuffer[5] = -px-pz;
-    contactEdgeBuffer[6] = +px-pz;
-    contactEdgeBuffer[7] = +px+pz;
-    contactEdgeBuffer[8] = +py-px;
-    contactEdgeBuffer[9] = +py+px;
-    contactEdgeBuffer[10] = -py-px;
-    contactEdgeBuffer[11] = -py+px;
-}
 
-glm::vec3 CubeCollider::getContactDirNormalByIndex(int i)
+std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
 {
-    if(i<4)
-        return rb->getLocalXAxis();
-    else if(i<8)
-        return rb->getLocalYAxis();
-    else
-        return rb->getLocalZAxis();
-}
-
-float CubeCollider::getContactSizeByIndex(int i)
-{
-    if(i<4)
-        return xSize;
-    else if(i<8)
-        return ySize;
-    else
-        return zSize;
-}
-
-CubeCollider::ContactDir CubeCollider::flipDir(ContactDir dir, glm::vec3 relPos)
-{
-    switch(dir)
-    {
-    case ContactDir::RIGHT:
-        if(glm::dot(relPos, rb->getLocalXAxis())<0)
-            return ContactDir::LEFT;
-        else
-            return dir;
-        break;
-    case ContactDir::UP:
-        if(glm::dot(relPos, rb->getLocalYAxis())<0)
-            return ContactDir::DOWN;
-        else
-            return dir;
-        break;
-    case ContactDir::FORWARD:
-        if(glm::dot(relPos, rb->getLocalZAxis())<0)
-            return ContactDir::BACK;
-        else
-            return dir;
-        break;
-    }
-}
-
-glm::vec3 CubeCollider::getClosestEdge(const glm::vec3& dir, ContactDir normalTo)
-{
-    glm::vec3 px = xSize*rb->getLocalXAxis();
-    glm::vec3 py = ySize*rb->getLocalYAxis();
-    glm::vec3 pz = zSize*rb->getLocalZAxis();
-    switch(normalTo)
-    {
-    case ContactDir::RIGHT:
-    {
-        float s1 = glm::sign(glm::dot(dir, py));
-        float s2 = glm::sign(glm::dot(dir, pz));
-        return s1*py+s2*pz;
-    }
-    case ContactDir::UP:
-    {
-        float s1 = glm::sign(glm::dot(dir, px));
-        float s2 = glm::sign(glm::dot(dir, pz));
-        return s1*px+s2*pz;
-    }
-    case ContactDir::FORWARD:
-    {
-        float s1 = glm::sign(glm::dot(dir, py));
-        float s2 = glm::sign(glm::dot(dir, px));
-        return s1*py+s2*px;
-    }
-    }
-    return px;
-}
-
-glm::vec3 CubeCollider::getClosestVert(const glm::vec3& dir)
-{
-    float min = 100.0f;
-    glm::vec3 minVert = contactVertBuffer[0];
+    updateContactVerts();
+    float min = std::numeric_limits<float>::max();
+    //glm::vec3 minVert = contactVertBuffer[0];
+    std::vector<glm::vec3> minVerts;
+    indices.clear();
+    minVerts.reserve(4);
+    indices.reserve(4);
     for(int i = 0; i<8;i++)
     {
         float test = glm::dot(dir, contactVertBuffer[i]);
         if(test<min)
         {
             min = test;
-            minVert = contactVertBuffer[i];
         }
     }
-    return minVert;
+    for(int i = 0; i<8;i++)
+    {
+        float test = glm::dot(dir, contactVertBuffer[i]);
+        if(glm::epsilonEqual(test, min, 0.0001f))
+        {
+            minVerts.push_back(contactVertBuffer[i]);
+            indices.push_back(i);
+        }
+    }
+    return minVerts;
+}
+
+std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
+{
+    std::vector<CubeCollider::EdgeIndices> eis;
+    for(int i0: indices)
+    {
+        for(int i1: indices)
+        {
+            if(i0!=i1)
+            {
+                for(int j = 0;j<12;j++)
+                {
+                    if((edges[j].i0 == i0 && edges[j].i1 == i1) ||(edges[j].i0 == i1 && edges[j].i1 == i0))
+                    {
+                        edges[j].midPoint = 0.5f*(contactVertBuffer[edges[j].i0]+contactVertBuffer[edges[j].i1]);
+                        if(j>3 && j<8)
+                            edges[j].dir = rb->getLocalYAxis();
+                        else
+                        {
+                            if(j%2==0)
+                                edges[j].dir = rb->getLocalZAxis();
+                            else
+                                edges[j].dir = rb->getLocalXAxis();
+                        }
+                        eis.push_back(edges[j]);
+                    }
+                }
+            }
+        }
+    }
+    return eis;
 }
 
 QuadCollider::QuadCollider(const float xSize, const float zSize)

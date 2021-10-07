@@ -200,7 +200,7 @@ void CubeDropScene::start()
     rb = UniformRigidBody(mass, inertia);
     otherRb = UniformRigidBody(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
-    collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+    collider = CubeCollider(glm::vec3(1.5f,0.2f,0.5f));
     otherCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
@@ -208,9 +208,10 @@ void CubeDropScene::start()
     //rb.dynamic = false;
     otherRb.position = glm::vec3(0,2, 2);
     //otherRb.dynamic = false;
-    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, 0.0f));
-    otherRb.rotation = glm::quat(glm::vec3(0,PI/3.0f, 0.0f));
-
+//    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, 0.0f));
+//    otherRb.rotation = glm::quat(glm::vec3(0,PI/3.0f, 0.0f));
+    rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+    otherRb.rotation = glm::quat(glm::vec3(0,0.0f, 0.0f));
 
     std::vector<Collider*> colliders = {&otherCollider, &collider};
     world.gravity = glm::vec3(0,0,0);
@@ -281,9 +282,13 @@ void CubeDropScene::update(float dt)
 
         for(int i =0;i<world.contacts.size();i++)
         {
-            point.setPosition(world.contacts[i].points[i]);
-            point.draw();
-            drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
+            for(int j =0;j<world.contacts[i].points.size();j++)
+            {
+                point.setPosition(world.contacts[i].points[j]);
+                point.draw();
+                if(j == 0)
+                    drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
+            }
 
         }
 

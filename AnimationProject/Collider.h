@@ -14,11 +14,13 @@ enum ColliderType
 };
 
 
+
 struct Collider
 {
     ColliderType type;
     UniformRigidBody* rb = nullptr;
     bool collisionDetected = false;
+    unsigned int id;
     Collider()
     {
         type = ColliderType::NONE;
@@ -61,8 +63,6 @@ struct CubeCollider: public Collider
     float xSize, ySize, zSize;
     glm::vec3 scale;
     glm::vec3 contactVertBuffer[8];
-    glm::vec3 contactEdgeBuffer[12];
-
     enum ContactDir
     {
         LEFT = 0,
@@ -73,19 +73,31 @@ struct CubeCollider: public Collider
         FORWARD = 5,
         NONE = 6
     };
+    struct EdgeIndices
+    {
+        int i0;
+        int i1;
+        float length;
+        //the midpoints will be updated every request for edges
+        glm::vec3 midPoint;
+        glm::vec3 dir;
+    };
+
+    EdgeIndices edges[12];
+    std::vector<int> indices;
+
+
 
     CubeCollider();
     CubeCollider(const CubeCollider& other);
     CubeCollider(const glm::vec3& sizes);
     CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb);
     CubeCollider& operator= (const CubeCollider& other);
+    void initEdges();
     void updateContactVerts();
     void updateContactEdges();
-    glm::vec3 getContactDirNormalByIndex(int i);
-    float getContactSizeByIndex(int i);
-    ContactDir flipDir(ContactDir dir, glm::vec3 relPos);
-    glm::vec3 getClosestEdge(const glm::vec3& dir, ContactDir normalTo);
-    glm::vec3 getClosestVert(const glm::vec3& dir);
+    std::vector<EdgeIndices> getEdgesFromVertexIndices();
+    std::vector<glm::vec3> getClosestVerts(const glm::vec3& dir);
 
 };
 
