@@ -184,12 +184,15 @@ void PhysicsWorld::checkForCollisions(float dt)
         }
     }
 
-    //    for(ContactInfo& info: contacts)
-    //    {
-    //        CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
-    //        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
-    //        cubeCubeCollisionResponse(info, dt, cube, otherCube);
-    //    }
+    if(enableResponse)
+    {
+        for(ContactInfo& info: contacts)
+        {
+            CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
+            CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
+            cubeCubeCollisionResponse(info, dt, cube, otherCube);
+        }
+    }
 
 }
 
@@ -230,13 +233,13 @@ bool PhysicsWorld::closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1, const
 
 bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo)
 {
-    glm::vec3 aX = glm::normalize(cubeA->rb->getLocalXAxis());
-    glm::vec3 aY = glm::normalize(cubeA->rb->getLocalYAxis());
-    glm::vec3 aZ = glm::normalize(cubeA->rb->getLocalZAxis());
+    glm::vec3 aX = cubeA->rb->getLocalXAxis();
+    glm::vec3 aY = cubeA->rb->getLocalYAxis();
+    glm::vec3 aZ = cubeA->rb->getLocalZAxis();
 
-    glm::vec3 bX = glm::normalize(cubeB->rb->getLocalXAxis());
-    glm::vec3 bY = glm::normalize(cubeB->rb->getLocalYAxis());
-    glm::vec3 bZ = glm::normalize(cubeB->rb->getLocalZAxis());
+    glm::vec3 bX = cubeB->rb->getLocalXAxis();
+    glm::vec3 bY = cubeB->rb->getLocalYAxis();
+    glm::vec3 bZ = cubeB->rb->getLocalZAxis();
 
     glm::vec3 T = cubeB->rb->position - cubeA->rb->position;
 
@@ -663,39 +666,48 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
 void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB)
 {
 
-    //    if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
-    //    {
-    //        cubeA->rb->position -= info.normal*info.penetrationDistance;
-    //    }
-    //    else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
-    //    {
-    //        cubeB->rb->position -= info.normal*info.penetrationDistance;
-    //    }
-    //    else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
-    //    {
-    //        cubeA->rb->position += 0.5f*info.normal*info.penetrationDistance;
-    //        cubeB->rb->position -= 0.5f*info.normal*info.penetrationDistance;
-    //    }
+    if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
+    {
+        cubeA->rb->position -= info.normal*info.penetrationDistance;
+    }
+    else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
+    {
+        cubeB->rb->position -= info.normal*info.penetrationDistance;
+    }
+    else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
+    {
+        cubeA->rb->position += 0.5f*info.normal*info.penetrationDistance;
+        cubeB->rb->position -= 0.5f*info.normal*info.penetrationDistance;
+    }
 
-    float epsilon = 0.5f;
-    glm::vec3 ra = info.points[0]-cubeA->rb->position;
-    glm::vec3 rb = info.points[0]-cubeB->rb->position;
-    glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
-    glm::vec3 vb = cubeB->rb->velocity + glm::cross(cubeB->rb->angularVelocity, rb);
-    float vRel = glm::dot(info.normal, va-vb);
-    float numerator = -(1-epsilon)*vRel;
+    for(int i =0;i<info.points.size();i++)
+    {
+        float epsilon = 0.5f;
+        glm::vec3 ra = info.points[i]-cubeA->rb->position;
+        glm::vec3 rb = info.points[i]-cubeB->rb->position;
+        glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
+        glm::vec3 vb = cubeB->rb->velocity + glm::cross(cubeB->rb->angularVelocity, rb);
+        float vRel = glm::dot(info.normal, va-vb);
+        float numerator = -(1-epsilon)*vRel;
 
-    float t1 = 1/cubeA->rb->mass;
-    float t2 = 1/cubeB->rb->mass;
-    float t3 = glm::dot(info.normal, glm::cross(glm::cross(cubeA->rb->inertiaInv*ra, info.normal), ra));
-    float t4 = glm::dot(info.normal, glm::cross(glm::cross(cubeB->rb->inertiaInv*ra, info.normal), rb));
+        float t1 = 1/cubeA->rb->mass;
+        float t2 = 1/cubeB->rb->mass;
+        float t3 = glm::dot(info.normal, glm::cross(glm::cross(cubeA->rb->inertiaInv*ra, info.normal), ra));
+        float t4 = glm::dot(info.normal, glm::cross(glm::cross(cubeB->rb->inertiaInv*ra, info.normal), rb));
 
-    float j = numerator/(t1+t2+t3+t4);
-    glm::vec3 force = j*info.normal/dt;
-    cubeA->rb->addForce(force);
-    cubeB->rb->addForce(-force);
-    cubeA->rb->addTorque(glm::cross(ra, force));
-    cubeB->rb->addTorque(-glm::cross(rb, force));
+        float j = numerator/(t1+t2+t3+t4);
+        glm::vec3 force = j*info.normal/dt;
+        if(cubeA->rb->dynamic)
+        {
+            cubeA->rb->addForce(force);
+            cubeA->rb->addTorque(+friction*glm::cross(ra, force));
+        }
+        if(cubeB->rb->dynamic)
+        {
+            cubeB->rb->addForce(-force);
+            cubeB->rb->addTorque(-friction*glm::cross(rb, force));
+        }
+    }
 
 
 }

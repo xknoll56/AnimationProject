@@ -90,29 +90,32 @@ CubeDropScene::CubeDropScene(MainWindow& window): Scene(window)
 //    otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
 //    collider.rb = &rb;
 //    otherCollider.rb = &otherRb;
-//    rb.position = glm::vec3(0, 5, 0);
+//    rb.position = glm::vec3(0, 10, 0);
 //    rb.dynamic = true;
 //    otherRb.position = glm::vec3(0,-0.1f, 0);
 //    otherRb.dynamic = false;
 //    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
+//   // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+
 
 //    std::vector<Collider*> colliders = {&otherCollider, &collider};
-//    world.gravity = glm::vec3(0,-1,0);
+//    world.gravity = glm::vec3(0,-10.0f,0);
 //    world.setColliders(&colliders);
 //}
 
 //void CubeDropScene::update(float dt)
 //{
 //    Scene::update(dt);
+//    //rb.setVelocity(glm::vec3());
 //    if(window.getKey(Qt::Key_Right))
 //    {
-//        //rb.setVelocity(1.0f*cam.getRight());
-//        rb.addForce(2.0f*cam.getRight());
+//        rb.setVelocity(1.0f*cam.getRight());
+//        //rb.addForce(2.0f*cam.getRight());
 //    }
 //    if(window.getKey(Qt::Key_Left))
 //    {
-//        //rb.setVelocity(-1.0f*cam.getRight());
-//        rb.addForce(-2.0f*cam.getRight());
+//        rb.setVelocity(-1.0f*cam.getRight());
+//        //rb.addForce(-2.0f*cam.getRight());
 //    }
 //    if(window.getKey(Qt::Key_E))
 //    {
@@ -124,14 +127,14 @@ CubeDropScene::CubeDropScene(MainWindow& window): Scene(window)
 //    }
 //    if(window.getKey(Qt::Key_Up))
 //    {
-//        //rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
-//        rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
+//        rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
+//        //rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
 
 //    }
 //    if(window.getKey(Qt::Key_Down))
 //    {
-//        //rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
-//        rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
+//        rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
+//        //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
 //    }
 //    if(window.getGetDown(Qt::Key_Space))
@@ -164,9 +167,13 @@ CubeDropScene::CubeDropScene(MainWindow& window): Scene(window)
 
 //        for(int i =0;i<world.contacts.size();i++)
 //        {
-//            point.setPosition(world.contacts[i].points[i]);
-//            point.draw();
-//            drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
+//            for(int j =0;j<world.contacts[i].points.size();j++)
+//            {
+//                point.setPosition(world.contacts[i].points[j]);
+//                point.draw();
+//                if(j == 0)
+//                    drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
+//            }
 
 //        }
 
@@ -185,10 +192,7 @@ CubeDropScene::CubeDropScene(MainWindow& window): Scene(window)
 //    cube.setRotation(otherRb.rotation);
 //    cube.setScale(otherCollider.scale);
 //    cube.draw();
-
-
 //    plane.draw();
-
 //}
 
 
@@ -201,21 +205,22 @@ void CubeDropScene::start()
     otherRb = UniformRigidBody(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-    otherCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+    otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
     rb.position = glm::vec3(0, 2, 0);
     //rb.dynamic = false;
-    otherRb.position = glm::vec3(0,2, 2);
+    otherRb.position = glm::vec3(0,-0.1, 0);
     //otherRb.dynamic = false;
 //    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, 0.0f));
 //    otherRb.rotation = glm::quat(glm::vec3(0,PI/3.0f, 0.0f));
-    rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+    rb.rotation = glm::quat(glm::vec3(PI,0.0f, 0.0f));
     otherRb.rotation = glm::quat(glm::vec3(0,0.0f, 0.0f));
 
     std::vector<Collider*> colliders = {&otherCollider, &collider};
     world.gravity = glm::vec3(0,0,0);
     world.setColliders(&colliders);
+    world.enableResponse = false;
 }
 
 void CubeDropScene::update(float dt)
@@ -307,8 +312,6 @@ void CubeDropScene::update(float dt)
     cube.setRotation(otherRb.rotation);
     cube.setScale(otherCollider.scale);
     cube.draw();
-
-
     plane.draw();
 
 }

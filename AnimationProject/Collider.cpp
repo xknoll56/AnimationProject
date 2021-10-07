@@ -136,7 +136,7 @@ std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
     for(int i = 0; i<8;i++)
     {
         float test = glm::dot(dir, contactVertBuffer[i]);
-        if(glm::epsilonEqual(test, min, 0.0001f))
+        if(glm::epsilonEqual(test, min, 0.01f))
         {
             minVerts.push_back(contactVertBuffer[i]);
             indices.push_back(i);

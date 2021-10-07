@@ -32,6 +32,7 @@ struct PhysicsWorld
     float restitutionSlope = 0.085f;
     float restitutionIntersect = 0.4f;
     std::vector<ContactInfo> contacts;
+    bool enableResponse = true;
 
     PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity);
     PhysicsWorld(std::vector<Collider*>* colliders);

@@ -97,17 +97,17 @@ void UniformRigidBody::setAngularVelocity(const glm::vec3& angularVelocity)
 
 glm::vec3 UniformRigidBody::getLocalXAxis()
 {
-    return glm::normalize(glm::vec3(rotationMatrix[0]));
+    return glm::vec3(rotationMatrix[0]);
 }
 
 glm::vec3 UniformRigidBody::getLocalYAxis()
 {
-    return glm::normalize(glm::vec3(rotationMatrix[1]));
+    return glm::vec3(rotationMatrix[1]);
 }
 
 glm::vec3 UniformRigidBody::getLocalZAxis()
 {
-    return glm::normalize(glm::vec3(rotationMatrix[2]));
+    return glm::vec3(rotationMatrix[2]);
 }
 
 glm::vec3 UniformRigidBody::peekNextPosition(float dt)
