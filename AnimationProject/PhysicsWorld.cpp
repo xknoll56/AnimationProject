@@ -357,7 +357,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     {
         return false;
     }
-    if(penetration > edgeInfo.penetrationDistance &&penetration < 0.0)
+    if(penetration < 0.0)
     {
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aX, bX);
@@ -487,7 +487,13 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     }
     t2+=penetration;
 
-    if(t1>=t2 || glm::length2(edgeInfo.normal) == 0.0f)
+    qDebug() << "t1: " << t1;
+    qDebug() << "t2: " << t2;
+    qDebug() << glm::length2(edgeInfo.normal);
+
+    if( t1>=t2 || glm::length2(edgeInfo.normal) < 0.0001f )
+        contactInfo = faceInfo;
+    else if(faceInfo.penetrationDistance>=edgeInfo.penetrationDistance)
         contactInfo = faceInfo;
     else
         contactInfo = edgeInfo;
@@ -692,16 +698,16 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
     if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
     {
-        cubeA->rb->position -= info.normal*info.penetrationDistance;
+        cubeA->rb->position -= 0.99f*info.normal*info.penetrationDistance;
     }
     else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
     {
-        cubeB->rb->position -= info.normal*info.penetrationDistance;
+        cubeB->rb->position -= 0.99f*info.normal*info.penetrationDistance;
     }
     else if(cubeA->rb->dynamic && cubeB->rb->dynamic)
     {
-        cubeA->rb->position += 0.5f*info.normal*info.penetrationDistance;
-        cubeB->rb->position -= 0.5f*info.normal*info.penetrationDistance;
+        cubeA->rb->position += 0.49f*info.normal*info.penetrationDistance;
+        cubeB->rb->position -= 0.49f*info.normal*info.penetrationDistance;
     }
 
     for(int i =0;i<info.points.size();i++)
