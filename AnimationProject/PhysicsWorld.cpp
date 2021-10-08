@@ -487,18 +487,47 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     }
     t2+=penetration;
 
-    qDebug() << "t1: " << t1;
-    qDebug() << "t2: " << t2;
-    qDebug() << "face penetration: " << faceInfo.penetrationDistance;
-    qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
-    qDebug() << "normal: " << edgeInfo.normal.x << ", "<<edgeInfo.normal.y << ", " << edgeInfo.normal.z;
-//    if(  || glm::length2(edgeInfo.normal) < 0.0001f )
-//        contactInfo = faceInfo;
-    float tolerance = 0.001f;
-    if(faceInfo.penetrationDistance+tolerance>=edgeInfo.penetrationDistance || t1>=t1)
+    //    qDebug() << "t1: " << t1;
+    //    qDebug() << "t2: " << t2;
+    //    qDebug() << "face penetration: " << faceInfo.penetrationDistance;
+    //    qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
+    //    if(  || glm::length2(edgeInfo.normal) < 0.0001f )
+    //        contactInfo = faceInfo;
+    //    float tolerance = 0.001f;
+    //    if(faceInfo.penetrationDistance>=edgeInfo.penetrationDistance )
+    //    {
+    //        contactInfo = faceInfo;
+    //        qDebug() << "face penetration";
+    //    }
+    //    else
+    //    {
+    //        contactInfo = edgeInfo;
+    //        qDebug() << "edge penetration";
+    //    }
+
+    faceInfo.normal = glm::sign(glm::dot(T, faceInfo.normal))*faceInfo.normal;
+    faceInfo.normal = glm::normalize(faceInfo.normal);
+    std::vector<glm::vec3> closestVertsA = cubeA->getClosestVerts(-faceInfo.normal);
+    std::vector<glm::vec3> closestVertsB = cubeB->getClosestVerts(faceInfo.normal);
+    bool facecollision = false;
+    if(faceInfo.aDir == CubeCollider::ContactDir::NONE)
+    {
+        facecollision = isCubeCubePetrusion(-faceInfo.normal, closestVertsA, cubeB, faceInfo.bDir);
+    }
+    else if(faceInfo.bDir == CubeCollider::ContactDir::NONE)
+    {
+         facecollision = isCubeCubePetrusion(faceInfo.normal, closestVertsB, cubeA, faceInfo.aDir);
+    }
+    if(faceInfo.penetrationDistance>=edgeInfo.penetrationDistance || facecollision)
+    {
         contactInfo = faceInfo;
+        qDebug() << "face penetration";
+    }
     else
+    {
         contactInfo = edgeInfo;
+        qDebug() << "edge penetration";
+    }
 
     contactInfo.a = cubeA;
     contactInfo.b = cubeB;
@@ -653,6 +682,54 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
     contacts.push_back(info);
 }
 
+bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir)
+{
+    glm::vec3 p0 = toCube->rb->position + toCube->rb->getLocalXAxis()*toCube->xSize;
+    glm::vec3 adj1 = toCube->rb->getLocalYAxis();
+    float maxDist1 = toCube->ySize;
+    glm::vec3 adj2 = toCube->rb->getLocalZAxis();
+    float maxDist2 = toCube->zSize;
+    switch(dir)
+    {
+    case CubeCollider::ContactDir::RIGHT:
+        if(glm::dot(normal, toCube->rb->getLocalXAxis())<0)
+            p0 = toCube->rb->position - toCube->rb->getLocalXAxis()*toCube->xSize;
+        break;
+    case CubeCollider::ContactDir::UP:
+        p0 = toCube->rb->position + toCube->rb->getLocalYAxis()*toCube->ySize;
+        if(glm::dot(normal, toCube->rb->getLocalYAxis())<0)
+            p0 = toCube->rb->position - toCube->rb->getLocalYAxis()*toCube->ySize;
+        adj1 = toCube->rb->getLocalXAxis();
+        maxDist1 = toCube->xSize;
+        adj2 = toCube->rb->getLocalZAxis();
+        maxDist2 = toCube->zSize;
+        break;
+    case CubeCollider::ContactDir::FORWARD:
+        p0 = toCube->rb->position + toCube->rb->getLocalZAxis()*toCube->zSize;
+        if(glm::dot(normal, toCube->rb->getLocalZAxis())<0)
+            p0 = toCube->rb->position - toCube->rb->getLocalZAxis()*toCube->zSize;
+        adj1 = toCube->rb->getLocalXAxis();
+        maxDist1 = toCube->xSize;
+        adj2 = toCube->rb->getLocalYAxis();
+        maxDist2 = toCube->ySize;
+        break;
+    }
+
+    for(glm::vec3 point: points)
+    {
+        float d = glm::dot(p0-point, normal)/glm::dot(normal,normal);
+        if(d>0.0f)
+        {
+            glm::vec3 intersectionPoint = point+d*normal;
+            float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
+            float dist2 = glm::abs(glm::dot(intersectionPoint-p0, adj2));
+            if(dist1<=maxDist1 && dist2<=maxDist2)
+                return true;
+        }
+    }
+    return false;
+}
+
 void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir, bool adjustPenetration)
 {
     glm::vec3 p0 = toCube->rb->position + toCube->rb->getLocalXAxis()*toCube->xSize;
@@ -690,7 +767,7 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
     {
         float d = glm::dot(p0-point, normal)/glm::dot(normal,normal);
         //This now becomes the new penetration distance
-        //qDebug() << "Penetration distance: " << d;
+       // qDebug() << "Penetration distance: " << d;
         if(adjustPenetration)
             info.penetrationDistance = -d;
         glm::vec3 intersectionPoint = point+d*normal;
@@ -751,8 +828,8 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
         }
         else
         {
-//            cubeA->rb->applyGravity = false;
-//            cubeB->rb->applyGravity = false;
+            //            cubeA->rb->applyGravity = false;
+            //            cubeB->rb->applyGravity = false;
         }
     }
 

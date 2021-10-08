@@ -58,6 +58,7 @@ struct PhysicsWorld
     bool detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo);
     void determineCubeCubeContactPoints(ContactInfo& info, CubeCollider* cubeA, CubeCollider* cubeB);
     void determineCubeCubePetrusionVerts(ContactInfo& info,const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir, bool adjustPenetration);
+    bool isCubeCubePetrusion(const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir);
     void cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     void cubeCubeCollisionResponseAlt(float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);

@@ -87,10 +87,11 @@ void CubeDropScene::start()
     otherRb = UniformRigidBody(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-    otherCollider = CubeCollider(glm::vec3(10,0.1f,10));
+    otherCollider = CubeCollider(glm::vec3(10,5.0f,10));
+    otherCollider = CubeCollider(glm::vec3(10.5f,5.0f,10.5f));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
-    rb.position = glm::vec3(0, 1, 0);
+    rb.position = glm::vec3(0, 5, 0);
     rb.dynamic = true;
     otherRb.position = glm::vec3(0,-0.1f, 0);
     otherRb.dynamic = false;
@@ -99,15 +100,15 @@ void CubeDropScene::start()
 
 
     std::vector<Collider*> colliders = {&otherCollider, &collider};
-    world.gravity = glm::vec3(0,-1.0f,0);
-    world.enableResponse = true;
+    world.gravity = glm::vec3(0,-0.0f,0);
+    world.enableResponse = false;
     world.setColliders(&colliders);
 }
 
 void CubeDropScene::update(float dt)
 {
     Scene::update(dt);
-   // rb.setVelocity(glm::vec3());
+    rb.setVelocity(glm::vec3());
     if(window.getKey(Qt::Key_Right))
     {
         rb.setVelocity(1.0f*cam.getRight());
