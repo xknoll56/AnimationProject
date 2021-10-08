@@ -135,7 +135,8 @@ void UniformRigidBody::stepQuantities(float dt)
             appliedTorques.clear();
         }
         angularMomentum += torque*dt;
-        linearMomentum += force*dt;
+        if(applyGravity)
+            linearMomentum += force*dt;
         angularVelocity = inertiaInv*angularMomentum;
         velocity = massInv*linearMomentum;
         rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;

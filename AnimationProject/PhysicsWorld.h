@@ -21,6 +21,15 @@ struct ContactInfo
     Collider* a;
     Collider* b;
     bool faceCollision;
+
+    ContactInfo()
+    {
+        penetrationDistance = -std::numeric_limits<float>().max();
+        normal = glm::vec3();
+        aDir = CubeCollider::ContactDir::NONE;
+        bDir = CubeCollider::ContactDir::NONE;
+        faceCollision = true;
+    }
 };
 
 struct PhysicsWorld

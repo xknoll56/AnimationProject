@@ -87,19 +87,19 @@ void CubeDropScene::start()
     otherRb = UniformRigidBody(mass, inertia);
     // SphereBody otherRb(mass, 0.5f);
     collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-    otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
+    otherCollider = CubeCollider(glm::vec3(10,0.1f,10));
     collider.rb = &rb;
     otherCollider.rb = &otherRb;
-    rb.position = glm::vec3(0, 10, 0);
+    rb.position = glm::vec3(0, 1, 0);
     rb.dynamic = true;
     otherRb.position = glm::vec3(0,-0.1f, 0);
     otherRb.dynamic = false;
-    rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
+    rb.rotation = glm::quat(glm::vec3(0,0.0f, 0));
    // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
     std::vector<Collider*> colliders = {&otherCollider, &collider};
-    world.gravity = glm::vec3(0,-10.0f,0);
+    world.gravity = glm::vec3(0,-1.0f,0);
     world.enableResponse = true;
     world.setColliders(&colliders);
 }
@@ -107,7 +107,7 @@ void CubeDropScene::start()
 void CubeDropScene::update(float dt)
 {
     Scene::update(dt);
-    //rb.setVelocity(glm::vec3());
+   // rb.setVelocity(glm::vec3());
     if(window.getKey(Qt::Key_Right))
     {
         rb.setVelocity(1.0f*cam.getRight());
@@ -144,10 +144,20 @@ void CubeDropScene::update(float dt)
     }
     if(window.getGetDown(Qt::Key_R))
     {
-        rb.setVelocity(glm::vec3(0,0,0));
-        rb.position = glm::vec3(0,10,0);
-        rb.setAngularVelocity(glm::vec3(0,0,0));
-        rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
+//        rb.setVelocity(glm::vec3(0,0,0));
+//        rb.position = glm::vec3(0,10,0);
+//        rb.setAngularVelocity(glm::vec3(0,0,0));
+        rb.rotation += 0.5f*glm::quat(glm::vec3(PI,0,0))*rb.rotation;
+
+    }
+    if(window.getGetDown(Qt::Key_T))
+    {
+        rb.rotation += 0.5f*glm::quat(glm::vec3(0,0,PI))*rb.rotation;
+
+    }
+    if(window.getGetDown(Qt::Key_Y))
+    {
+        rb.rotation += 0.5f*glm::quat(glm::vec3(0,PI,0))*rb.rotation;
 
     }
     if(window.getGetDown(Qt::Key_1))

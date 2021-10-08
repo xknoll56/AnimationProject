@@ -37,6 +37,7 @@ HEADERS += \
     Mesh.h \
     PhysicsWorld.h \
     Scene.h \
+    Scenes/StackScene.h \
     Shader.h \
     UniformRigidBody.h
 

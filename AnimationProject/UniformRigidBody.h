@@ -37,6 +37,7 @@ struct UniformRigidBody
     bool applyForce = false;
     bool applyTorque = false;
     bool dynamic = true;
+    bool applyGravity = true;
 
 
     UniformRigidBody(float _mass, float _inertia);

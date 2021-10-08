@@ -34,6 +34,7 @@
 #include <PhysicsWorld.h>
 #include <Scene.h>
 #include <MainApplication.h>
+#include <Scenes/StackScene.h>
 
 
 
@@ -49,6 +50,7 @@ int main(int argc, char *argv[])
     MainApplication app(argc, argv);
     app.setup(1280, 720);
     CubeDropScene scene(app.window);
+    //StackScene scene(app.window);
     app.scene = &scene;
     app.execute();
 }
