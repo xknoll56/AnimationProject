@@ -1,6 +1,7 @@
 #pragma once
 #include "Scene.h"
 extern void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to);
+extern MainWindow* gMainWindow;
 
 class CollisionTestScene: public Scene
 {
@@ -13,7 +14,7 @@ private:
 
 
 public:
-    CollisionTestScene(MainWindow& window): Scene(window)
+    CollisionTestScene()
     {
 
     }
@@ -47,41 +48,41 @@ public:
     {
         Scene::update(dt);
         rb.setVelocity(glm::vec3());
-        if(window.getKey(Qt::Key_Right))
+        if(gMainWindow->getKey(Qt::Key_Right))
         {
             rb.setVelocity(1.0f*cam.getRight());
             //rb.addForce(2.0f*cam.getRight());
         }
-        if(window.getKey(Qt::Key_Left))
+        if(gMainWindow->getKey(Qt::Key_Left))
         {
             rb.setVelocity(-1.0f*cam.getRight());
             //rb.addForce(-2.0f*cam.getRight());
         }
-        if(window.getKey(Qt::Key_E))
+        if(gMainWindow->getKey(Qt::Key_E))
         {
             rb.setVelocity(1.0f*glm::vec3(0,1,0));
         }
-        if(window.getKey(Qt::Key_Q))
+        if(gMainWindow->getKey(Qt::Key_Q))
         {
             rb.setVelocity(-1.0f*glm::vec3(0,1,0));
         }
-        if(window.getKey(Qt::Key_Up))
+        if(gMainWindow->getKey(Qt::Key_Up))
         {
             rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
             //rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
 
         }
-        if(window.getKey(Qt::Key_Down))
+        if(gMainWindow->getKey(Qt::Key_Down))
         {
             rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
             //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
         }
-        if(window.getGetDown(Qt::Key_Space))
+        if(gMainWindow->getGetDown(Qt::Key_Space))
         {
             rb.addForce(glm::vec3(0,800,0));
         }
-        if(window.getGetDown(Qt::Key_R))
+        if(gMainWindow->getGetDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
             rb.position = glm::vec3(0,1,0);

@@ -3,11 +3,11 @@
 
 extern Shader* modelShader;
 extern Shader* gridShader;
+extern MainWindow* gMainWindow;
 
-
-Scene::Scene(MainWindow& window) : window(window)
+Scene::Scene()
 {
-    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)window.width()/window.height(), 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)gMainWindow->width()/gMainWindow->height(), 0.1f, 100.0f);
     glm::mat4 trans(1.0f);
     cam = Camera(glm::vec3(0,2,5));
     cam.updateView();
@@ -45,26 +45,26 @@ void Scene::start()
 
 void Scene::update(float dt)
 {
-    if(window.getKey(Qt::Key_A))
+    if(gMainWindow->getKey(Qt::Key_A))
     {
         cam.translateRight(-dt);
     }
-    if(window.getKey(Qt::Key_D))
+    if(gMainWindow->getKey(Qt::Key_D))
     {
         cam.translateRight(dt);
     }
-    if(window.getKey(Qt::Key_W))
+    if(gMainWindow->getKey(Qt::Key_W))
     {
         cam.translateFwd(-dt);
     }
-    if(window.getKey(Qt::Key_S))
+    if(gMainWindow->getKey(Qt::Key_S))
     {
         cam.translateFwd(dt);
     }
-    if(window.getMouse(Qt::MouseButton::LeftButton))
+    if(gMainWindow->getMouse(Qt::MouseButton::LeftButton))
     {
-        QPointF deltaPos = QCursor::pos()-window.mousePos;
-        window.mousePos = QCursor::pos();
+        QPointF deltaPos = QCursor::pos()-gMainWindow->mousePos;
+        gMainWindow->mousePos = QCursor::pos();
         cam.smoothRotateYaw(-dt*deltaPos.x());
         cam.smoothRotatePitch(-dt*deltaPos.y());
     }

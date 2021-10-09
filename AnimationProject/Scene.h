@@ -13,12 +13,11 @@ class Scene
 {
 public:
 
-    Scene(MainWindow& window);
+    Scene();
     virtual void start();
     virtual void update(float dt);
 
 protected:
-    MainWindow& window;
     Entity plane;
     Mesh lineMesh;
     Entity unitDirs;

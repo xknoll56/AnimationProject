@@ -3,6 +3,7 @@
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 extern Shader* modelShader;
 extern Shader* gridShader;
+MainWindow* gMainWindow;
 
 MainApplication::MainApplication(int argc, char *argv[]): QGuiApplication(argc, argv)
 {
@@ -21,6 +22,7 @@ bool MainApplication::setup(int windowWidth, int windowHeight)
     format.setSwapBehavior(QSurfaceFormat::SwapBehavior::DefaultSwapBehavior);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
+    gMainWindow = &window;
     window.setTitle("Animation Project");
     window.setFormat(format);
     window.setSurfaceType(QWindow::OpenGLSurface);

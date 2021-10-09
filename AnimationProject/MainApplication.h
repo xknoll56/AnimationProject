@@ -10,6 +10,7 @@
 #include "Scene.h"
 
 
+
 class MainApplication: QGuiApplication
 {
 public:

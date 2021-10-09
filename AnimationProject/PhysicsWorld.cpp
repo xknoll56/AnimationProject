@@ -707,7 +707,7 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
     for(glm::vec3 point: points)
     {
         float d = glm::dot(p0-point, normal)/glm::dot(normal,normal);
-        if(d>0.0f)
+        if(d>=0.0f)
         {
             glm::vec3 intersectionPoint = point+d*normal;
             float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
