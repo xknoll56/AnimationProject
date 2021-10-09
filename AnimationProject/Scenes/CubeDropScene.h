@@ -86,10 +86,11 @@ public:
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {
-            rb.setVelocity(glm::vec3(0,0,0));
-            rb.position = glm::vec3(0,10,0);
+            rb.setVelocity(glm::vec3((float)(rand()%8)/8.0f,0,(float)(rand()%8)/8.0f));
+            rb.position = glm::vec3(0,5,0);
             rb.setAngularVelocity(glm::vec3(0,0,0));
-            rb.rotation += 0.5f*glm::quat(glm::vec3(PI,0,0))*rb.rotation;
+            rb.rotation = glm::quat(glm::vec3((float)(rand()%8),(float)(rand()%8),(float)(rand()%8)));
+           // rb.rotation += 0.5f*glm::quat(glm::vec3(PI,0,0))*rb.rotation;
 
         }
 
