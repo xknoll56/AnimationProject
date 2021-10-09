@@ -12,7 +12,7 @@ UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), in
     angularMomentum = glm::vec3();
     velocity = glm::vec3();
     angularVelocity = glm::vec3();
-    force = glm::vec3();
+    gravitionalForce = glm::vec3();
     torque = glm::vec3();
     rotation = glm::normalize(rotation);
     rotationMatrix = glm::toMat3(rotation);
@@ -28,7 +28,7 @@ UniformRigidBody::UniformRigidBody(const UniformRigidBody& other): mass(other.ma
     angularMomentum = other.angularMomentum;
     velocity = other.velocity;
     angularVelocity = other.angularVelocity;
-    force = other.force;
+    gravitionalForce = other.gravitionalForce;
     torque = other.torque;
     rotation = glm::normalize(rotation);
     rotationMatrix = glm::toMat3(rotation);
@@ -44,7 +44,7 @@ UniformRigidBody& UniformRigidBody::operator= (const UniformRigidBody& other)
     angularMomentum = other.angularMomentum;
     velocity = other.velocity;
     angularVelocity = other.angularVelocity;
-    force = other.force;
+    gravitionalForce = other.gravitionalForce;
     torque = other.torque;
     rotation = glm::normalize(rotation);
     rotationMatrix = glm::toMat3(rotation);
@@ -61,7 +61,7 @@ UniformRigidBody::UniformRigidBody(): mass(1.0f), inertia(1.0f)
     angularMomentum = glm::vec3();
     velocity = glm::vec3();
     angularVelocity = glm::vec3();
-    force = glm::vec3();
+    gravitionalForce = glm::vec3();
     torque = glm::vec3();
     rotation = glm::normalize(rotation);
     rotationMatrix = glm::toMat3(rotation);
@@ -112,7 +112,7 @@ glm::vec3 UniformRigidBody::getLocalZAxis()
 
 glm::vec3 UniformRigidBody::peekNextPosition(float dt)
 {
-    glm::vec3 tempMomentum = linearMomentum+force*dt;
+    glm::vec3 tempMomentum = linearMomentum+gravitionalForce*dt;
     return position + massInv*tempMomentum*dt;
 }
 void UniformRigidBody::stepQuantities(float dt)
@@ -136,7 +136,7 @@ void UniformRigidBody::stepQuantities(float dt)
         }
         angularMomentum += torque*dt;
         if(applyGravity)
-            linearMomentum += force*dt;
+            linearMomentum += gravitionalForce*dt;
         angularVelocity = inertiaInv*angularMomentum;
         velocity = massInv*linearMomentum;
         rotation+= dt*0.5f*glm::quat(0, angularVelocity.x, angularVelocity.y, angularVelocity.z)*rotation;

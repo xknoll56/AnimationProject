@@ -14,7 +14,7 @@ PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity)
     for(auto& collider: *colliders)
     {
         if(collider->rb!=nullptr)
-            collider->rb->force += collider->rb->mass*gravity;
+            collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }
 
 }
@@ -32,7 +32,7 @@ PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders)
     for(auto& collider: *colliders)
     {
         if(collider->rb!=nullptr)
-            collider->rb->force += collider->rb->mass*gravity;
+            collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }
 
 }
@@ -54,7 +54,7 @@ void PhysicsWorld::setColliders(std::vector<Collider *> *colliders)
     for(auto& collider: *colliders)
     {
         if(collider->rb!=nullptr)
-            collider->rb->force += collider->rb->mass*gravity;
+            collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }
 }
 
@@ -489,21 +489,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
 
     //    qDebug() << "t1: " << t1;
     //    qDebug() << "t2: " << t2;
-    //    qDebug() << "face penetration: " << faceInfo.penetrationDistance;
-    //    qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
-    //    if(  || glm::length2(edgeInfo.normal) < 0.0001f )
-    //        contactInfo = faceInfo;
-    //    float tolerance = 0.001f;
-    //    if(faceInfo.penetrationDistance>=edgeInfo.penetrationDistance )
-    //    {
-    //        contactInfo = faceInfo;
-    //        qDebug() << "face penetration";
-    //    }
-    //    else
-    //    {
-    //        contactInfo = edgeInfo;
-    //        qDebug() << "edge penetration";
-    //    }
+//        qDebug() << "face penetration: " << faceInfo.penetrationDistance;
+//        qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
 
     faceInfo.normal = glm::sign(glm::dot(T, faceInfo.normal))*faceInfo.normal;
     faceInfo.normal = glm::normalize(faceInfo.normal);
@@ -518,10 +505,12 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     {
          facecollision = isCubeCubePetrusion(faceInfo.normal, closestVertsB, cubeA, faceInfo.aDir);
     }
-    if(faceInfo.penetrationDistance>=edgeInfo.penetrationDistance || facecollision)
+    if(facecollision)
     {
         contactInfo = faceInfo;
         qDebug() << "face penetration";
+        if(faceInfo.normal.y!=1.0f)
+            qDebug() << "normal: " << faceInfo.normal.x <<", " << faceInfo.normal.y<<", " << faceInfo.normal.z;
     }
     else
     {

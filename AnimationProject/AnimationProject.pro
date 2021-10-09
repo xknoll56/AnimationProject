@@ -37,6 +37,8 @@ HEADERS += \
     Mesh.h \
     PhysicsWorld.h \
     Scene.h \
+    Scenes/CollisionTestScene.h \
+    Scenes/CubeDropScene.h \
     Scenes/StackScene.h \
     Shader.h \
     UniformRigidBody.h

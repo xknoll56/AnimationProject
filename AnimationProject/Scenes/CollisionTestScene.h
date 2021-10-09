@@ -2,20 +2,18 @@
 #include "Scene.h"
 extern void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to);
 
-class StackScene: public Scene
+class CollisionTestScene: public Scene
 {
 private:
     PhysicsWorld world;
     CubeCollider collider;
-    CubeCollider stackedCollider;
-    UniformRigidBody stackedRb;
     CubeCollider otherCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
 
 
 public:
-    StackScene(MainWindow& window): Scene(window)
+    CollisionTestScene(MainWindow& window): Scene(window)
     {
 
     }
@@ -26,16 +24,13 @@ public:
         float inertia = (2.0f/5.0f)*mass*radius*radius;
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
-        stackedRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
         collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         otherCollider = CubeCollider(glm::vec3(10.0f,0.5f,10.0f));
-        stackedCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-        stackedCollider.rb = &stackedRb;
+
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1.5, 0);
-        stackedRb.position = glm::vec3(0, 3, 0);
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.5f, 0);
         otherRb.dynamic = false;
@@ -43,15 +38,15 @@ public:
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
-        std::vector<Collider*> colliders = {&otherCollider, &collider, &stackedCollider};
-        world.gravity = glm::vec3(0,-10.0f,0);
-        world.enableResponse = true;
+        std::vector<Collider*> colliders = {&otherCollider, &collider};
+        world.gravity = glm::vec3(0,0.0f,0);
+        world.enableResponse = false;
         world.setColliders(&colliders);
     }
     void update(float dt)
     {
         Scene::update(dt);
-        //rb.setVelocity(glm::vec3());
+        rb.setVelocity(glm::vec3());
         if(window.getKey(Qt::Key_Right))
         {
             rb.setVelocity(1.0f*cam.getRight());
@@ -89,18 +84,12 @@ public:
         if(window.getGetDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
-            rb.position = glm::vec3(0,10,0);
-            rb.setAngularVelocity(glm::vec3(0,0,0));
+            rb.position = glm::vec3(0,1,0);
+            rb.setAngularVelocity(glm::vec3(0.1,0.2,0.3));
             rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
         }
-        if(window.getGetDown(Qt::Key_1))
-        {
-            rb.setVelocity(glm::vec3(0,0,0));
-        }
 
-        //rb.setAngularVelocity(glm::vec3(0.2, 0.3, 0.4));
-        //world.stepWorld(0.0009f);
         world.stepWorld(dt);
 
         if(world.contacts.size()>0)
@@ -125,11 +114,6 @@ public:
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);
-        cube.draw();
-
-        cube.setPosition(stackedRb.position);
-        cube.setRotation(stackedRb.rotation);
-        cube.setScale(stackedCollider.scale);
         cube.draw();
 
         cube.setPosition(otherRb.position);

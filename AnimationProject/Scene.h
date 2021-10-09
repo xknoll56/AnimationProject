@@ -33,20 +33,4 @@ protected:
 
 };
 
-class CubeDropScene: public Scene
-{
-private:
-    PhysicsWorld world;
-    CubeCollider collider;
-    CubeCollider otherCollider;
-    UniformRigidBody rb;
-    UniformRigidBody otherRb;
-
-
-public:
-    CubeDropScene(MainWindow& window);
-    void start() override;
-    void update(float dt) override;
-};
-
 #endif // SCENE_H

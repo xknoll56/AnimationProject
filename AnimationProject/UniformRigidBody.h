@@ -28,7 +28,7 @@ struct UniformRigidBody
     glm::vec3 angularVelocity;
 
     //known quantities
-    glm::vec3 force;
+    glm::vec3 gravitionalForce;
     glm::vec3 torque;
 
     //applied force/torque will be applie for a single step
