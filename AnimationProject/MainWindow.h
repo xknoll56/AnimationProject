@@ -21,6 +21,7 @@ public:
     void resizeEvent(QResizeEvent *ev) override;
     void resetInputs();
     bool shouldRun();
+    void quit();
     void toggleWriteEnable();
     void clearText();
     bool getKey(Qt::Key);

@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Debug.h"
+#include <QDebug>
 
 extern Shader* modelShader;
 extern Shader* gridShader;
@@ -51,7 +52,7 @@ void Scene::start()
 
 void Scene::update(float dt)
 {
-    if(gMainWindow->getGetDown(Qt::Key_0))
+    if(gMainWindow->getGetDown(Qt::Key_Escape))
     {
         doUpdateConsole = true;
         consoleToggle = false;
@@ -80,6 +81,7 @@ void Scene::update(float dt)
         cam.rotateYaw(-dt*deltaPos.x());
         cam.rotatePitch(-dt*deltaPos.y());
     }
+
     cam.updateView();
     modelShader->setMat4("view", cam.view);
     gridShader->setMat4("view", cam.view);
@@ -91,22 +93,41 @@ void Scene::updateConsole(float dt)
     openglFunctions->glDisable(GL_DEPTH_TEST);
     openglFunctions->glDisable(GL_CULL_FACE);
 
+    if(gMainWindow->getGetDown(Qt::Key_Return))
+    {
+        QString text = gMainWindow->writtenText;
+        if(text.compare("exit")==0)
+            gMainWindow->quit();
+        commands.push_front(text);
+        for(QString& reply: replys)
+            reply.append("\n\n");
+        replys.push_front("command not found\n");
+        for(QString& command: commands)
+            command.append("\n\n");
+        gMainWindow->clearText();
+    }
+
     painter.begin(gPaintDevice);
     painter.setPen(Qt::green);
     painter.setBrush(Qt::black);
     painter.setOpacity(0.8f);
-    painter.setFont(QFont("Monospace", 12));
+    painter.setFont(QFont("Courier", 12));
 
     QRectF rect(0.0f,gMainWindow->size().height()*3/4,gMainWindow->size().width(), gMainWindow->size().height()/4);
 
 
     painter.drawRect(rect);
-    painter.drawText(rect, Qt::AlignBottom, gMainWindow->writtenText);
+    for(QString& command: commands)
+        painter.drawText(rect, Qt::AlignBottom, command);
+    painter.drawText(rect, Qt::AlignBottom, ">"+gMainWindow->writtenText.toLower());
 
+    painter.setPen(Qt::red);
+    for(QString& reply: replys)
+        painter.drawText(rect, Qt::AlignBottom, reply);
     painter.end();
 
 
-    if(gMainWindow->getGetDown(Qt::Key_0) && consoleToggle)
+    if(gMainWindow->getGetDown(Qt::Key_Escape) && consoleToggle)
     {
         doUpdateConsole = false;
         gMainWindow->clearText();

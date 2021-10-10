@@ -6,6 +6,7 @@
 #include "PhysicsWorld.h"
 #include "Camera.h"
 #include "MainWindow.h"
+#include <list>
 
 extern void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to);
 
@@ -35,6 +36,8 @@ protected:
     Camera cam;
     Entity point;
     QPainter painter;
+    std::list<QString> commands;
+    std::list<QString> replys;
 
 
 };

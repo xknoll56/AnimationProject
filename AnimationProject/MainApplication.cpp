@@ -1,8 +1,8 @@
 #include "MainApplication.h"
 
-extern QOpenGLFunctions_4_5_Core* openglFunctions;
-extern Shader* modelShader;
-extern Shader* gridShader;
+QOpenGLFunctions_4_5_Core* openglFunctions;
+Shader* modelShader;
+Shader* gridShader;
 MainWindow* gMainWindow;
 QPaintDevice* gPaintDevice;
 

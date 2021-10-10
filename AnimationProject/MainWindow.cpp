@@ -35,14 +35,20 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if(enableWrite)
     {
+
+        switch(event->key())
+        {
+        case Qt::Key_Space:
+            writtenText.append(" ");
+            break;
+        case Qt::Key_Backspace:
+            writtenText.chop(1);
+            break;
+        }
+
         QChar test = QChar(event->key());
         if(test.isLetterOrNumber())
-            writtenText += test;
-    }
-    switch(event->key())
-    {
-    case Qt::Key_Escape:
-        running = false;
+            writtenText.append(test.toLower());
     }
     inputs[event->key()] = true;
     if(!inputsDownReset[event->key()])
@@ -51,6 +57,11 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         inputsDown[event->key()] = true;
         inputsDownReset[event->key()] = true;
     }
+}
+
+void MainWindow::quit()
+{
+    running = false;
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
