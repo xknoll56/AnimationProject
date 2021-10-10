@@ -508,14 +508,10 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     if(facecollision)
     {
         contactInfo = faceInfo;
-        qDebug() << "face penetration";
-        if(faceInfo.normal.y!=1.0f)
-            qDebug() << "normal: " << faceInfo.normal.x <<", " << faceInfo.normal.y<<", " << faceInfo.normal.z;
     }
     else
     {
         contactInfo = edgeInfo;
-        qDebug() << "edge penetration";
     }
 
     contactInfo.a = cubeA;
@@ -792,7 +788,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
         glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
         glm::vec3 vb = cubeB->rb->velocity + glm::cross(cubeB->rb->angularVelocity, rb);
         float vRel = glm::dot(info.normal, va-vb);
-        qDebug() << vRel;
+       // qDebug() << vRel;
         float numerator = -(1-epsilon)*vRel;
 
         float t1 = cubeA->rb->massInv;

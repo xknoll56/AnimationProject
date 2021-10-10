@@ -8,6 +8,7 @@ MainWindow::MainWindow() : QWindow()
 {
     setKeyboardGrabEnabled(true);
     running = true;
+    writtenText = "";
 }
 
 
@@ -32,6 +33,12 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
+    if(enableWrite)
+    {
+        QChar test = QChar(event->key());
+        if(test.isLetterOrNumber())
+            writtenText += test;
+    }
     switch(event->key())
     {
     case Qt::Key_Escape:
@@ -100,4 +107,13 @@ bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
           exit(EXIT_SUCCESS);
      }
      return QObject::eventFilter(obj, event);
+}
+
+void MainWindow::toggleWriteEnable()
+{
+    enableWrite = !enableWrite;
+}
+void MainWindow::clearText()
+{
+    writtenText = "";
 }

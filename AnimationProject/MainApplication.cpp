@@ -4,6 +4,7 @@ extern QOpenGLFunctions_4_5_Core* openglFunctions;
 extern Shader* modelShader;
 extern Shader* gridShader;
 MainWindow* gMainWindow;
+QPaintDevice* gPaintDevice;
 
 MainApplication::MainApplication(int argc, char *argv[]): QGuiApplication(argc, argv)
 {
@@ -40,6 +41,7 @@ bool MainApplication::setup(int windowWidth, int windowHeight)
 
     //app.processEvents();
     paintDevice = new QOpenGLPaintDevice;
+    gPaintDevice = paintDevice;
     paintDevice->setSize(window.size() * window.devicePixelRatio());
     paintDevice->setDevicePixelRatio(window.devicePixelRatio());
 
@@ -57,11 +59,11 @@ bool MainApplication::setup(int windowWidth, int windowHeight)
 
     window.openglInitialized = true;
     openglFunctions->glViewport(0, 0, window.width() * window.devicePixelRatio(), window.height() * window.devicePixelRatio());
+//    openglFunctions->glEnable(GL_LINE_SMOOTH);
+//    openglFunctions->glEnable(GL_LINE_WIDTH);
+//    openglFunctions->glLineWidth(2.5f);
     openglFunctions->glEnable(GL_DEPTH_TEST);
     openglFunctions->glEnable(GL_CULL_FACE);
-    openglFunctions->glEnable(GL_LINE_SMOOTH);
-    openglFunctions->glEnable(GL_LINE_WIDTH);
-    openglFunctions->glLineWidth(2.5f);
     openglFunctions->glDisable(GL_LIGHTING);
 
     modelShader = new Shader("model.vert", "model.frag");
@@ -93,6 +95,7 @@ int MainApplication::execute()
         elapsedTimer.restart();
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
+        openglFunctions->glEnable(GL_CULL_FACE);
         openglFunctions->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if(window.windowResized())
@@ -103,7 +106,17 @@ int MainApplication::execute()
             modelShader->setMat4("projection", projection);
             gridShader->setMat4("projection", projection);
         }
-        scene->update(dt);
+
+
+        if(!scene->doUpdateConsole)
+            scene->update(dt);
+
+        scene->updateDraw(dt);
+
+        if(scene->doUpdateConsole)
+            scene->updateConsole(dt);
+
+
 
         window.resetInputs();
         processEvents();

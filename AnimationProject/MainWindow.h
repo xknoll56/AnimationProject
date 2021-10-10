@@ -21,6 +21,8 @@ public:
     void resizeEvent(QResizeEvent *ev) override;
     void resetInputs();
     bool shouldRun();
+    void toggleWriteEnable();
+    void clearText();
     bool getKey(Qt::Key);
     bool getGetDown(Qt::Key);
     bool getMouse(Qt::MouseButton);
@@ -33,12 +35,14 @@ public:
         return temp;
     }
 
+    QString writtenText;
 private:
     std::map<int, bool> inputs;
     std::map<int, bool> inputsDown;
     std::map<int, bool> inputsDownReset;
     bool running;
     bool resized = false;
+    bool enableWrite = false;
 };
 
 class CloseEventFilter : public QObject

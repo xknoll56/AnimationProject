@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include <QPainter>
 #include "Entity.h"
 #include "PhysicsWorld.h"
 #include "Camera.h"
@@ -16,7 +17,11 @@ public:
     Scene();
     virtual void start();
     virtual void update(float dt);
+    virtual void updateConsole(float dt);
+    virtual void updateDraw(float dt);
 
+    bool doUpdateConsole;
+    bool consoleToggle;
 protected:
     Entity plane;
     Mesh lineMesh;
@@ -29,6 +34,8 @@ protected:
     Entity arrow;
     Camera cam;
     Entity point;
+    QPainter painter;
+
 
 };
 

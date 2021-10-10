@@ -123,6 +123,11 @@ public:
         {
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
+
+    }
+
+    void updateDraw(float dt)
+    {
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);

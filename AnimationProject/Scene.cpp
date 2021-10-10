@@ -4,9 +4,15 @@
 extern Shader* modelShader;
 extern Shader* gridShader;
 extern MainWindow* gMainWindow;
+extern QPaintDevice* gPaintDevice;
+extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
 Scene::Scene()
 {
+
+    painter.setWorldMatrixEnabled(false);
+    doUpdateConsole = false;
+    consoleToggle = true;
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)gMainWindow->width()/gMainWindow->height(), 0.1f, 100.0f);
     glm::mat4 trans(1.0f);
     cam = Camera(glm::vec3(0,2,5));
@@ -45,6 +51,12 @@ void Scene::start()
 
 void Scene::update(float dt)
 {
+    if(gMainWindow->getGetDown(Qt::Key_0))
+    {
+        doUpdateConsole = true;
+        consoleToggle = false;
+        gMainWindow->toggleWriteEnable();
+    }
     if(gMainWindow->getKey(Qt::Key_A))
     {
         cam.translateRight(-dt);
@@ -65,11 +77,46 @@ void Scene::update(float dt)
     {
         QPointF deltaPos = QCursor::pos()-gMainWindow->mousePos;
         gMainWindow->mousePos = QCursor::pos();
-        cam.smoothRotateYaw(-dt*deltaPos.x());
-        cam.smoothRotatePitch(-dt*deltaPos.y());
+        cam.rotateYaw(-dt*deltaPos.x());
+        cam.rotatePitch(-dt*deltaPos.y());
     }
-    cam.smoothUpdateView();
+    cam.updateView();
     modelShader->setMat4("view", cam.view);
     gridShader->setMat4("view", cam.view);
+
 }
 
+void Scene::updateConsole(float dt)
+{
+    openglFunctions->glDisable(GL_DEPTH_TEST);
+    openglFunctions->glDisable(GL_CULL_FACE);
+
+    painter.begin(gPaintDevice);
+    painter.setPen(Qt::green);
+    painter.setBrush(Qt::black);
+    painter.setOpacity(0.8f);
+    painter.setFont(QFont("Monospace", 12));
+
+    QRectF rect(0.0f,gMainWindow->size().height()*3/4,gMainWindow->size().width(), gMainWindow->size().height()/4);
+
+
+    painter.drawRect(rect);
+    painter.drawText(rect, Qt::AlignBottom, gMainWindow->writtenText);
+
+    painter.end();
+
+
+    if(gMainWindow->getGetDown(Qt::Key_0) && consoleToggle)
+    {
+        doUpdateConsole = false;
+        gMainWindow->clearText();
+        gMainWindow->toggleWriteEnable();
+    }
+    else
+        consoleToggle = true;
+}
+
+void Scene::updateDraw(float dt)
+{
+
+}
