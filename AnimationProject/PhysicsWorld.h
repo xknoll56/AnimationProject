@@ -21,6 +21,7 @@ struct ContactInfo
     Collider* a;
     Collider* b;
     bool faceCollision;
+    bool faceToFaceCollision;
 
     ContactInfo()
     {
@@ -29,6 +30,7 @@ struct ContactInfo
         aDir = CubeCollider::ContactDir::NONE;
         bDir = CubeCollider::ContactDir::NONE;
         faceCollision = true;
+        faceToFaceCollision = false;
     }
 };
 

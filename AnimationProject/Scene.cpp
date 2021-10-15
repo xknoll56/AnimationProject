@@ -119,7 +119,7 @@ void Scene::updateConsole(float dt)
     painter.drawRect(rect);
     for(QString& command: commands)
         painter.drawText(rect, Qt::AlignBottom, command);
-    painter.drawText(rect, Qt::AlignBottom, ">"+gMainWindow->writtenText.toLower());
+    painter.drawText(rect, Qt::AlignBottom, ">"+gMainWindow->writtenText);
 
     painter.setPen(Qt::red);
     for(QString& reply: replys)

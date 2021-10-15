@@ -36,7 +36,7 @@ public:
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1.5, 0);
-        stackedRb.position = glm::vec3(0, 3, 0);
+        stackedRb.position = glm::vec3(0.2f, 3, 0.2f);
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.5f, 0);
         otherRb.dynamic = false;

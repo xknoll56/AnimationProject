@@ -29,19 +29,20 @@ public:
         // SphereBody otherRb(mass, 0.5f);
         collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         otherCollider = CubeCollider(glm::vec3(10,5.0f,10));
-        otherCollider = CubeCollider(glm::vec3(10.5f,0.1f,10.5f));
+        otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
-        rb.position = glm::vec3(0, 5, 0);
+        rb.position = glm::vec3(0, 10, 0);
+        rb.setVelocity(glm::vec3(1,0,1));
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
-        rb.rotation = glm::quat(glm::vec3(0,0.0f, 0));
+        rb.rotation = glm::quat(glm::vec3(0,0.2f, 0.3f));
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
-        std::vector<Collider*> colliders = {&otherCollider, &collider};
-        world.gravity = glm::vec3(0,-5.0f,0);
+        std::vector<Collider*> colliders = {   &otherCollider,  &collider};
+        world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
     }
@@ -90,6 +91,7 @@ public:
             rb.position = glm::vec3(0,5,0);
             rb.setAngularVelocity(glm::vec3(0,0,0));
             rb.rotation = glm::quat(glm::vec3((float)(rand()%8),(float)(rand()%8),(float)(rand()%8)));
+            rb.applyGravity = true;
            // rb.rotation += 0.5f*glm::quat(glm::vec3(PI,0,0))*rb.rotation;
 
         }

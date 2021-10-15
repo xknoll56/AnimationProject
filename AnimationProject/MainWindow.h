@@ -44,6 +44,7 @@ private:
     bool running;
     bool resized = false;
     bool enableWrite = false;
+    bool caps = false;
 };
 
 class CloseEventFilter : public QObject

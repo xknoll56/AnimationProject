@@ -11,7 +11,7 @@ int main(int argc, char *argv[])
     app.setup(1280, 720);
     //CollisionTestScene scene;
     CubeDropScene scene;
-   // StackScene scene;
+    //StackScene scene;
     app.scene = &scene;
     app.execute();
 }

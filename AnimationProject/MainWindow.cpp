@@ -1,6 +1,7 @@
 #include <MainWindow.h>
 #include <QDebug>
 #include <QOpenGLFunctions_4_5_Core>
+#include <QApplication>
 
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
@@ -35,7 +36,6 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 {
     if(enableWrite)
     {
-
         switch(event->key())
         {
         case Qt::Key_Space:
@@ -44,11 +44,67 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         case Qt::Key_Backspace:
             writtenText.chop(1);
             break;
-        }
+        case Qt::Key_Period:
+            writtenText.append(".");
+            break;
+        case Qt::Key_Comma:
+            writtenText.append(",");
+            break;
+        case Qt::Key_0:
+            writtenText.append("0");
+            break;
+        case Qt::Key_1:
+            writtenText.append("1");
+            break;
+        case Qt::Key_2:
+            writtenText.append("2");
+            break;
+        case Qt::Key_3:
+            writtenText.append("3");
+            break;
+        case Qt::Key_4:
+            writtenText.append("4");
+            break;
+        case Qt::Key_5:
+            writtenText.append("5");
+            break;
+        case Qt::Key_6:
+            writtenText.append("6");
+            break;
+        case Qt::Key_7:
+            writtenText.append("7");
+            break;
+        case Qt::Key_8:
+            writtenText.append("8");
+            break;
+        case Qt::Key_9:
+            writtenText.append("9");
+            break;
+        case Qt::Key_Minus:
+            writtenText.append("-");
+            break;
+        case Qt::Key_Equal:
+            writtenText.append("=");
+            break;
+        case Qt::Key_Exclam:
+            writtenText.append("!");
+            break;
+        case Qt::Key_Plus:
+            writtenText.append("+");
+            break;
+        case Qt::Key_Underscore:
+            writtenText+="_";
+            break;
+        case Qt::Key_Shift:
+            caps = true;
+            break;
 
+        }
         QChar test = QChar(event->key());
-        if(test.isLetterOrNumber())
-            writtenText.append(test.toLower());
+        if(!caps)
+            test = test.toLower();
+        if(test.isLetter())
+            writtenText.append(test);
     }
     inputs[event->key()] = true;
     if(!inputsDownReset[event->key()])
@@ -66,6 +122,15 @@ void MainWindow::quit()
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event)
 {
+    if(enableWrite)
+    {
+        switch(event->key())
+        {
+        case Qt::Key_Shift:
+            caps = false;
+            break;
+        }
+    }
     if(!event->isAutoRepeat())
     {
         inputs[event->key()] = false;
@@ -113,11 +178,11 @@ bool MainWindow::getMouseDown(Qt::MouseButton button)
 
 bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
 {
-     if (event->type() == QEvent::Close)
-     {
-          exit(EXIT_SUCCESS);
-     }
-     return QObject::eventFilter(obj, event);
+    if (event->type() == QEvent::Close)
+    {
+        exit(EXIT_SUCCESS);
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 void MainWindow::toggleWriteEnable()

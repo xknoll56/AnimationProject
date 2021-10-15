@@ -489,8 +489,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
 
     //    qDebug() << "t1: " << t1;
     //    qDebug() << "t2: " << t2;
-//        qDebug() << "face penetration: " << faceInfo.penetrationDistance;
-//        qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
+    //        qDebug() << "face penetration: " << faceInfo.penetrationDistance;
+    //        qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
 
     faceInfo.normal = glm::sign(glm::dot(T, faceInfo.normal))*faceInfo.normal;
     faceInfo.normal = glm::normalize(faceInfo.normal);
@@ -503,7 +503,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     }
     else if(faceInfo.bDir == CubeCollider::ContactDir::NONE)
     {
-         facecollision = isCubeCubePetrusion(faceInfo.normal, closestVertsB, cubeA, faceInfo.aDir);
+        facecollision = isCubeCubePetrusion(faceInfo.normal, closestVertsB, cubeA, faceInfo.aDir);
     }
     if(facecollision)
     {
@@ -516,6 +516,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
 
     contactInfo.a = cubeA;
     contactInfo.b = cubeB;
+
 
     cubeA->collisionDetected = true;
     cubeB->collisionDetected = true;
@@ -557,6 +558,7 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
             determineCubeCubePetrusionVerts(info, -info.normal, closestVertsA, cubeB, info.bDir, true);
             if(closestVertsA.size()>2)
             {
+                info.faceToFaceCollision = true;
                 CubeCollider::ContactDir aDir;
                 //plane on plan collision
                 switch(info.bDir)
@@ -612,6 +614,7 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
             determineCubeCubePetrusionVerts(info, info.normal, closestVertsB, cubeA, info.aDir, true);
             if(closestVertsB.size()>2)
             {
+                info.faceToFaceCollision = true;
                 CubeCollider::ContactDir bDir;
                 //plane on plan collision
                 switch(info.aDir)
@@ -752,7 +755,7 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
     {
         float d = glm::dot(p0-point, normal)/glm::dot(normal,normal);
         //This now becomes the new penetration distance
-       // qDebug() << "Penetration distance: " << d;
+        // qDebug() << "Penetration distance: " << d;
         if(adjustPenetration)
             info.penetrationDistance = -d;
         glm::vec3 intersectionPoint = point+d*normal;
@@ -768,7 +771,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
     if(cubeA->rb->dynamic && !cubeB->rb->dynamic)
     {
-        cubeA->rb->position -= info.normal*info.penetrationDistance;
+        cubeA->rb->position += info.normal*info.penetrationDistance;
     }
     else if(!cubeA->rb->dynamic && cubeB->rb->dynamic)
     {
@@ -788,7 +791,8 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
         glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
         glm::vec3 vb = cubeB->rb->velocity + glm::cross(cubeB->rb->angularVelocity, rb);
         float vRel = glm::dot(info.normal, va-vb);
-       // qDebug() << vRel;
+        //glm::vec3 vPerp = glm::normalize(glm::cross(info.normal, va-vb));
+        //qDebug() << "vPerp x:" << vPerp.x << " y: " << vPerp.y << " z: " << vPerp.z;
         float numerator = -(1-epsilon)*vRel;
 
         float t1 = cubeA->rb->massInv;
@@ -798,36 +802,44 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
         float j = numerator/(t1+t2+t3+t4);
         glm::vec3 force = j*info.normal/dt;
-
-        if(vRel>0.3f)
+        //qDebug() << glm::length2(cubeB->rb->angularVelocity);
+        float angularRel = glm::length(cubeA->rb->angularVelocity-cubeB->rb->angularVelocity);
+        qDebug() << "cube b vertical velocity: " << cubeB->rb->velocity.y;
+        qDebug() << "cube a vertical velocity: " << cubeA->rb->velocity.y;
+        //qDebug() << "angular velocity: " << angularRel;
+       if(glm::abs(vRel)>0.2f || !info.faceToFaceCollision)
         {
 
             if(cubeA->rb->dynamic)
             {
-                cubeA->rb->addForce(force+glm::cross(ra, glm::cross(ra, force)));
+                cubeA->rb->addForce(force);
                 cubeA->rb->addTorque(glm::cross(ra, force));
             }
             if(cubeB->rb->dynamic)
             {
-                cubeB->rb->addForce(-force-glm::cross(rb, glm::cross(rb, force)));
+                cubeB->rb->addForce(-force);
                 cubeB->rb->addTorque(-glm::cross(rb, force));
             }
+            //qDebug() << "not resting";
         }
         else
         {
 
             if(cubeA->rb->dynamic)
             {
-                cubeA->rb->addForce(-glm::normalize(cubeA->rb->velocity)*force);
-                //cubeA->rb->addTorque(glm::cross(ra, force));
+                qDebug() << "cube a resting";
+                glm::vec3 perpVel = cubeA->rb->velocity - va*info.normal;
+                cubeA->rb->setAngularVelocity(glm::vec3(0,0,0));
+                cubeA->rb->setVelocity(-friction*perpVel);
             }
             if(cubeB->rb->dynamic)
             {
-                cubeB->rb->addForce(-glm::normalize(cubeB->rb->velocity)*force);
-                //cubeB->rb->addTorque(-glm::cross(rb, force));
+                qDebug() << "cube b resting";
+                cubeB->rb->setAngularVelocity(glm::vec3(0,0,0));
+                glm::vec3 perpVel = cubeB->rb->velocity + vb*info.normal;
+                cubeB->rb->setVelocity(-friction*perpVel);
             }
-            //            cubeA->rb->applyGravity = false;
-            //            cubeB->rb->applyGravity = false;
+           //qDebug() << "resting";
         }
     }
 

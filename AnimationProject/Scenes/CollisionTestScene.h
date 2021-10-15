@@ -104,7 +104,10 @@ public:
                     point.setPosition(world.contacts[i].points[j]);
                     point.draw();
                     if(j == 0)
-                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position+2.0f*world.contacts[i].normal);
+                    {
+                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
+                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
+                    }
                 }
             }
         }
