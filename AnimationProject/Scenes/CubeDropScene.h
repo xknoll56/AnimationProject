@@ -33,7 +33,7 @@ public:
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 10, 0);
-        rb.setVelocity(glm::vec3(1,0,1));
+        rb.setVelocity(glm::vec3(0,0,0));
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
@@ -41,7 +41,7 @@ public:
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
-        std::vector<Collider*> colliders = {   &otherCollider,  &collider};
+        std::vector<Collider*> colliders = { &otherCollider, &collider};
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);

@@ -34,10 +34,12 @@ struct UniformRigidBody
     //applied force/torque will be applie for a single step
     std::vector<glm::vec3> appliedForces;
     std::vector<glm::vec3> appliedTorques;
+    std::vector<UniformRigidBody*> appliedBodies;
     bool applyForce = false;
     bool applyTorque = false;
     bool dynamic = true;
     bool applyGravity = true;
+    bool atRest = false;
 
 
     UniformRigidBody(float _mass, float _inertia);
@@ -47,6 +49,8 @@ struct UniformRigidBody
     virtual ~UniformRigidBody();
     void addForce(const glm::vec3& force);
     void addTorque(const glm::vec3& torque);
+    void addForce(const glm::vec3& force,  UniformRigidBody& other);
+    void addTorque(const glm::vec3& torque,  UniformRigidBody& other);
     void setVelocity(const glm::vec3& velocity);
     void setAngularVelocity(const glm::vec3& angularVelocity);
     glm::vec3 getLocalXAxis();

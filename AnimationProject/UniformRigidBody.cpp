@@ -1,5 +1,5 @@
 #include "UniformRigidBody.h"
-
+#include <algorithm>
 
 
 UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), inertia(_inertia)
@@ -85,6 +85,29 @@ void UniformRigidBody::addTorque(const glm::vec3& torque)
     applyTorque = true;
 }
 
+void UniformRigidBody::addForce(const glm::vec3& force, UniformRigidBody& other)
+{
+    appliedForces.push_back(force);
+    applyForce = true;
+    if(atRest)
+    {
+    if(!(std::find(appliedBodies.begin(), appliedBodies.end(), &other)!=appliedBodies.end()))
+    {
+        appliedBodies.push_back(&other);
+        atRest = false;
+    }
+    }
+}
+void UniformRigidBody::addTorque(const glm::vec3& torque,  UniformRigidBody& other)
+{
+    appliedTorques.push_back(torque);
+    applyTorque = true;
+    if(!(std::find(appliedBodies.begin(), appliedBodies.end(), &other)!=appliedBodies.end()))
+    {
+        appliedBodies.push_back(&other);
+    }
+}
+
 void UniformRigidBody::setVelocity(const glm::vec3& velocity)
 {
     linearMomentum = velocity*mass;
@@ -118,7 +141,7 @@ glm::vec3 UniformRigidBody::peekNextPosition(float dt)
 void UniformRigidBody::stepQuantities(float dt)
 {
 
-    if(dynamic)
+    if(dynamic && !atRest)
     {
         if(applyForce)
         {

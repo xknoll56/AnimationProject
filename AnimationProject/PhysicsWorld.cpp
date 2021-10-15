@@ -785,61 +785,79 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
     for(int i =0;i<info.points.size();i++)
     {
-        float epsilon = 0.5f;
+        float epsilon = 0.2f;
         glm::vec3 ra = info.points[i]-cubeA->rb->position;
         glm::vec3 rb = info.points[i]-cubeB->rb->position;
         glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
         glm::vec3 vb = cubeB->rb->velocity + glm::cross(cubeB->rb->angularVelocity, rb);
         float vRel = glm::dot(info.normal, va-vb);
-        //glm::vec3 vPerp = glm::normalize(glm::cross(info.normal, va-vb));
-        //qDebug() << "vPerp x:" << vPerp.x << " y: " << vPerp.y << " z: " << vPerp.z;
-        float numerator = -(1-epsilon)*vRel;
 
-        float t1 = cubeA->rb->massInv;
-        float t2 = cubeB->rb->massInv;
-        float t3 = glm::dot(info.normal, glm::cross(glm::cross(cubeA->rb->inertiaInv*ra, info.normal), ra));
-        float t4 = glm::dot(info.normal, glm::cross(glm::cross(cubeB->rb->inertiaInv*ra, info.normal), rb));
-
-        float j = numerator/(t1+t2+t3+t4);
-        glm::vec3 force = j*info.normal/dt;
-        //qDebug() << glm::length2(cubeB->rb->angularVelocity);
-        float angularRel = glm::length(cubeA->rb->angularVelocity-cubeB->rb->angularVelocity);
-        qDebug() << "cube b vertical velocity: " << cubeB->rb->velocity.y;
-        qDebug() << "cube a vertical velocity: " << cubeA->rb->velocity.y;
-        //qDebug() << "angular velocity: " << angularRel;
-       if(glm::abs(vRel)>0.2f || !info.faceToFaceCollision)
+       // if(vRel>0)
         {
+            //glm::vec3 vPerp = glm::normalize(glm::cross(info.normal, va-vb));
+            //qDebug() << "vPerp x:" << vPerp.x << " y: " << vPerp.y << " z: " << vPerp.z;
+            float numerator = -(1-epsilon)*vRel;
 
-            if(cubeA->rb->dynamic)
-            {
-                cubeA->rb->addForce(force);
-                cubeA->rb->addTorque(glm::cross(ra, force));
-            }
-            if(cubeB->rb->dynamic)
-            {
-                cubeB->rb->addForce(-force);
-                cubeB->rb->addTorque(-glm::cross(rb, force));
-            }
-            //qDebug() << "not resting";
-        }
-        else
-        {
+            float t1 = cubeA->rb->massInv;
+            float t2 = cubeB->rb->massInv;
+            float t3 = glm::dot(info.normal, glm::cross(glm::cross(cubeA->rb->inertiaInv*ra, info.normal), ra));
+            float t4 = glm::dot(info.normal, glm::cross(glm::cross(cubeB->rb->inertiaInv*ra, info.normal), rb));
 
-            if(cubeA->rb->dynamic)
+            float j = numerator/(t1+t2+t3+t4);
+            glm::vec3 force = j*info.normal/dt;
+            //qDebug() << glm::length2(cubeB->rb->angularVelocity);
+            float angularRel = glm::length(cubeA->rb->angularVelocity-cubeB->rb->angularVelocity);
+            //qDebug() << "cube b vertical velocity: " << cubeB->rb->velocity.y;
+            //qDebug() << "cube a vertical velocity: " << cubeA->rb->velocity.y;
+            qDebug() << vRel;
+            //qDebug() << "angular velocity: " << angularRel;
+            if(glm::abs(vRel)>0.2f || !info.faceToFaceCollision)
             {
-                qDebug() << "cube a resting";
-                glm::vec3 perpVel = cubeA->rb->velocity - va*info.normal;
-                cubeA->rb->setAngularVelocity(glm::vec3(0,0,0));
-                cubeA->rb->setVelocity(-friction*perpVel);
+
+                if(cubeA->rb->dynamic)
+                {
+                    glm::vec3 perpVelNormal = glm::normalize(cubeA->rb->velocity - va*info.normal);
+                    if(!cubeB->rb->dynamic){
+                    glm::vec3 fric = friction*perpVelNormal*cubeA->rb->mass*glm::dot(gravity, info.normal);
+                    force-=fric;
+                    }
+                    cubeA->rb->addForce(force, *cubeB->rb);
+                    cubeA->rb->addTorque(glm::cross(ra, force));
+                }
+                if(cubeB->rb->dynamic)
+                {
+                    glm::vec3 perpVelNormal = glm::normalize(cubeB->rb->velocity + vb*info.normal);
+                    if(!cubeA->rb->dynamic)
+                    {
+                    glm::vec3 fric = friction*perpVelNormal*cubeB->rb->mass*glm::dot(gravity, info.normal);
+                    force-=fric;
+                    }
+                    cubeB->rb->addForce(-force, *cubeA->rb);
+                    cubeB->rb->addTorque(-glm::cross(rb, force));
+                }
+                //qDebug() << "not resting";
             }
-            if(cubeB->rb->dynamic)
+            else
             {
-                qDebug() << "cube b resting";
-                cubeB->rb->setAngularVelocity(glm::vec3(0,0,0));
-                glm::vec3 perpVel = cubeB->rb->velocity + vb*info.normal;
-                cubeB->rb->setVelocity(-friction*perpVel);
+
+                if(cubeA->rb->dynamic)
+                {
+                    //glm::vec3 perpVelNormal = glm::normalize(cubeA->rb->velocity - va*info.normal);
+                    //glm::vec3 fric = perpVelNormal*cubeA->rb->mass*glm::dot(gravity, info.normal);
+                    cubeA->rb->setAngularVelocity(glm::vec3(0,0,0));
+                    //cubeA->rb->atRest = true;
+                    //cubeA->rb->addForce(-fric);
+                }
+                if(cubeB->rb->dynamic)
+                {
+                    //glm::vec3 perpVelNormal = glm::normalize(cubeB->rb->velocity + vb*info.normal);
+                    //glm::vec3 fric = perpVelNormal*cubeB->rb->mass*glm::dot(gravity, info.normal);
+                    cubeB->rb->setAngularVelocity(glm::vec3(0,0,0));
+                    //cubeB->rb->atRest = true;
+                    //cubeB->rb->addForce(-fric);
+                }
+                //qDebug() << "resting";
             }
-           //qDebug() << "resting";
         }
     }
 
