@@ -7,9 +7,31 @@
 #include "Camera.h"
 #include "MainWindow.h"
 #include <list>
+#include <QDebug>
 
 extern void drawLine(Mesh& line, glm::vec3 from, glm::vec3 to);
 
+class ConsoleInterface
+{
+public:
+
+    UniformRigidBody* rb;
+
+    QString ParseCommand(QString& command)
+    {
+        QString response;
+        QStringList tokens = command.split(' ');
+        if(tokens[0].compare("get")==0)
+        {
+            if(tokens[1].compare("position")==0)
+            {
+                response.append("x: "+QString::number(rb->position.x)+" y: "+QString::number(rb->position.y)+" z: "+QString::number(rb->position.z));
+            }
+        }
+
+        return response;
+    }
+};
 
 class Scene
 {
@@ -36,10 +58,13 @@ protected:
     Camera cam;
     Entity point;
     QPainter painter;
+    ConsoleInterface console;
     std::list<QString> commands;
     std::list<QString> replys;
 
 
 };
+
+
 
 #endif // SCENE_H

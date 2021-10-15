@@ -42,6 +42,7 @@ public:
         otherRb.dynamic = false;
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+        console.rb = &stackedRb;
 
 
         std::vector<Collider*> colliders = {&otherCollider, &collider, &stackedCollider};

@@ -98,10 +98,10 @@ void Scene::updateConsole(float dt)
         QString text = gMainWindow->writtenText;
         if(text.compare("exit")==0)
             gMainWindow->quit();
-        commands.push_front(text);
+        commands.push_front(text);    
         for(QString& reply: replys)
             reply.append("\n\n");
-        replys.push_front("command not found\n");
+        replys.push_front(console.ParseCommand(text)+"\n");
         for(QString& command: commands)
             command.append("\n\n");
         gMainWindow->clearText();

@@ -785,7 +785,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
     for(int i =0;i<info.points.size();i++)
     {
-        float epsilon = 0.2f;
+        float epsilon = 0.5f;
         glm::vec3 ra = info.points[i]-cubeA->rb->position;
         glm::vec3 rb = info.points[i]-cubeB->rb->position;
         glm::vec3 va = cubeA->rb->velocity + glm::cross(cubeA->rb->angularVelocity, ra);
@@ -805,13 +805,12 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
             float j = numerator/(t1+t2+t3+t4);
             glm::vec3 force = j*info.normal/dt;
-            //qDebug() << glm::length2(cubeB->rb->angularVelocity);
             float angularRel = glm::length(cubeA->rb->angularVelocity-cubeB->rb->angularVelocity);
             //qDebug() << "cube b vertical velocity: " << cubeB->rb->velocity.y;
             //qDebug() << "cube a vertical velocity: " << cubeA->rb->velocity.y;
-            qDebug() << vRel;
+            //qDebug() << vRel;
             //qDebug() << "angular velocity: " << angularRel;
-            if(glm::abs(vRel)>0.2f || !info.faceToFaceCollision)
+            if(glm::abs(vRel)>0.25f || !info.faceToFaceCollision)
             {
 
                 if(cubeA->rb->dynamic)

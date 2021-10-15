@@ -38,6 +38,7 @@ public:
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
         rb.rotation = glm::quat(glm::vec3(0,0.2f, 0.3f));
+        console.rb = &rb;
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
