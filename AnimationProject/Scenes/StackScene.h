@@ -13,6 +13,8 @@ private:
     CubeCollider otherCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
+    UniformRigidBody thrownRb;
+    CubeCollider thrownCube;
 
 
 public:
@@ -28,11 +30,14 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         stackedRb = UniformRigidBody(mass, inertia);
+        thrownRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
         collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         otherCollider = CubeCollider(glm::vec3(10.0f,0.5f,10.0f));
         stackedCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+        thrownCube = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         stackedCollider.rb = &stackedRb;
+        thrownCube.rb = &thrownRb;
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1.5, 0);
@@ -42,6 +47,7 @@ public:
         otherRb.dynamic = false;
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+        thrownRb.position = glm::vec3(6, 2, 6);
         console.rb = &stackedRb;
 
 
@@ -86,7 +92,10 @@ public:
         }
         if(gMainWindow->getGetDown(Qt::Key_Space))
         {
-            rb.addForce(glm::vec3(0,800,0));
+            thrownRb.linearMomentum = glm::vec3(0,0,0);
+            thrownRb.angularMomentum = glm::vec3(0,0,0);
+            thrownRb.position = cam.getPosition()+cam.getFwd();
+            thrownRb.addForce(-cam.getFwd()*10000.0f);
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {
@@ -143,6 +152,13 @@ public:
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);
         cube.draw();
+
+//        cube.setPosition(thrownRb.position);
+//        cube.setRotation(thrownRb.rotation);
+//        cube.setScale(thrownCube.scale);
+//        cube.draw();
+
+
         plane.draw();
     }
 };

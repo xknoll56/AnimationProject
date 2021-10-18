@@ -810,7 +810,9 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
             //qDebug() << "cube a vertical velocity: " << cubeA->rb->velocity.y;
             //qDebug() << vRel;
             //qDebug() << "angular velocity: " << angularRel;
-            if(glm::abs(vRel)>0.25f || !info.faceToFaceCollision)
+            cubeA->rb->applyGravity = true;
+            cubeB->rb->applyGravity = true;
+            if(glm::abs(vRel)>0.2f )
             {
 
                 if(cubeA->rb->dynamic)
@@ -836,26 +838,56 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
                 }
                 //qDebug() << "not resting";
             }
-            else
+            else if(info.points.size()<3)
             {
-
+                glm::vec3 rotPoint = info.points[i];
+                if(info.points.size() == 2)
+                {
+                    rotPoint = 0.5f*(info.points[0]+info.points[1]);
+                    ra = rotPoint-cubeA->rb->position;
+                    rb = rotPoint-cubeB->rb->position;
+                }
+                //The contact point will become a stationary rotational point
                 if(cubeA->rb->dynamic)
                 {
-                    //glm::vec3 perpVelNormal = glm::normalize(cubeA->rb->velocity - va*info.normal);
-                    //glm::vec3 fric = perpVelNormal*cubeA->rb->mass*glm::dot(gravity, info.normal);
-                    cubeA->rb->setAngularVelocity(glm::vec3(0,0,0));
-                    //cubeA->rb->atRest = true;
-                    //cubeA->rb->addForce(-fric);
+                    cubeA->rb->addTorque(glm::cross(cubeA->rb->mass*gravity, rotPoint));
+                    glm::vec3 rotDir = glm::normalize(glm::cross(cubeA->rb->mass*gravity, rotPoint));
+                    float mag = glm::dot(rotDir, cubeA->rb->angularVelocity);
+                    if(mag>0)
+                    {
+                        qDebug() << "mag: "<<mag;
+                    cubeA->rb->setAngularVelocity(mag*rotDir);
+                    }
+                    cubeA->rb->setVelocity(-glm::cross(mag*rotDir, ra));
                 }
                 if(cubeB->rb->dynamic)
                 {
-                    //glm::vec3 perpVelNormal = glm::normalize(cubeB->rb->velocity + vb*info.normal);
-                    //glm::vec3 fric = perpVelNormal*cubeB->rb->mass*glm::dot(gravity, info.normal);
-                    cubeB->rb->setAngularVelocity(glm::vec3(0,0,0));
-                    //cubeB->rb->atRest = true;
-                    //cubeB->rb->addForce(-fric);
+                    cubeB->rb->addTorque(glm::cross(cubeB->rb->mass*gravity, rotPoint));
+                    glm::vec3 rotDir = glm::normalize(glm::cross(cubeB->rb->mass*gravity, rotPoint));
+                    float mag = glm::dot(rotDir, cubeB->rb->angularVelocity);
+                    if(mag>0)
+                    {
+                        qDebug() << "mag: " << mag;
+                    cubeB->rb->setAngularVelocity(mag*rotDir);
+                    }
+                    cubeB->rb->setVelocity(-glm::cross(mag*rotDir, rb));
                 }
-                //qDebug() << "resting";
+
+            }
+            else
+            {
+                if(cubeA->rb->dynamic)
+                {
+                    cubeA->rb->setAngularVelocity(glm::vec3(0,0,0));
+                    cubeA->rb->setVelocity(glm::vec3(0,0,0));
+                    //cubeA->rb->applyGravity = false;
+                }
+                if(cubeB->rb->dynamic)
+                {
+                    cubeB->rb->setAngularVelocity(glm::vec3(0,0,0));
+                    cubeB->rb->setVelocity(glm::vec3(0,0,0));
+                    //cubeB->rb->applyGravity = false;
+                }
             }
         }
     }
