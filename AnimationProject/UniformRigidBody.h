@@ -59,5 +59,6 @@ struct UniformRigidBody
     glm::vec3 getLocalZAxis();
     glm::vec3 peekNextPosition(float dt);
     void stepQuantities(float dt);
+    bool isStatic();
 };
 #endif // UNIFORMRIGIDBODY_H

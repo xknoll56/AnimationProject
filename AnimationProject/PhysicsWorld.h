@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <Collider.h>
+#include <QDebug>
 struct RayCastData
 {
     glm::vec3 point;
@@ -68,6 +69,15 @@ struct PhysicsWorld
     void spherePlaneCollision(float dt, SphereCollider* sphere);
     void updateQuantities(float dt);
     void stepWorld(float dt);
+};
+
+class Utilities
+{
+public:
+    static void PrintVec3(const glm::vec3& vec)
+    {
+        qDebug() << "x: "<<vec.x <<" y: "<<vec.y << " z: "<<vec.z;
+    }
 };
 
 

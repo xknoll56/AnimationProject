@@ -41,17 +41,17 @@ public:
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1.5, 0);
-        stackedRb.position = glm::vec3(0.2f, 3, 0.2f);
+        stackedRb.position = glm::vec3(0.2f, 10, 0.2f);
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.5f, 0);
         otherRb.dynamic = false;
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
         thrownRb.position = glm::vec3(6, 2, 6);
-        console.rb = &stackedRb;
+        console.rb = &rb;
 
 
-        std::vector<Collider*> colliders = {&otherCollider, &collider, &stackedCollider};
+        std::vector<Collider*> colliders = {&otherCollider, &collider};
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
@@ -153,10 +153,10 @@ public:
         cube.setScale(otherCollider.scale);
         cube.draw();
 
-//        cube.setPosition(thrownRb.position);
-//        cube.setRotation(thrownRb.rotation);
-//        cube.setScale(thrownCube.scale);
-//        cube.draw();
+        cube.setPosition(thrownRb.position);
+        cube.setRotation(thrownRb.rotation);
+        cube.setScale(thrownCube.scale);
+        cube.draw();
 
 
         plane.draw();

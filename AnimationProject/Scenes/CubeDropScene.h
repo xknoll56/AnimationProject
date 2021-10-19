@@ -37,12 +37,12 @@ public:
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
-        rb.rotation = glm::quat(glm::vec3(0,0.2f, 0.3f));
+        rb.rotation = glm::quat(glm::vec3(0.4f,0.0f, 0.3f));
         console.rb = &rb;
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
-        std::vector<Collider*> colliders = { &otherCollider, &collider};
+        std::vector<Collider*> colliders = {&otherCollider,  &collider};
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);

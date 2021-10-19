@@ -1,4 +1,4 @@
-#include "UniformRigidBody.h"
+﻿#include "UniformRigidBody.h"
 #include <algorithm>
 
 
@@ -89,14 +89,6 @@ void UniformRigidBody::addForce(const glm::vec3& force, UniformRigidBody& other)
 {
     appliedForces.push_back(force);
     applyForce = true;
-    if(atRest)
-    {
-    if(!(std::find(appliedBodies.begin(), appliedBodies.end(), &other)!=appliedBodies.end()))
-    {
-        appliedBodies.push_back(&other);
-        atRest = false;
-    }
-    }
 }
 void UniformRigidBody::addTorque(const glm::vec3& torque,  UniformRigidBody& other)
 {
@@ -172,4 +164,9 @@ void UniformRigidBody::stepQuantities(float dt)
         angularMomentum = glm::vec3();
         linearMomentum = glm::vec3();
     }
+}
+
+bool UniformRigidBody::isStatic()
+{
+    return !dynamic || atRest;
 }
