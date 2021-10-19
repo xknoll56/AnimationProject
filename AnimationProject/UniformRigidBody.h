@@ -40,6 +40,7 @@ struct UniformRigidBody
     bool dynamic = true;
     bool applyGravity = true;
     bool atRest = false;
+    bool stabilizing = false;
 
 
     UniformRigidBody(float _mass, float _inertia);
