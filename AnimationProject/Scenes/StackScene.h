@@ -46,14 +46,18 @@ public:
         stackedRb = UniformRigidBody(mass, inertia);
         stackedCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         stackedCollider.rb = &stackedRb;
-        stackedRb.position = glm::vec3(0.3f, 3.0f, 0.1f);
+        stackedRb.position = glm::vec3(0.0f, 6.0f, 0.0f);
         stackedRb.rotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
         console.rb = &stackedRb;
 
+        thrownCube = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+        thrownRb = UniformRigidBody(mass, inertia);
+        thrownCube.rb = &thrownRb;
+        thrownRb.position = glm::vec3(5, 3, 5);
 
 
-
-        std::vector<Collider*> colliders = {  &collider,  &otherCollider, &stackedCollider};
+        std::vector<Collider*> colliders = {  &collider,  &otherCollider, &stackedCollider, &thrownCube};
+        ///std::vector<Collider*> colliders = {  &otherCollider, &thrownCube};
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
@@ -61,8 +65,7 @@ public:
     void update(float dt)
     {
         Scene::update(dt);
-        Utilities::PrintVec3(stackedRb.position);
-        //rb.setVelocity(glm::vec3());
+       // rb.setVelocity(glm::vec3());
         if(gMainWindow->getKey(Qt::Key_Right))
         {
             rb.setVelocity(1.0f*cam.getRight());
@@ -99,6 +102,7 @@ public:
             thrownRb.angularMomentum = glm::vec3(0,0,0);
             thrownRb.position = cam.getPosition()+cam.getFwd();
             thrownRb.addForce(-cam.getFwd()*10000.0f);
+            thrownRb.atRest = false;
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {
@@ -159,10 +163,10 @@ public:
         cube.setScale(otherCollider.scale);
         cube.draw();
 
-//        cube.setPosition(thrownRb.position);
-//        cube.setRotation(thrownRb.rotation);
-//        cube.setScale(thrownCube.scale);
-//        cube.draw();
+        cube.setPosition(thrownRb.position);
+        cube.setRotation(thrownRb.rotation);
+        cube.setScale(thrownCube.scale);
+        cube.draw();
 
 
         plane.draw();
