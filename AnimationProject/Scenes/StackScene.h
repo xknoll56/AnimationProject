@@ -41,6 +41,7 @@ public:
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+        otherRb.rotation = glm::quat(glm::vec3(0.1f,0,0));
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
         stackedRb = UniformRigidBody(mass, inertia);
