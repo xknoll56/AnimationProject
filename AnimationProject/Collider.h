@@ -88,7 +88,6 @@ struct CubeCollider: public Collider
     CubeCollider();
     CubeCollider(const CubeCollider& other);
     CubeCollider(const glm::vec3& sizes);
-    CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb);
     CubeCollider& operator= (const CubeCollider& other);
     void initEdges();
     void updateContactVerts();

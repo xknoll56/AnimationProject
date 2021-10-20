@@ -69,18 +69,6 @@ CubeCollider& CubeCollider::operator= (const CubeCollider& other)
     return *this;
 }
 
-CubeCollider::CubeCollider(const glm::vec3& sizes, UniformRigidBody* const rb)
-{
-    xSize = sizes.x;
-    ySize = sizes.y;
-    zSize = sizes.z;
-    this->rb = rb;
-    type = ColliderType::CUBE;
-    scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
-    initEdges();
-
-}
-
 void CubeCollider::initEdges()
 {
     edges[0] = {0,1, zSize};
