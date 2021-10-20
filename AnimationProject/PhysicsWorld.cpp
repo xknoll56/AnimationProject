@@ -591,23 +591,24 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
             {
                 //testing petrusion correciton
                 //info.penetrationDistance = -closestDistanceBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length);
-                float dist = glm::abs(closestDistanceBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length));
-                if(dist<minDist && !info.faceCollision)
-                {
-                    qDebug() << "ea dir dot eb dir";
-                    qDebug() << glm::dot(ea.dir, eb.dir);
-                    minDist = dist;
-                    info.normal = glm::normalize(glm::cross(ea.dir, eb.dir));
-                    info.normal = glm::sign(glm::dot(T, info.normal))*info.normal;
-                    info.penetrationDistance = -dist;
-                    qDebug() << "ea dir: ";
-                    Utilities::PrintVec3(ea.dir);
-                    qDebug() <<"eb dir: ";
-                    Utilities::PrintVec3(eb.dir);
-                    qDebug() <<"normal dir: ";
-                    Utilities::PrintVec3(info.normal);
-                }
+//                float dist = glm::abs(closestDistanceBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length));
+//                if(dist<minDist && !info.faceCollision)
+//                {
+//                    qDebug() << "ea dir dot eb dir";
+//                    qDebug() << glm::dot(ea.dir, eb.dir);
+//                    minDist = dist;
+//                    info.normal = glm::normalize(glm::cross(ea.dir, eb.dir));
+//                    info.normal = glm::sign(glm::dot(T, info.normal))*info.normal;
+//                    info.penetrationDistance = glm::abs(dist);
+//                    qDebug() << "ea dir: ";
+//                    Utilities::PrintVec3(ea.dir);
+//                    qDebug() <<"eb dir: ";
+//                    Utilities::PrintVec3(eb.dir);
+//                    qDebug() <<"normal dir: ";
+//                    Utilities::PrintVec3(info.normal);
+//                }
                 info.points.push_back(closestPointBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir));
+                info.edgePoints++;
 //                if(!info.faceCollision)
 //                {
 //                    info.normal = glm::normalize(glm::cross(ea.dir, eb.dir));
@@ -832,7 +833,10 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
         float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
         float dist2 = glm::abs(glm::dot(intersectionPoint-p0, adj2));
         if(dist1<=maxDist1 && dist2<=maxDist2)
+        {
             info.points.push_back(intersectionPoint);
+            info.vertexPoints++;
+        }
     }
 }
 
@@ -940,7 +944,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
 //            if(glm::abs(vRel)<2.0f )
 //                dynamicCube->rb->stabilizing = true;
-            if(glm::abs(vRel)<1.0f )
+            qDebug() << "j: " <<j;
+            if(glm::abs(j)<0.5f )
                 dynamicCube->rb->stabilizing = true;
 
             glm::vec3 perpVelNormal = glm::normalize(dynamicCube->rb->velocity + va*norm);
@@ -956,7 +961,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
     {
         //qDebug() <<"in resting state";
 
-        float angularLen = glm::length(dynamicCube->rb->angularVelocity);
+        float angularSpeed = glm::length(dynamicCube->rb->angularVelocity);
+        float speed = glm::length(dynamicCube->rb->velocity);
 
         if(info.points.size()>0)
         {
@@ -965,38 +971,41 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             //qDebug() << "angular speed: " << angularLen;
             glm::vec3 ra = info.points[0]-dynamicCube->rb->position;
             glm::vec3 rotPoint= info.points[0];
-            if(info.points.size() == 2)
+            if(info.vertexPoints == 2)
             {
                 rotPoint = 0.5f*(info.points[0]+info.points[1]);
                 glm::vec3 ra = rotPoint-dynamicCube->rb->position;
             }
-            else if(info.points.size() == 4)
+            else if(info.vertexPoints > 3)
             {
                 rotPoint = 0.5f*(info.points[0]+info.points[1] + info.points[2]+info.points[3]);
                 glm::vec3 ra = rotPoint-dynamicCube->rb->position;
               //  Utilities::PrintVec3(ra);
             }
-            if(info.points.size()>2 && info.faceToFaceCollision)
+            if(info.faceToFaceCollision&&info.points.size()>2)
             {
                 dynamicCube->rb->atRest = true;
                 dynamicCube->rb->stabilizing = false;
             }
+            glm::vec3 currentVel = glm::normalize(dynamicCube->rb->velocity + dynamicCube->rb->velocity*norm);
+            qDebug() << "current velocity: ";
+            Utilities::PrintVec3(currentVel);
             glm::vec3 perpVel = glm::cross(dynamicCube->rb->angularVelocity, -ra);
             glm::vec3 normVel = glm::dot(perpVel, norm)*norm;
             perpVel -= normVel;
             //Utilities::PrintVec3(perpVel);
 
-            glm::vec3 frictionForce = glm::normalize(perpVel)*glm::dot(friction*gravity, norm);
+            glm::vec3 frictionForce = glm::normalize(currentVel)*glm::dot(friction*gravity, norm);
             dynamicCube->rb->addTorque(5.0f*glm::cross(dynamicCube->rb->mass*gravity, 2.0f*ra));
 
 
 
              if(!glm::isnan(frictionForce.x) && !glm::isnan(frictionForce.y) && !glm::isnan(frictionForce.z))
              {
-                 perpVel-=frictionForce*dt;
-                 dynamicCube->rb->addTorque(5.0f*glm::cross(frictionForce, -ra));
+                 perpVel+=frictionForce*dt;
+                 dynamicCube->rb->addTorque(glm::cross(frictionForce, -ra));
              }
-            dynamicCube->rb->setVelocity(perpVel);
+            dynamicCube->rb->setVelocity(currentVel+perpVel);
         }
 //        else if(glm::abs(glm::dot(info.normal, glm::vec3(0,1,0)))>0.90f)
 //            dynamicCube->rb->atRest = true;

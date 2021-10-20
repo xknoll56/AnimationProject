@@ -163,6 +163,8 @@ void UniformRigidBody::stepQuantities(float dt)
     {
         angularMomentum = glm::vec3();
         linearMomentum = glm::vec3();
+        rotation = glm::normalize(rotation);
+        rotationMatrix = glm::toMat3(rotation);
     }
 }
 

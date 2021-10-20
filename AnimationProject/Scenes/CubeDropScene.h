@@ -37,8 +37,9 @@ public:
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
-        rb.rotation = glm::quat(glm::vec3(0.1f,0.0f, 0.1f));
-        rb.setAngularVelocity(glm::vec3(0,2,0));
+        rb.rotation = glm::quat(glm::vec3(0.3f,0.0f, 0.2f));
+       // rb.setAngularVelocity(glm::vec3(0,2,0));
+        otherRb.rotation = glm::quat(glm::vec3(0.3f, 0,0));
         console.rb = &rb;
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
@@ -105,7 +106,7 @@ public:
 
         world.stepWorld(dt);
 
-        if(collider.collisionDetected)
+        if(world.contacts.size()>0)
         {
             cube.meshes[1].setColor(glm::vec3(1,0,0));
 
@@ -116,12 +117,12 @@ public:
                     point.setPosition(world.contacts[i].points[j]);
                     point.draw();
                     if(j == 0)
-                        drawLine(lineMesh, rb.position, rb.position+2.0f*world.contacts[i].normal);
+                    {
+                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
+                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
+                    }
                 }
-
             }
-
-
         }
         else
         {
@@ -141,7 +142,7 @@ public:
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);
         cube.draw();
-        plane.draw();
+       // plane.draw();
     }
 
 };

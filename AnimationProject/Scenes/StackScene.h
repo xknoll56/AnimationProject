@@ -41,7 +41,6 @@ public:
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
-        otherRb.rotation = glm::quat(glm::vec3(0.1f,0,0));
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
         stackedRb = UniformRigidBody(mass, inertia);
@@ -104,6 +103,7 @@ public:
             thrownRb.position = cam.getPosition()+cam.getFwd();
             thrownRb.addForce(-cam.getFwd()*10000.0f);
             thrownRb.atRest = false;
+            thrownRb.stabilizing = false;
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {

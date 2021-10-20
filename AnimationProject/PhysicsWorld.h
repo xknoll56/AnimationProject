@@ -19,6 +19,8 @@ struct ContactInfo
     std::vector<glm::vec3> points;
     CubeCollider::ContactDir aDir;
     CubeCollider::ContactDir bDir;
+    int vertexPoints;
+    int edgePoints;
     Collider* a;
     Collider* b;
     bool faceCollision;
@@ -32,6 +34,8 @@ struct ContactInfo
         bDir = CubeCollider::ContactDir::NONE;
         faceCollision = true;
         faceToFaceCollision = false;
+        vertexPoints = 0;
+        edgePoints = 0;
     }
 };
 
