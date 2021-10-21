@@ -32,13 +32,13 @@ public:
         otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
-        rb.position = glm::vec3(-5, 10, 0);
+        rb.position = glm::vec3(-7, 10, 0);
         rb.setVelocity(glm::vec3(5,0,0));
-        //rb.setAngularVelocity(glm::vec3(0,0,-10));
+        rb.setAngularVelocity(glm::vec3(0,0,10));
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,-0.1f, 0);
         otherRb.dynamic = false;
-        rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
+        rb.rotation = glm::quat(glm::vec3(0.3f,0.0f, 0.4f));
        // rb.setAngularVelocity(glm::vec3(0,2,0));
        // otherRb.rotation = glm::quat(glm::vec3(0.3f, 0,0));
         console.rb = &rb;

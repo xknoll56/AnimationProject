@@ -19,7 +19,7 @@ bool MainApplication::setup(int windowWidth, int windowHeight)
     format.setDepthBufferSize(24);
     format.setMajorVersion(4);
     format.setMinorVersion(5);
-    format.setSwapInterval(0);
+    format.setSwapInterval(1);
     format.setSwapBehavior(QSurfaceFormat::SwapBehavior::DefaultSwapBehavior);
     format.setProfile(QSurfaceFormat::CoreProfile);
 

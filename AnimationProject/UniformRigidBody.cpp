@@ -103,11 +103,13 @@ void UniformRigidBody::addTorque(const glm::vec3& torque,  UniformRigidBody& oth
 void UniformRigidBody::setVelocity(const glm::vec3& velocity)
 {
     linearMomentum = velocity*mass;
+    this->velocity = velocity;
 }
 
 void UniformRigidBody::setAngularVelocity(const glm::vec3& angularVelocity)
 {
     angularMomentum = inertia*angularVelocity;
+    this->angularVelocity = angularVelocity;
 }
 
 glm::vec3 UniformRigidBody::getLocalXAxis()
