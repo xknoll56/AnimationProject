@@ -589,32 +589,9 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
         {
             if(closestPointsDoIntersect(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length))
             {
-                //testing petrusion correciton
-                //info.penetrationDistance = -closestDistanceBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length);
-//                float dist = glm::abs(closestDistanceBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length));
-//                if(dist<minDist && !info.faceCollision)
-//                {
-//                    qDebug() << "ea dir dot eb dir";
-//                    qDebug() << glm::dot(ea.dir, eb.dir);
-//                    minDist = dist;
-//                    info.normal = glm::normalize(glm::cross(ea.dir, eb.dir));
-//                    info.normal = glm::sign(glm::dot(T, info.normal))*info.normal;
-//                    info.penetrationDistance = glm::abs(dist);
-//                    qDebug() << "ea dir: ";
-//                    Utilities::PrintVec3(ea.dir);
-//                    qDebug() <<"eb dir: ";
-//                    Utilities::PrintVec3(eb.dir);
-//                    qDebug() <<"normal dir: ";
-//                    Utilities::PrintVec3(info.normal);
-//                }
+
                 info.points.push_back(closestPointBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir));
                 info.edgePoints++;
-//                if(!info.faceCollision)
-//                {
-//                    info.normal = glm::normalize(glm::cross(ea.dir, eb.dir));
-//                    info.normal = glm::sign(glm::dot(T, info.normal))*info.normal;
-//                    Utilities::PrintVec3(info.normal);
-//                }
             }
         }
     }
@@ -777,7 +754,7 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
     for(glm::vec3 point: points)
     {
         float d = glm::dot(p0-point, normal)/glm::dot(normal,normal);
-        if(d>=0.0f)
+        if(d>=-tolerance)
         {
             glm::vec3 intersectionPoint = point+d*normal;
             float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
@@ -917,11 +894,11 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
     dynamicCube->rb->position += norm*info.penetrationDistance;
 
-    if(!dynamicCube->rb->stabilizing)
+    if(!dynamicCube->rb->restingContact)
     {
        // qDebug() << "not stabalizing";
-        if(info.points.size()==0)
-            dynamicCube->rb->stabilizing = true;
+       // if(info.points.size()==0)
+            //dynamicCube->rb->restingContact = true;
         for(int i =0;i<info.points.size();i++)
         {
             float epsilon = 0.5f;
@@ -937,22 +914,15 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             float t3 = glm::dot(info.normal, glm::cross(glm::cross(dynamicCube->rb->inertiaInv*ra, info.normal), ra));
             float t4 = glm::dot(info.normal, glm::cross(glm::cross(staticCube->rb->inertiaInv*rb, info.normal), rb));
 
-            float j = numerator/(t1+t3);
+            float j = numerator/(t1+t2+t3+t4);
             glm::vec3 force = j*info.normal/(dt*info.points.size());
             float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
-            //qDebug() << "j: " << j;
 
-//            if(glm::abs(vRel)<2.0f )
-//                dynamicCube->rb->stabilizing = true;
-            qDebug() << "j: " <<j;
-            if(glm::abs(j)<0.5f )
-                dynamicCube->rb->stabilizing = true;
 
-            glm::vec3 perpVelNormal = glm::normalize(dynamicCube->rb->velocity + va*norm);
-            if(!glm::isnan(perpVelNormal.x) && !glm::isnan(perpVelNormal.y) && !glm::isnan(perpVelNormal.z)){
-                glm::vec3 fric = friction*perpVelNormal*dynamicCube->rb->mass*glm::dot(gravity, norm);
-                force-=fric;
-            }
+           // qDebug() << "surface slope: " << glm::abs(glm::dot(glm::normalize(gravity), info.normal));
+            if(glm::abs(j)<0.5f && glm::abs(glm::dot(glm::normalize(gravity), info.normal))>0.7f)
+                dynamicCube->rb->restingContact = true;
+
             dynamicCube->rb->addForce(force, *dynamicCube->rb);
             dynamicCube->rb->addTorque(glm::cross(ra, force));
         }
@@ -966,38 +936,56 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
         if(info.points.size()>0)
         {
-           // if(info.points.size()>2)
-               // qDebug() <<"more then 2: " << info.points.size();
-            //qDebug() << "angular speed: " << angularLen;
+
             glm::vec3 ra = info.points[0]-dynamicCube->rb->position;
             glm::vec3 rotPoint= info.points[0];
-            if(info.vertexPoints == 2)
+            glm::vec3 currentHorizontalVelocity = dynamicCube->rb->velocity-glm::dot(dynamicCube->rb->velocity, norm)*norm;
+
+            if(info.vertexPoints > 2)
             {
-                rotPoint = 0.5f*(info.points[0]+info.points[1]);
+                glm::vec3 dir = glm::normalize(glm::normalize(currentHorizontalVelocity)+norm);
+                std::vector<glm::vec3> closest = dynamicCube->getClosestVerts(dir);
+                rotPoint = closest[0];
+                qDebug() << "closest size" << closest.size();
+                for(int i = 1;i<closest.size();i++)
+                    rotPoint+=closest[i];
+                rotPoint/=closest.size();
                 glm::vec3 ra = rotPoint-dynamicCube->rb->position;
+
+                if(angularSpeed<1.0f)
+                {
+                    dynamicCube->rb->stabilizing = true;
+                   // qDebug() << "stabalizing";
+                }
             }
-            else if(info.vertexPoints > 3)
-            {
-                rotPoint = 0.5f*(info.points[0]+info.points[1] + info.points[2]+info.points[3]);
-                glm::vec3 ra = rotPoint-dynamicCube->rb->position;
-              //  Utilities::PrintVec3(ra);
-            }
+
             if(info.faceToFaceCollision&&info.points.size()>2)
             {
                 dynamicCube->rb->atRest = true;
-                dynamicCube->rb->stabilizing = false;
+                dynamicCube->rb->restingContact = false;
             }
-            glm::vec3 currentVel = glm::normalize(dynamicCube->rb->velocity + dynamicCube->rb->velocity*norm);
-            qDebug() << "current velocity: ";
-            Utilities::PrintVec3(currentVel);
+            Utilities::PrintVec3(currentHorizontalVelocity);
+           // dynamicCube->rb->setAngularVelocity(glm::cross(currentHorizontalVelocity, ra));
+
+            glm::vec3 va = dynamicCube->rb->velocity + glm::cross(dynamicCube->rb->angularVelocity, ra);
+            float vRel = glm::dot(info.normal, va);
+
+            float numerator = -vRel;
+
+            float t1 = dynamicCube->rb->massInv;
+            float t3 = glm::dot(info.normal, glm::cross(glm::cross(dynamicCube->rb->inertiaInv*ra, info.normal), ra));
+
+            float j = numerator/(t1+t3);
+            glm::vec3 force = j*info.normal/(dt*info.vertexPoints);
+
             glm::vec3 perpVel = glm::cross(dynamicCube->rb->angularVelocity, -ra);
             glm::vec3 normVel = glm::dot(perpVel, norm)*norm;
             perpVel -= normVel;
-            //Utilities::PrintVec3(perpVel);
 
-            glm::vec3 frictionForce = glm::normalize(currentVel)*glm::dot(friction*gravity, norm);
-            dynamicCube->rb->addTorque(5.0f*glm::cross(dynamicCube->rb->mass*gravity, 2.0f*ra));
-
+            glm::vec3 frictionForce = glm::normalize(perpVel)*glm::dot(friction*gravity, norm);
+           // dynamicCube->rb->addTorque(glm::cross(dynamicCube->rb->mass*gravity, 2.0f*ra)+glm::cross(ra, force));
+            dynamicCube->rb->addTorque(glm::cross(ra, force));
+            qDebug() << "j: " <<j;
 
 
              if(!glm::isnan(frictionForce.x) && !glm::isnan(frictionForce.y) && !glm::isnan(frictionForce.z))
@@ -1005,10 +993,9 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                  perpVel+=frictionForce*dt;
                  dynamicCube->rb->addTorque(glm::cross(frictionForce, -ra));
              }
-            dynamicCube->rb->setVelocity(currentVel+perpVel);
+            dynamicCube->rb->setVelocity(perpVel);
+
         }
-//        else if(glm::abs(glm::dot(info.normal, glm::vec3(0,1,0)))>0.90f)
-//            dynamicCube->rb->atRest = true;
 
     }
 
@@ -1079,4 +1066,9 @@ void PhysicsWorld::stepWorld(float dt)
 {
     checkForCollisions(dt);
     updateQuantities(dt);
+}
+
+bool PhysicsWorld::cubeFlatOnSurface(CubeCollider* cube, glm::vec3& normal, float tolerance)
+{
+    return true;
 }

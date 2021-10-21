@@ -103,7 +103,7 @@ public:
             thrownRb.position = cam.getPosition()+cam.getFwd();
             thrownRb.addForce(-cam.getFwd()*10000.0f);
             thrownRb.atRest = false;
-            thrownRb.stabilizing = false;
+            thrownRb.restingContact = false;
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {
