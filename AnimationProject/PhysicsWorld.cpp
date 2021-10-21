@@ -964,7 +964,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 //add the fritional torque
                 glm::vec3 ff = ra - glm::dot(ra, norm)*norm;
                 ff = -glm::normalize(ff)*glm::dot(dynamicCube->rb->mass*gravity/(float)info.points.size(), norm);
-                dynamicCube->rb->addTorque(glm::cross(ff, ra));
+                ff = glm::cross(ff, ra);
+                dynamicCube->rb->addTorque(ff);
 
             }
 
@@ -989,7 +990,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
             velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
 
-
+            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
+            dynamicCube->rb->addTorque(-torsion);
             dynamicCube->rb->setVelocity(velocityFromAngular);
         }
     }
