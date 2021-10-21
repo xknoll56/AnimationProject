@@ -943,7 +943,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
         {
             for(int i =0;i<info.points.size();i++)
             {
-                float epsilon = 0.5f;
+                float epsilon = 0.1f;
                 glm::vec3 ra = info.points[i]-dynamicCube->rb->position;
                 glm::vec3 rb = info.points[i]-staticCube->rb->position;
                 glm::vec3 va = dynamicCube->rb->velocity + glm::cross(dynamicCube->rb->angularVelocity, ra);
