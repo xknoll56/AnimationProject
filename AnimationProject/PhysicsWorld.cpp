@@ -227,13 +227,14 @@ float PhysicsWorld::closestDistanceBetweenLines(glm::vec3& p0,  glm::vec3& p1, c
     return glm::abs(glm::dot(uv, p0-p1)/glm::length(uv));
 }
 
-bool PhysicsWorld::closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v, float s0, float s1)
+bool PhysicsWorld::closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1,  const glm::vec3& u, const glm::vec3& v, float s0, float s1, float max1, float max2)
 {
     glm::vec3 uv = glm::cross(v,u);
     float uvSquared = glm::length2(uv);
     float t = -glm::dot(glm::cross(p1-p0, u), uv)/uvSquared;
     float s = -glm::dot(glm::cross(p1-p0, v), uv)/uvSquared;
-    if(glm::abs(t)>s1 || glm::abs(s)>s0  || std::isnan(t) || std::isnan(s))
+    float dist = glm::abs(glm::dot(uv, p0-p1)/glm::length(uv));
+    if(glm::abs(t)>s1 || glm::abs(s)>s0  || std::isnan(t) || std::isnan(s) || dist>max1 || dist>max2)
         return false;
 
     return true;
@@ -565,15 +566,19 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
     std::vector<CubeCollider::EdgeIndices> aEdges = cubeA->getEdgesFromVertexIndices();
     std::vector<CubeCollider::EdgeIndices> bEdges = cubeB->getEdgesFromVertexIndices();
     float minDist = std::numeric_limits<float>().max();
+    RayCastData data;
     for(CubeCollider::EdgeIndices ea: aEdges)
     {
         for(CubeCollider::EdgeIndices eb: bEdges)
         {
-            if(closestPointsDoIntersect(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length))
+            if(closestPointsDoIntersect(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length, ea.normalLength, eb.normalLength))
             {
-
-                info.points.push_back(closestPointBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir));
-                info.edgePoints++;
+                glm::vec3 testPoint = closestPointBetweenLines(ea.midPoint, eb.midPoint, ea.dir, eb.dir);
+                if(cubeRaycast(testPoint, info.normal, data, cubeB) && cubeRaycast(testPoint, -info.normal, data, cubeA))
+                {
+                    info.points.push_back(testPoint);
+                    info.edgePoints++;
+                }
             }
         }
     }
@@ -654,78 +659,78 @@ bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, Ray
     //start with the left and right faces
     for(int i = 0;i<6;i++)
     {
-       switch(i)
-       {
-       case 1:
-           normal = -cube->rb->getLocalXAxis();
-           p0 = cube->rb->position-cube->xSize*cube->rb->getLocalXAxis();
-           adj1 = cube->rb->getLocalYAxis();
-           adj2 = cube->rb->getLocalZAxis();
-           maxDist1 = cube->ySize;
-           maxDist2 = cube->zSize;
-           break;
-       case 2:
-           normal = cube->rb->getLocalXAxis();
-           p0 = cube->rb->position+cube->xSize*cube->rb->getLocalXAxis();
-           adj1 = cube->rb->getLocalYAxis();
-           adj2 = cube->rb->getLocalZAxis();
-           maxDist1 = cube->ySize;
-           maxDist2 = cube->zSize;
-           break;
-       case 3:
-           normal = -cube->rb->getLocalYAxis();
-           p0 = cube->rb->position-cube->ySize*cube->rb->getLocalYAxis();
-           adj1 = cube->rb->getLocalXAxis();
-           adj2 = cube->rb->getLocalZAxis();
-           maxDist1 = cube->xSize;
-           maxDist2 = cube->zSize;
-           break;
-       case 4:
-           normal = cube->rb->getLocalYAxis();
-           p0 = cube->rb->position+cube->ySize*cube->rb->getLocalYAxis();
-           adj1 = cube->rb->getLocalXAxis();
-           adj2 = cube->rb->getLocalZAxis();
-           maxDist1 = cube->xSize;
-           maxDist2 = cube->zSize;
-           break;
-       case 5:
-           normal = -cube->rb->getLocalZAxis();
-           p0 = cube->rb->position-cube->zSize*cube->rb->getLocalZAxis();
-           adj1 = cube->rb->getLocalYAxis();
-           adj2 = cube->rb->getLocalXAxis();
-           maxDist1 = cube->ySize;
-           maxDist2 = cube->xSize;
-           break;
-       case 6:
-           normal = cube->rb->getLocalZAxis();
-           p0 = cube->rb->position+cube->zSize*cube->rb->getLocalZAxis();
-           adj1 = cube->rb->getLocalYAxis();
-           adj2 = cube->rb->getLocalXAxis();
-           maxDist1 = cube->ySize;
-           maxDist2 = cube->xSize;
-           break;
-       }
+        switch(i)
+        {
+        case 0:
+            normal = -cube->rb->getLocalXAxis();
+            p0 = cube->rb->position-cube->xSize*cube->rb->getLocalXAxis();
+            adj1 = cube->rb->getLocalYAxis();
+            adj2 = cube->rb->getLocalZAxis();
+            maxDist1 = cube->ySize;
+            maxDist2 = cube->zSize;
+            break;
+        case 1:
+            normal = cube->rb->getLocalXAxis();
+            p0 = cube->rb->position+cube->xSize*cube->rb->getLocalXAxis();
+            adj1 = cube->rb->getLocalYAxis();
+            adj2 = cube->rb->getLocalZAxis();
+            maxDist1 = cube->ySize;
+            maxDist2 = cube->zSize;
+            break;
+        case 2:
+            normal = -cube->rb->getLocalYAxis();
+            p0 = cube->rb->position-cube->ySize*cube->rb->getLocalYAxis();
+            adj1 = cube->rb->getLocalXAxis();
+            adj2 = cube->rb->getLocalZAxis();
+            maxDist1 = cube->xSize;
+            maxDist2 = cube->zSize;
+            break;
+        case 3:
+            normal = cube->rb->getLocalYAxis();
+            p0 = cube->rb->position+cube->ySize*cube->rb->getLocalYAxis();
+            adj1 = cube->rb->getLocalXAxis();
+            adj2 = cube->rb->getLocalZAxis();
+            maxDist1 = cube->xSize;
+            maxDist2 = cube->zSize;
+            break;
+        case 4:
+            normal = -cube->rb->getLocalZAxis();
+            p0 = cube->rb->position-cube->zSize*cube->rb->getLocalZAxis();
+            adj1 = cube->rb->getLocalYAxis();
+            adj2 = cube->rb->getLocalXAxis();
+            maxDist1 = cube->ySize;
+            maxDist2 = cube->xSize;
+            break;
+        case 5:
+            normal = cube->rb->getLocalZAxis();
+            p0 = cube->rb->position+cube->zSize*cube->rb->getLocalZAxis();
+            adj1 = cube->rb->getLocalYAxis();
+            adj2 = cube->rb->getLocalXAxis();
+            maxDist1 = cube->ySize;
+            maxDist2 = cube->xSize;
+            break;
+        }
 
-       float dist = glm::dot((p0-start),normal)/glm::dot(dir, normal);
-       if(dist>=0.0f)
-       {
-           glm::vec3 intersection = start + dir*dist;
-           float dist1 = glm::abs(glm::dot(intersection-p0, adj1));
-           float dist2 = glm::abs(glm::dot(intersection-p0, adj2));
-           if(dist1<=maxDist1 && dist2<=maxDist2)
-           {
-               //cast hits, check if its the minimum
-               if(dist<minDist)
-               {
-                   minDist = dist;
-                   dat.normal = normal;
-                   dat.point = intersection;
-                   dat.length = dist;
-                   doesHit = true;
-               }
-           }
+        float dist = glm::dot((p0-start),normal)/glm::dot(dir, normal);
+        if(dist>=0.0f)
+        {
+            glm::vec3 intersection = start + dir*dist;
+            float dist1 = glm::abs(glm::dot(intersection-p0, adj1));
+            float dist2 = glm::abs(glm::dot(intersection-p0, adj2));
+            if(dist1<=maxDist1 && dist2<=maxDist2)
+            {
+                //cast hits, check if its the minimum
+                if(dist<minDist)
+                {
+                    minDist = dist;
+                    dat.normal = normal;
+                    dat.point = intersection;
+                    dat.length = dist;
+                    doesHit = true;
+                }
+            }
 
-       }
+        }
     }
 
     return doesHit;

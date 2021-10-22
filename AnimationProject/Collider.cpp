@@ -233,6 +233,13 @@ std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
     return minVerts;
 }
 
+std::vector<CubeCollider::EdgeIndices> CubeCollider::getClosestEdges(const glm::vec3& dir)
+{
+    std::vector<CubeCollider::EdgeIndices> eis = getEdgesFromVertexIndices();
+
+    return eis;
+}
+
 std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
 {
     std::vector<CubeCollider::EdgeIndices> eis;
@@ -272,6 +279,18 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
                         eis.push_back(edges[j]);
                     }
                 }
+            }
+        }
+    }
+
+    for(CubeCollider::EdgeIndices& edge: eis)
+    {
+        for(CubeCollider::EdgeIndices& otherEdge: eis)
+        {
+            if(glm::dot(edge.dir, otherEdge.dir)<0.5f)
+            {
+                edge.normalLength = otherEdge.length;
+                break;
             }
         }
     }

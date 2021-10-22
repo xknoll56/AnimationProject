@@ -78,6 +78,8 @@ struct CubeCollider: public Collider
         //the midpoints will be updated every request for edges
         glm::vec3 midPoint;
         glm::vec3 dir;
+        //for the collision detection the length of the other edge normal to the edges must be saved
+        float normalLength;
     };
 
     EdgeIndices edges[12];
@@ -94,6 +96,7 @@ struct CubeCollider: public Collider
     void updateContactEdges();
     std::vector<EdgeIndices> getEdgesFromVertexIndices();
     std::vector<glm::vec3> getClosestVerts(const glm::vec3& dir);
+    std::vector<EdgeIndices> getClosestEdges(const glm::vec3& dir);
 
 };
 

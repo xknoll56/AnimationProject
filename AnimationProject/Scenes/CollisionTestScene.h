@@ -27,13 +27,13 @@ public:
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
         collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-        otherCollider = CubeCollider(glm::vec3(10.0f,0.5f,10.0f));
+        otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1.5, 0);
         rb.dynamic = true;
-        otherRb.position = glm::vec3(0,-0.5f, 0);
+        otherRb.position = glm::vec3(0,2.0f, -4);
         otherRb.dynamic = false;
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
@@ -116,13 +116,13 @@ public:
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
 
-        RayCastData data;
-        if(world.cubeRaycast(glm::vec3(-5,2,0), glm::vec3(1,0,0), data, &collider))
-        {
-            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
-            point.setPosition(data.point);
-            point.draw();
-        }
+//        RayCastData data;
+//        if(world.cubeRaycast(glm::vec3(-5,2,0), glm::vec3(1,0,0), data, &collider))
+//        {
+//            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
+//            point.setPosition(data.point);
+//            point.draw();
+//        }
 
     }
 
@@ -133,9 +133,9 @@ public:
         cube.setScale(collider.scale);
         cube.draw();
 
-        unitDirs.setPosition(rb.position);
-        unitDirs.setRotation(rb.rotation);
-        unitDirs.draw();
+//        unitDirs.setPosition(rb.position);
+//        unitDirs.setRotation(rb.rotation);
+//        unitDirs.draw();
 
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
