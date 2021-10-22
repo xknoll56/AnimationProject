@@ -89,11 +89,14 @@ public:
         }
         if(gMainWindow->getGetDown(Qt::Key_R))
         {
-            rb.setVelocity(glm::vec3((float)(rand()%8)/8.0f,0,(float)(rand()%8)/8.0f));
-            rb.position = glm::vec3(0,5,0);
+            //rb.setVelocity(glm::vec3((float)(rand()%8)/8.0f,0,(float)(rand()%8)/8.0f));
+            rb.position = cam.getPosition()-3.0f*cam.getFwd();
             rb.setAngularVelocity(glm::vec3(0,0,0));
-            rb.rotation = glm::quat(glm::vec3((float)(rand()%8),(float)(rand()%8),(float)(rand()%8)));
+            rb.rotation = glm::quat(glm::vec3());
+            rb.setVelocity(glm::vec3());
             rb.applyGravity = true;
+            rb.stabilizing = false;
+
            // rb.rotation += 0.5f*glm::quat(glm::vec3(PI,0,0))*rb.rotation;
 
         }
@@ -103,7 +106,7 @@ public:
             rb.setVelocity(glm::vec3(0,0,0));
         }
 
-        world.stepWorld(dt);
+        world.stepWorld(0.0025f);
 
         if(collider.collisionDetected)
         {

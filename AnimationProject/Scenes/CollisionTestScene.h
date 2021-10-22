@@ -48,6 +48,7 @@ public:
     {
         Scene::update(dt);
         rb.setVelocity(glm::vec3());
+        rb.setAngularVelocity(glm::vec3());
         if(gMainWindow->getKey(Qt::Key_Right))
         {
             rb.setVelocity(1.0f*cam.getRight());
@@ -66,6 +67,14 @@ public:
         {
             rb.setVelocity(-1.0f*glm::vec3(0,1,0));
         }
+        if(gMainWindow->getKey(Qt::Key_R))
+        {
+            rb.setAngularVelocity(glm::vec3(1,0,0));
+        }
+        if(gMainWindow->getKey(Qt::Key_T))
+        {
+            rb.setAngularVelocity(glm::vec3(-1,0,0));
+        }
         if(gMainWindow->getKey(Qt::Key_Up))
         {
             rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
@@ -82,16 +91,34 @@ public:
         {
             rb.addForce(glm::vec3(0,800,0));
         }
-        if(gMainWindow->getGetDown(Qt::Key_R))
-        {
-            rb.setVelocity(glm::vec3(0,0,0));
-            rb.position = glm::vec3(0,1,0);
-            rb.setAngularVelocity(glm::vec3(0.1,0.2,0.3));
-            rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
+//        if(gMainWindow->getGetDown(Qt::Key_R))
+//        {
+//            rb.setVelocity(glm::vec3(0,0,0));
+//            rb.position = glm::vec3(0,1,0);
+//            rb.setAngularVelocity(glm::vec3(0.1,0.2,0.3));
+//            rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
-        }
-
+//        }
+        if(world.contacts.size()>0)
+            qDebug() << "penetration distance: "<< world.contacts[0].penetrationDistance;
         world.stepWorld(dt);
+
+
+
+    }
+
+    void updateDraw(float dt)
+    {
+        cube.setPosition(rb.position);
+        cube.setRotation(rb.rotation);
+        cube.setScale(collider.scale);
+        cube.draw();
+
+        cube.setPosition(otherRb.position);
+        cube.setRotation(otherRb.rotation);
+        cube.setScale(otherCollider.scale);
+        cube.draw();
+        plane.draw();
 
         if(world.contacts.size()>0)
         {
@@ -115,20 +142,5 @@ public:
         {
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
-
-    }
-
-    void updateDraw(float dt)
-    {
-        cube.setPosition(rb.position);
-        cube.setRotation(rb.rotation);
-        cube.setScale(collider.scale);
-        cube.draw();
-
-        cube.setPosition(otherRb.position);
-        cube.setRotation(otherRb.rotation);
-        cube.setScale(otherCollider.scale);
-        cube.draw();
-        plane.draw();
     }
 };

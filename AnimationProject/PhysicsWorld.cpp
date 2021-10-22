@@ -621,119 +621,8 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
 
     if(info.faceCollision)
     {
-        float faceTolerance = 0.001f;
-        if(info.aDir == CubeCollider::ContactDir::NONE)
-        {
-            determineCubeCubePetrusionVerts(info, -info.normal, closestVertsA, cubeB, info.bDir, true);
-            if(closestVertsA.size()>2)
-            {
-                info.faceToFaceCollision = true;
-                CubeCollider::ContactDir aDir;
-                //plane on plan collision
-                switch(info.bDir)
-                {
-                case CubeCollider::ContactDir::RIGHT:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalXAxis(), cubeA->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalXAxis(), cubeA->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalXAxis(), cubeA->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                case CubeCollider::ContactDir::UP:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalYAxis(), cubeA->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalYAxis(), cubeA->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalYAxis(), cubeA->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                case CubeCollider::ContactDir::FORWARD:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalZAxis(), cubeA->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalZAxis(), cubeA->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeB->rb->getLocalZAxis(), cubeA->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        aDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                }
-                determineCubeCubePetrusionVerts(info, info.normal, closestVertsB, cubeA, aDir, false);
-            }
-        }
-        else
-        {
-            determineCubeCubePetrusionVerts(info, info.normal, closestVertsB, cubeA, info.aDir, true);
-            if(closestVertsB.size()>2)
-            {
-                info.faceToFaceCollision = true;
-                CubeCollider::ContactDir bDir;
-                //plane on plan collision
-                switch(info.aDir)
-                {
-                case CubeCollider::ContactDir::RIGHT:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalXAxis(), cubeB->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalXAxis(), cubeB->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalXAxis(), cubeB->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                case CubeCollider::ContactDir::UP:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalYAxis(), cubeB->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalYAxis(), cubeB->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalYAxis(), cubeB->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                case CubeCollider::ContactDir::FORWARD:
-                    if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalZAxis(), cubeB->rb->getLocalXAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::RIGHT;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalZAxis(), cubeB->rb->getLocalYAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::UP;
-                    }
-                    else if(glm::epsilonEqual(glm::abs(glm::dot(cubeA->rb->getLocalZAxis(), cubeB->rb->getLocalZAxis())), 1.0f, faceTolerance))
-                    {
-                        bDir = CubeCollider::ContactDir::FORWARD;
-                    }
-                    break;
-                }
-                determineCubeCubePetrusionVerts(info, -info.normal, closestVertsA, cubeB, bDir, false);
-            }
-        }
+        determineCubeCubePetrusionVerts(info, -info.normal, closestVertsA, cubeB, info.bDir, true);
+        determineCubeCubePetrusionVerts(info, info.normal, closestVertsB, cubeA, info.aDir, true);
     }
 
     contacts.push_back(info);
@@ -828,11 +717,25 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
          //qDebug() << "Penetration distance: " << d;
         if(adjustPenetration && d>=0.0f)
             info.penetrationDistance = -d;
+<<<<<<< Updated upstream
         glm::vec3 intersectionPoint = point+d*normal;
         float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
         float dist2 = glm::abs(glm::dot(intersectionPoint-p0, adj2));
         if(dist1<=maxDist1 && dist2<=maxDist2)
             info.points.push_back(intersectionPoint);
+=======
+        if(d>=0.0f)
+        {
+            glm::vec3 intersectionPoint = point+d*normal;
+            float dist1 = glm::abs(glm::dot(intersectionPoint-p0, adj1));
+            float dist2 = glm::abs(glm::dot(intersectionPoint-p0, adj2));
+            if(dist1<=maxDist1 && dist2<=maxDist2)
+            {
+                info.points.push_back(intersectionPoint);
+                info.vertexPoints++;
+            }
+        }
+>>>>>>> Stashed changes
     }
 }
 

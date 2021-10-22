@@ -106,6 +106,7 @@ void CubeCollider::updateContactVerts()
 
 std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
 {
+    //todo return all of the edges in the face of the closest dir
     updateContactVerts();
     float min = std::numeric_limits<float>::max();
     //glm::vec3 minVert = contactVertBuffer[0];
@@ -113,23 +114,122 @@ std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
     indices.clear();
     minVerts.reserve(4);
     indices.reserve(4);
-    for(int i = 0; i<8;i++)
+    float magX = glm::dot(dir, xSize*rb->getLocalXAxis());
+    float magY = glm::dot(dir, ySize*rb->getLocalYAxis());
+    float magZ = glm::dot(dir, zSize*rb->getLocalZAxis());
+
+
+    float max = magX;
+    ContactDir cd = ContactDir::RIGHT;
+    if(glm::abs(magY)>glm::abs(max))
     {
-        float test = glm::dot(dir, contactVertBuffer[i]);
-        if(test<min)
-        {
-            min = test;
-        }
+        cd =ContactDir::UP;
+        max = magY;
     }
-    for(int i = 0; i<8;i++)
+    if(glm::abs(magZ)>glm::abs(max))
     {
-        float test = glm::dot(dir, contactVertBuffer[i]);
-        if(glm::epsilonEqual(test, min, 0.001f))
-        {
-            minVerts.push_back(contactVertBuffer[i]);
-            indices.push_back(i);
-        }
+        cd = ContactDir::FORWARD;
+        max = magZ;
     }
+    switch(cd)
+    {
+    case ContactDir::RIGHT:
+        if(max<0)
+        {
+            minVerts.push_back(contactVertBuffer[2]);
+            minVerts.push_back(contactVertBuffer[3]);
+            minVerts.push_back(contactVertBuffer[6]);
+            minVerts.push_back(contactVertBuffer[7]);
+
+            indices.push_back(2);
+            indices.push_back(3);
+            indices.push_back(6);
+            indices.push_back(7);
+        }
+        else
+        {
+            minVerts.push_back(contactVertBuffer[0]);
+            minVerts.push_back(contactVertBuffer[1]);
+            minVerts.push_back(contactVertBuffer[4]);
+            minVerts.push_back(contactVertBuffer[5]);
+
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(4);
+            indices.push_back(5);
+        }
+        break;
+    case ContactDir::UP:
+        if(max<0)
+        {
+            minVerts.push_back(contactVertBuffer[4]);
+            minVerts.push_back(contactVertBuffer[5]);
+            minVerts.push_back(contactVertBuffer[6]);
+            minVerts.push_back(contactVertBuffer[7]);
+
+            indices.push_back(4);
+            indices.push_back(5);
+            indices.push_back(6);
+            indices.push_back(7);
+        }
+        else
+        {
+            minVerts.push_back(contactVertBuffer[0]);
+            minVerts.push_back(contactVertBuffer[1]);
+            minVerts.push_back(contactVertBuffer[2]);
+            minVerts.push_back(contactVertBuffer[3]);
+
+            indices.push_back(0);
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(3);
+        }
+        break;
+    case ContactDir::FORWARD:
+        if(max<0)
+        {
+            minVerts.push_back(contactVertBuffer[1]);
+            minVerts.push_back(contactVertBuffer[2]);
+            minVerts.push_back(contactVertBuffer[5]);
+            minVerts.push_back(contactVertBuffer[6]);
+
+            indices.push_back(1);
+            indices.push_back(2);
+            indices.push_back(5);
+            indices.push_back(6);
+        }
+        else
+        {
+            minVerts.push_back(contactVertBuffer[0]);
+            minVerts.push_back(contactVertBuffer[7]);
+            minVerts.push_back(contactVertBuffer[3]);
+            minVerts.push_back(contactVertBuffer[4]);
+
+            indices.push_back(0);
+            indices.push_back(7);
+            indices.push_back(3);
+            indices.push_back(4);
+        }
+        break;
+    }
+
+//    for(int i = 0; i<8;i++)
+//    {
+//        float test = glm::dot(dir, contactVertBuffer[i]);
+//        if(test<min)
+//        {
+//            min = test;
+//        }
+//    }
+//    for(int i = 0; i<8;i++)
+//    {
+//        float test = glm::dot(dir, contactVertBuffer[i]);
+//        if(glm::epsilonEqual(test, min, 0.001f))
+//        {
+//            minVerts.push_back(contactVertBuffer[i]);
+//            indices.push_back(i);
+//        }
+//    }
     return minVerts;
 }
 
@@ -146,6 +246,19 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
                 {
                     if((edges[j].i0 == i0 && edges[j].i1 == i1) ||(edges[j].i0 == i1 && edges[j].i1 == i0))
                     {
+                        bool found = false;
+                        for(int i =0;i<eis.size();i++)
+                        {
+                            if((eis[i].i0 == i0 && eis[i].i1 == i1) ||(eis[i].i0 == i1 && eis[i].i1==i0))
+                            {
+                                //already contained in edges
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(found)
+                            break;
+
                         edges[j].midPoint = 0.5f*(contactVertBuffer[edges[j].i0]+contactVertBuffer[edges[j].i1]);
                         if(j>3 && j<8)
                             edges[j].dir = rb->getLocalYAxis();
