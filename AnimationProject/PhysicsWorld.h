@@ -74,6 +74,7 @@ struct PhysicsWorld
     void updateQuantities(float dt);
     void stepWorld(float dt);
     bool cubeFlatOnSurface(CubeCollider* cube, glm::vec3& normal, float tolerance);
+    bool cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube);
 };
 
 class Utilities

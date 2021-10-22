@@ -637,6 +637,100 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
     return false;
 }
 
+bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube)
+{
+    float minDist = std::numeric_limits<float>().max();
+    //normal of the plane
+    glm::vec3 normal;
+    //initial points on plane
+    glm::vec3 p0;
+    //The adjacent directions to check if its on the plane
+    glm::vec3 adj1;
+    float maxDist1;
+    glm::vec3 adj2;
+    float maxDist2;
+    bool doesHit = false;
+
+    //start with the left and right faces
+    for(int i = 0;i<6;i++)
+    {
+       switch(i)
+       {
+       case 1:
+           normal = -cube->rb->getLocalXAxis();
+           p0 = cube->rb->position-cube->xSize*cube->rb->getLocalXAxis();
+           adj1 = cube->rb->getLocalYAxis();
+           adj2 = cube->rb->getLocalZAxis();
+           maxDist1 = cube->ySize;
+           maxDist2 = cube->zSize;
+           break;
+       case 2:
+           normal = cube->rb->getLocalXAxis();
+           p0 = cube->rb->position+cube->xSize*cube->rb->getLocalXAxis();
+           adj1 = cube->rb->getLocalYAxis();
+           adj2 = cube->rb->getLocalZAxis();
+           maxDist1 = cube->ySize;
+           maxDist2 = cube->zSize;
+           break;
+       case 3:
+           normal = -cube->rb->getLocalYAxis();
+           p0 = cube->rb->position-cube->ySize*cube->rb->getLocalYAxis();
+           adj1 = cube->rb->getLocalXAxis();
+           adj2 = cube->rb->getLocalZAxis();
+           maxDist1 = cube->xSize;
+           maxDist2 = cube->zSize;
+           break;
+       case 4:
+           normal = cube->rb->getLocalYAxis();
+           p0 = cube->rb->position+cube->ySize*cube->rb->getLocalYAxis();
+           adj1 = cube->rb->getLocalXAxis();
+           adj2 = cube->rb->getLocalZAxis();
+           maxDist1 = cube->xSize;
+           maxDist2 = cube->zSize;
+           break;
+       case 5:
+           normal = -cube->rb->getLocalZAxis();
+           p0 = cube->rb->position-cube->zSize*cube->rb->getLocalZAxis();
+           adj1 = cube->rb->getLocalYAxis();
+           adj2 = cube->rb->getLocalXAxis();
+           maxDist1 = cube->ySize;
+           maxDist2 = cube->xSize;
+           break;
+       case 6:
+           normal = cube->rb->getLocalZAxis();
+           p0 = cube->rb->position+cube->zSize*cube->rb->getLocalZAxis();
+           adj1 = cube->rb->getLocalYAxis();
+           adj2 = cube->rb->getLocalXAxis();
+           maxDist1 = cube->ySize;
+           maxDist2 = cube->xSize;
+           break;
+       }
+
+       float dist = glm::dot((p0-start),normal)/glm::dot(dir, normal);
+       if(dist>=0.0f)
+       {
+           glm::vec3 intersection = start + dir*dist;
+           float dist1 = glm::abs(glm::dot(intersection-p0, adj1));
+           float dist2 = glm::abs(glm::dot(intersection-p0, adj2));
+           if(dist1<=maxDist1 && dist2<=maxDist2)
+           {
+               //cast hits, check if its the minimum
+               if(dist<minDist)
+               {
+                   minDist = dist;
+                   dat.normal = normal;
+                   dat.point = intersection;
+                   dat.length = dist;
+                   doesHit = true;
+               }
+           }
+
+       }
+    }
+
+    return doesHit;
+}
+
 void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir, bool adjustPenetration)
 {
     glm::vec3 p0 = toCube->rb->position + toCube->rb->getLocalXAxis()*toCube->xSize;

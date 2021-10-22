@@ -116,6 +116,14 @@ public:
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
 
+        RayCastData data;
+        if(world.cubeRaycast(glm::vec3(-5,2,0), glm::vec3(1,0,0), data, &collider))
+        {
+            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
+            point.setPosition(data.point);
+            point.draw();
+        }
+
     }
 
     void updateDraw(float dt)
@@ -124,6 +132,10 @@ public:
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);
         cube.draw();
+
+        unitDirs.setPosition(rb.position);
+        unitDirs.setRotation(rb.rotation);
+        unitDirs.draw();
 
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
