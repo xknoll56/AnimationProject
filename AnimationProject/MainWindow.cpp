@@ -162,7 +162,7 @@ bool MainWindow::getKey(Qt::Key key)
 {
     return inputs[key];
 }
-bool MainWindow::getGetDown(Qt::Key key)
+bool MainWindow::getKeyDown(Qt::Key key)
 {
     return inputsDown[key];
 }

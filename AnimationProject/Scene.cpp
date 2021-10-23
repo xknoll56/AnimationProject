@@ -52,7 +52,7 @@ void Scene::start()
 
 void Scene::update(float dt)
 {
-    if(gMainWindow->getGetDown(Qt::Key_Escape))
+    if(gMainWindow->getKeyDown(Qt::Key_Escape))
     {
         doUpdateConsole = true;
         consoleToggle = false;
@@ -93,7 +93,7 @@ void Scene::updateConsole(float dt)
     openglFunctions->glDisable(GL_DEPTH_TEST);
     openglFunctions->glDisable(GL_CULL_FACE);
 
-    if(gMainWindow->getGetDown(Qt::Key_Return))
+    if(gMainWindow->getKeyDown(Qt::Key_Return))
     {
         QString text = gMainWindow->writtenText;
         if(text.compare("exit")==0)
@@ -127,7 +127,7 @@ void Scene::updateConsole(float dt)
     painter.end();
 
 
-    if(gMainWindow->getGetDown(Qt::Key_Escape) && consoleToggle)
+    if(gMainWindow->getKeyDown(Qt::Key_Escape) && consoleToggle)
     {
         doUpdateConsole = false;
         gMainWindow->clearText();

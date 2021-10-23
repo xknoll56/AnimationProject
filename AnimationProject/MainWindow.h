@@ -25,7 +25,7 @@ public:
     void toggleWriteEnable();
     void clearText();
     bool getKey(Qt::Key);
-    bool getGetDown(Qt::Key);
+    bool getKeyDown(Qt::Key);
     bool getMouse(Qt::MouseButton);
     bool getMouseDown(Qt::MouseButton);
     bool openglInitialized = false;
