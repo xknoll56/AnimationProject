@@ -89,11 +89,11 @@ public:
             //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
         }
-        if(gMainWindow->getGetDown(Qt::Key_Space))
+        if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
             rb.addForce(glm::vec3(0,800,0));
         }
-        if(gMainWindow->getGetDown(Qt::Key_R))
+        if(gMainWindow->getKeyDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
             rb.position = glm::vec3(0,1,0);

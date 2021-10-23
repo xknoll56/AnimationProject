@@ -85,11 +85,11 @@ public:
             //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
         }
-        if(gMainWindow->getGetDown(Qt::Key_Space))
+        if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
             rb.addForce(glm::vec3(0,800,0));
         }
-        if(gMainWindow->getGetDown(Qt::Key_R))
+        if(gMainWindow->getKeyDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3((float)(rand()%8)/8.0f,0,(float)(rand()%8)/8.0f));
             rb.position = glm::vec3(0,5,0);
@@ -100,7 +100,7 @@ public:
 
         }
 
-        if(gMainWindow->getGetDown(Qt::Key_1))
+        if(gMainWindow->getKeyDown(Qt::Key_1))
         {
             rb.setVelocity(glm::vec3(0,0,0));
         }

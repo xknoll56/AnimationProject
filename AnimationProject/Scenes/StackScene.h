@@ -96,7 +96,7 @@ public:
             //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
         }
-        if(gMainWindow->getGetDown(Qt::Key_Space))
+        if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
             thrownRb.linearMomentum = glm::vec3(0,0,0);
             thrownRb.angularMomentum = glm::vec3(0,0,0);
@@ -105,7 +105,7 @@ public:
             thrownRb.atRest = false;
             thrownRb.restingContact = false;
         }
-        if(gMainWindow->getGetDown(Qt::Key_R))
+        if(gMainWindow->getKeyDown(Qt::Key_R))
         {
             rb.setVelocity(glm::vec3(0,0,0));
             rb.position = glm::vec3(0,10,0);
@@ -113,7 +113,7 @@ public:
             rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
         }
-        if(gMainWindow->getGetDown(Qt::Key_1))
+        if(gMainWindow->getKeyDown(Qt::Key_1))
         {
             rb.setVelocity(glm::vec3(0,0,0));
         }
