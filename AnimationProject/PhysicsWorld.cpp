@@ -149,10 +149,18 @@ void PhysicsWorld::checkForCollisions(float dt)
                     switch(other->type)
                     {
                     case ColliderType::SPHERE:
+                    {
                         SphereCollider* otherSphere = dynamic_cast<SphereCollider*>(other);
                         if(detectSphereSphereCollision(sphere, otherSphere))
                             sphereSphereCollisionResponse(dt, sphere, otherSphere);
                         break;
+                    }
+                    case ColliderType::CUBE:
+                    {
+                        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
+
+                        break;
+                    }
                     }
                 }
             }
@@ -168,6 +176,7 @@ void PhysicsWorld::checkForCollisions(float dt)
                     switch(other->type)
                     {
                     case ColliderType::CUBE:
+                    {
                         CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
                         if(!contactHandled(cube, otherCube))
                         {
@@ -177,12 +186,66 @@ void PhysicsWorld::checkForCollisions(float dt)
                         }
                         break;
                     }
+                    case ColliderType::SPHERE:
+                    {
+                        break;
+                    }
+                    }
                 }
             }
             break;
         }
         }
     }
+    //    for(auto& collider: colliders)
+    //    {
+    //        switch(collider->type)
+    //        {
+    //        case ColliderType::SPHERE:
+    //        {
+    //            SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
+    //            spherePlaneCollision(dt, sphere);
+    //            for(auto& other: colliders)
+    //            {
+    //                if(other!=collider)
+    //                {
+    //                    switch(other->type)
+    //                    {
+    //                    case ColliderType::SPHERE:
+    //                        SphereCollider* otherSphere = dynamic_cast<SphereCollider*>(other);
+    //                        if(detectSphereSphereCollision(sphere, otherSphere))
+    //                            sphereSphereCollisionResponse(dt, sphere, otherSphere);
+    //                        break;
+    //                    }
+    //                }
+    //            }
+    //            break;
+    //        }
+    //        case ColliderType::CUBE:
+    //        {
+    //            CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+    //            for(auto& other: colliders)
+    //            {
+    //                if(other!=collider)
+    //                {
+    //                    switch(other->type)
+    //                    {
+    //                    case ColliderType::CUBE:
+    //                        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
+    //                        if(!contactHandled(cube, otherCube))
+    //                        {
+    //                            ContactInfo info;
+    //                            if(detectCubeCubeCollision(dt, cube, otherCube, info))
+    //                                determineCubeCubeContactPoints(info, cube, otherCube);
+    //                        }
+    //                        break;
+    //                    }
+    //                }
+    //            }
+    //            break;
+    //        }
+    //        }
+    //    }
 
     if(enableResponse)
     {
@@ -190,16 +253,19 @@ void PhysicsWorld::checkForCollisions(float dt)
         {
             CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
             CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
-            if(cube->rb->isStatic() && !otherCube->rb->isStatic())
+            if(cube && otherCube)
             {
-                cubeCubeCollisionResponseDynamicVsStatic(info, -info.normal, dt, otherCube, cube);
+                if(cube->rb->isStatic() && !otherCube->rb->isStatic())
+                {
+                    cubeCubeCollisionResponseDynamicVsStatic(info, -info.normal, dt, otherCube, cube);
+                }
+                else if(otherCube->rb->isStatic() && !cube->rb->isStatic())
+                {
+                    cubeCubeCollisionResponseDynamicVsStatic(info, info.normal, dt, cube, otherCube);
+                }
+                else if(!cube->rb->isStatic() && !otherCube->rb->isStatic())
+                    cubeCubeCollisionResponse(info, dt, cube, otherCube);
             }
-            else if(otherCube->rb->isStatic() && !cube->rb->isStatic())
-            {
-                cubeCubeCollisionResponseDynamicVsStatic(info, info.normal, dt, cube, otherCube);
-            }
-            else if(!cube->rb->isStatic() && !otherCube->rb->isStatic())
-                cubeCubeCollisionResponse(info, dt, cube, otherCube);
 
         }
     }
@@ -640,6 +706,49 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
         }
     }
     return false;
+}
+
+bool PhysicsWorld::sphereRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, SphereCollider* sphere)
+{
+    glm::vec3 right(1,0,0), up(0,1,0);
+    if(glm::all(glm::equal(dir, glm::vec3(0,1,0)))  || glm::all(glm::equal(dir, glm::vec3(0,-1,0))))
+    {
+        up = glm::vec3(0,0,1);
+    }
+    else
+    {
+        right = glm::normalize(glm::cross(up, dir));
+        up = glm::cross(right, dir);
+    }
+
+    bool hits = false;
+    glm::vec3 p0 = sphere->rb->position;
+    glm::vec3 normal = -dir;
+    float dist = glm::dot((p0-start),normal)/glm::dot(dir, normal);
+
+    if(dist>=0.0f)
+    {
+        glm::vec3 intersection = start+dir*dist;
+        glm::vec3 radius = intersection-p0;
+        float l2 = glm::length2(radius);
+        if(l2<=sphere->radius*sphere->radius)
+        {
+            hits = true;
+            glm::vec3 rightComp = glm::dot(right, radius)*right;
+            glm::vec3 upComp = glm::dot(up, radius)*up;
+            float length = glm::length(rightComp+upComp);
+            float theta = glm::asin(length/sphere->radius);
+            glm::vec3 dirComp = normal*length/glm::tan(theta);
+            if(length==0.0f)
+                dirComp = normal*sphere->radius;
+            glm::vec3 point = rightComp+upComp+dirComp+p0;
+            dat.length = glm::length(point-start);
+            dat.normal = rightComp+upComp+dirComp;
+            dat.point = point;
+        }
+    }
+
+    return hits;
 }
 
 bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube)

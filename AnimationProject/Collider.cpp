@@ -16,10 +16,18 @@ PlaneCollider::PlaneCollider(const glm::vec3& point1, const glm::vec3& point2, c
     type = ColliderType::PLANE;
 }
 
+SphereCollider::SphereCollider()
+{
+    this->radius = 0.5f;
+    type = ColliderType::SPHERE;
+    scale = 2.0f*glm::vec3(radius, radius, radius);
+}
+
 SphereCollider::SphereCollider(const float radius)
 {
     this->radius = radius;
     type = ColliderType::SPHERE;
+    scale = 2.0f*glm::vec3(radius, radius, radius);
 }
 
 SphereCollider::SphereCollider(const float radius, UniformRigidBody* const rb)
@@ -27,6 +35,15 @@ SphereCollider::SphereCollider(const float radius, UniformRigidBody* const rb)
     this->radius = radius;
     type = ColliderType::SPHERE;
     this->rb = rb;
+    scale = 2.0f*glm::vec3(radius, radius, radius);
+}
+
+SphereCollider& SphereCollider::operator= (const SphereCollider& other)
+{
+    this->radius = other.radius;
+    this->type = ColliderType::SPHERE;
+    scale = 2.0f*glm::vec3(radius, radius, radius);
+    return *this;
 }
 
 CubeCollider::CubeCollider(const glm::vec3& sizes)

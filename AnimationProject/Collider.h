@@ -52,9 +52,12 @@ struct PlaneCollider: public Collider
 struct SphereCollider: public Collider
 {
     float radius;
+    glm::vec3 scale;
 
+    SphereCollider();
     SphereCollider(const float radius);
     SphereCollider(const float radius, UniformRigidBody* const rb);
+    SphereCollider& operator= (const SphereCollider& other);
 };
 
 struct CubeCollider: public Collider

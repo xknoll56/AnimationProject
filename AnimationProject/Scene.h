@@ -43,6 +43,7 @@ public:
     virtual void updateConsole(float dt);
     virtual void updateDraw(float dt);
 
+    float elapsedTime;
     bool doUpdateConsole;
     bool consoleToggle;
 protected:
@@ -61,6 +62,7 @@ protected:
     ConsoleInterface console;
     std::list<QString> commands;
     std::list<QString> replys;
+
 
 
 };

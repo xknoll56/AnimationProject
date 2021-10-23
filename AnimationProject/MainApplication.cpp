@@ -85,14 +85,18 @@ int MainApplication::execute()
     scene->start();
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
+    QElapsedTimer sceneTimer;
+    sceneTimer.start();
     long time = elapsedTimer.nsecsElapsed();
     float dt;
+    scene->elapsedTime = 0.0f;
     while(window.shouldRun())
     {
 
         long timeNow = elapsedTimer.nsecsElapsed();
         dt = elapsedTimer.nsecsElapsed()/1000000000.0f;
         elapsedTimer.restart();
+        scene->elapsedTime = sceneTimer.elapsed()/1000.0f;
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glEnable(GL_CULL_FACE);

@@ -11,6 +11,9 @@ private:
     CubeCollider otherCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
+    SphereCollider sphereCollider;
+    UniformRigidBody sphereRb;
+    glm::vec3 castDir;
 
 
 public:
@@ -20,8 +23,9 @@ public:
     }
     void start()
     {
+
         float mass = 1.0f;
-        float radius = 1.0f;
+        float radius = 0.5f;
         float inertia = (2.0f/5.0f)*mass*radius*radius;
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
@@ -38,8 +42,15 @@ public:
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
+        sphereCollider = SphereCollider(3.0f);
+        sphereRb = UniformRigidBody(mass, inertia);
+        sphereCollider.rb = &sphereRb;
+        sphereRb.position = glm::vec3(5.0f, 2.0f, 0.0f);
+        sphereRb.setAngularVelocity(glm::vec3(0.1,0.2,0.3));
+        castDir = glm::vec3(1,0,0);
 
-        std::vector<Collider*> colliders = {&otherCollider, &collider};
+
+        std::vector<Collider*> colliders = {&otherCollider, &collider, &sphereCollider};
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = false;
         world.setColliders(&colliders);
@@ -116,13 +127,15 @@ public:
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
 
-//        RayCastData data;
-//        if(world.cubeRaycast(glm::vec3(-5,2,0), glm::vec3(1,0,0), data, &collider))
-//        {
-//            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
-//            point.setPosition(data.point);
-//            point.draw();
-//        }
+        RayCastData data;
+        qDebug() << elapsedTime;
+        castDir = glm::vec3(glm::cos(elapsedTime/10.0f), 0.0f, glm::sin(elapsedTime/10.0f));
+        if(world.sphereRaycast(glm::vec3(-5,2,0), castDir, data, &sphereCollider))
+        {
+            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
+            point.setPosition(data.point);
+            point.draw();
+        }
 
     }
 
@@ -136,6 +149,11 @@ public:
 //        unitDirs.setPosition(rb.position);
 //        unitDirs.setRotation(rb.rotation);
 //        unitDirs.draw();
+
+        sphere.setPosition(sphereRb.position);
+        sphere.setRotation(sphereRb.rotation);
+        sphere.setScale(sphereCollider.scale);
+        sphere.draw();
 
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
