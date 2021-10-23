@@ -1023,6 +1023,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
         if(info.points.size())
         {
+            int iMax = 0;
+            float jMax = 0;
             for(int i =0;i<info.points.size();i++)
             {
                 float epsilon = 0.1f;
@@ -1039,6 +1041,11 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 float t4 = glm::dot(info.normal, glm::cross(glm::cross(staticCube->rb->inertiaInv*rb, info.normal), rb));
 
                 float j = numerator/(t1+t3);
+                if(glm::abs(j)>jMax)
+                {
+                    jMax = glm::abs(j);
+                    iMax = i;
+                }
                 glm::vec3 force = j*info.normal/(dt*info.points.size());
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
@@ -1053,7 +1060,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
             glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
 
-            glm::vec3 rotationPoint = info.points[0];
+            glm::vec3 rotationPoint = info.points[iMax];
             glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
 
             if(info.vertexPoints>1)
