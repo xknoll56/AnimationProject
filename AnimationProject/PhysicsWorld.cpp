@@ -1026,12 +1026,20 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
         if(info.points.size())
         {
+            //if(glm::abs(glm::dot(glm::normalize(gravity), info.normal))<=0.7f)
+            {
+               // dynamicCube->rb->restingContact = false;
+               // return;
+            }
+            glm::vec3 totalVelocity(0,0,0);
             for(int i =0;i<info.points.size();i++)
             {
                 float epsilon = 0.1f;
                 glm::vec3 ra = info.points[i]-dynamicCube->rb->position;
                 glm::vec3 rb = info.points[i]-staticCube->rb->position;
                 glm::vec3 va = dynamicCube->rb->velocity + glm::cross(dynamicCube->rb->angularVelocity, ra);
+                glm::vec3 vn = glm::dot(va, info.normal)*info.normal;
+                glm::vec3 vt = va-vn;
                 float vRel = glm::dot(info.normal, va);
 
                 float numerator = -(1-epsilon)*vRel;
@@ -1041,43 +1049,69 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 float t3 = glm::dot(info.normal, glm::cross(glm::cross(dynamicCube->rb->inertiaInv*ra, info.normal), ra));
                 float t4 = glm::dot(info.normal, glm::cross(glm::cross(staticCube->rb->inertiaInv*rb, info.normal), rb));
 
-                float j = numerator/(t1+t3);
-                glm::vec3 force = j*info.normal/(dt*info.points.size());
+                float j = numerator/(t1+t2+t3+t4);
+                glm::vec3 normalForce = j*info.normal/(dt*info.points.size());
+                glm::vec3 tangentialForce = (glm::length(vt)/glm::length(vn))*glm::abs(j)*glm::normalize(vt)/(dt*info.points.size());
+               // Utilities::PrintVec3(tangentialForce);
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
-                dynamicCube->rb->addTorque(glm::cross(ra, force)+glm::cross(dynamicCube->rb->mass*gravity/(float)info.points.size(), ra));
+                dynamicCube->rb->addTorque(glm::cross(ra, normalForce)+glm::cross(dynamicCube->rb->mass*gravity/(float)info.points.size(), ra));
+                //dynamicCube->rb->addTorque(glm::cross(ra, force));
                 //add the fritional torque
-                glm::vec3 ff = ra - glm::dot(ra, norm)*norm;
-                ff = -glm::normalize(ff)*glm::dot(dynamicCube->rb->mass*gravity/(float)info.points.size(), norm);
-                ff = glm::cross(ff, ra);
-                dynamicCube->rb->addTorque(ff);
 
-            }
-
-            glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
-
-            glm::vec3 rotationPoint = info.points[info.vertexPoints];
-            glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
-
-            if(info.vertexPoints>1)
-            {
-                std::vector<glm::vec3> points = dynamicCube->getClosestVerts(glm::normalize(glm::normalize(dynamicCube->rb->velocity)+norm));
-                if(points.size())
+                if(glm::length(tangentialForce)<friction*glm::length(normalForce))
                 {
-                    rotationPoint = points[0];
-                    for(int i = 1;i<points.size();i++)
-                        rotationPoint+=points[i];
-                    rotationPoint/=points.size();
-                    radius = dynamicCube->rb->position-rotationPoint;
+                    vt = glm::vec3(0,0,0);
                 }
+                else
+                {
+                    if(!glm::all(glm::isnan(tangentialForce)))
+                    {
+                        vt -= friction*tangentialForce*dt;
+                        dynamicCube->rb->addTorque(glm::cross(ra, -friction*tangentialForce));
+                    }
+                }
+                glm::vec3 rotationPoint = info.points[i];
+                glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
+
+
+                glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
+                velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
+
+                glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
+                dynamicCube->rb->addTorque(-torsion);
+                totalVelocity+=velocityFromAngular+vt;
             }
+            totalVelocity/=(float)info.points.size();
 
-            glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
-            velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
+            dynamicCube->rb->setVelocity(totalVelocity);
 
-            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
-            dynamicCube->rb->addTorque(-torsion);
-            dynamicCube->rb->setVelocity(velocityFromAngular);
+//            glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
+
+//            glm::vec3 rotationPoint = info.points[0];
+//            if(info.edgePoints == 0)
+//                glm::vec3 rotationPoint = info.points[info.vertexPoints];
+//            glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
+
+//            if(info.vertexPoints>1)
+//            {
+//                std::vector<glm::vec3> points = dynamicCube->getClosestVerts(glm::normalize(glm::normalize(dynamicCube->rb->velocity)+norm));
+//                if(points.size())
+//                {
+//                    rotationPoint = points[0];
+//                    for(int i = 1;i<points.size();i++)
+//                        rotationPoint+=points[i];
+//                    rotationPoint/=points.size();
+//                    radius = dynamicCube->rb->position-rotationPoint;
+//                }
+//            }
+
+//            glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
+//            velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
+
+//            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
+//            dynamicCube->rb->addTorque(-torsion);
+//            dynamicCube->rb->setVelocity(velocityFromAngular);
         }
     }
 

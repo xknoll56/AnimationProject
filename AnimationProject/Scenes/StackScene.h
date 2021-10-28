@@ -118,6 +118,11 @@ public:
             rb.setVelocity(glm::vec3(0,0,0));
         }
 
+        qDebug() << "angular momentum";
+        Utilities::PrintVec3(rb.angularMomentum);
+        qDebug() <<"linear momentum:";
+        Utilities::PrintVec3(rb.linearMomentum);
+
         //rb.setAngularVelocity(glm::vec3(0.2, 0.3, 0.4));
         //world.stepWorld(0.0009f);
         world.stepWorld(dt);
