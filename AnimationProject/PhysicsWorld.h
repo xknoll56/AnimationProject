@@ -64,10 +64,12 @@ struct PhysicsWorld
     bool closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1,  const glm::vec3& u, const glm::vec3& v, float s0, float s1, float max1, float max2);
     bool detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo);
     void determineCubeCubeContactPoints(ContactInfo& info, CubeCollider* cubeA, CubeCollider* cubeB);
+    bool detectCubeSphereCollision(float dt, CubeCollider* cube, SphereCollider* sphere, ContactInfo& contactInfo);
     void determineCubeCubePetrusionVerts(ContactInfo& info,const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir, bool adjustPenetration);
     bool isCubeCubePetrusion(const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir);
     void cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     void cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, const glm::vec3& norm, float dt, CubeCollider* dynamicCube, CubeCollider* staticCube);
+    void cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);
     void sphereSphereCollisionResponse(float dt, SphereCollider* sphere, SphereCollider* other);
     void spherePlaneCollision(float dt, SphereCollider* sphere);

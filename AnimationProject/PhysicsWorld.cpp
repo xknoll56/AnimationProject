@@ -141,7 +141,7 @@ void PhysicsWorld::checkForCollisions(float dt)
         case ColliderType::SPHERE:
         {
             SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
-            spherePlaneCollision(dt, sphere);
+            //spherePlaneCollision(dt, sphere);
             for(auto& other: colliders)
             {
                 if(other!=collider)
@@ -158,7 +158,11 @@ void PhysicsWorld::checkForCollisions(float dt)
                     case ColliderType::CUBE:
                     {
                         CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
-
+                        ContactInfo info;
+                        if(detectCubeSphereCollision( dt, otherCube, sphere, info))
+                        {
+                            //qDebug() << "collision";
+                        }
                         break;
                     }
                     }
@@ -188,6 +192,12 @@ void PhysicsWorld::checkForCollisions(float dt)
                     }
                     case ColliderType::SPHERE:
                     {
+                        SphereCollider* sphere = dynamic_cast<SphereCollider*>(other);
+                        ContactInfo info;
+                        if(detectCubeSphereCollision( dt, cube, sphere, info))
+                        {
+                            //qDebug() << "collision";
+                        }
                         break;
                     }
                     }
@@ -306,6 +316,129 @@ bool PhysicsWorld::closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1,  cons
     return true;
 }
 
+
+bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, SphereCollider* sphere, ContactInfo& contactInfo)
+{
+    cube->collisionDetected = false;
+    sphere->collisionDetected = false;
+
+    contactInfo.a = cube;
+    contactInfo.b = sphere;
+
+    glm::vec3 aX = cube->rb->getLocalXAxis();
+    glm::vec3 aY = cube->rb->getLocalYAxis();
+    glm::vec3 aZ = cube->rb->getLocalZAxis();
+
+    glm::vec3 T = cube->rb->position-sphere->rb->position;
+
+    float penetrationY, penetrationX, penetrationZ;
+
+    float penetration = glm::abs(glm::dot(aX, T)) - cube->xSize - sphere->radius;
+    if(penetration > 0)
+    {
+
+        return false;
+    }
+    contactInfo.aDir = CubeCollider::ContactDir::RIGHT;
+    contactInfo.penetrationDistance = penetration;
+    penetrationX = glm::abs(penetration);
+
+    penetration = glm::abs(glm::dot(aY, T)) - cube->ySize - sphere->radius;
+    if(penetration > 0)
+    {
+        return false;
+    }
+
+    penetrationY = glm::abs(penetration);
+    if(penetration > contactInfo.penetrationDistance)
+    {
+        contactInfo.aDir = CubeCollider::ContactDir::UP;
+        contactInfo.penetrationDistance = penetration;
+    }
+
+
+
+    penetration = glm::abs(glm::dot(aZ, T)) - cube->zSize - sphere->radius;
+    if(penetration > 0)
+    {
+        return false;
+    }
+    penetrationZ = penetration;
+    if(penetration > contactInfo.penetrationDistance)
+    {
+        contactInfo.aDir = CubeCollider::ContactDir::FORWARD;
+        contactInfo.penetrationDistance = penetration;
+    }
+
+
+
+    glm::vec3 normal, normalX, normalY, normalZ;
+    normalX = glm::sign(glm::dot(aX, T))*aX;
+    normalY = glm::sign(glm::dot(aY, T))*aY;
+    normalZ = glm::sign(glm::dot(aZ, T))*aZ;
+    float size;
+    glm::vec3 castDir;
+    switch(contactInfo.aDir)
+    {
+    case(CubeCollider::ContactDir::RIGHT):
+        normal = normalX;
+        size = cube->xSize;
+        castDir = glm::normalize(-normalY-normalZ);
+        if(cubeRaycast(sphere->rb->position, normalX, rcd, cube))
+        {
+            if(rcd.length<sphere->radius)
+            {
+                contactInfo.points.push_back(rcd.point);
+                contactInfo.normal = -normalX;
+                contacts.push_back(contactInfo);
+                return true;
+            }
+        }
+        break;
+    case(CubeCollider::ContactDir::UP):
+        normal = normalY;
+        size = cube->ySize;
+        castDir = glm::normalize(-normalX-normalZ);
+        if(cubeRaycast(sphere->rb->position, normalY, rcd, cube))
+        {
+            if(rcd.length<sphere->radius)
+            {
+                contactInfo.points.push_back(rcd.point);
+                contactInfo.normal = -normalY;
+                contacts.push_back(contactInfo);
+                return true;
+            }
+        }
+        break;
+    case(CubeCollider::ContactDir::FORWARD):
+        if(cubeRaycast(sphere->rb->position, normalZ, rcd, cube))
+        {
+            if(rcd.length<sphere->radius)
+            {
+                contactInfo.points.push_back(rcd.point);
+                contactInfo.normal = -normalZ;
+                contacts.push_back(contactInfo);
+                return true;
+            }
+        }
+        break;
+    }
+
+    if(glm::abs(glm::dot(aX, T))<cube->xSize && glm::abs(glm::dot(aZ, T))<cube->zSize && glm::abs(glm::dot(aY, T))<cube->ySize)
+    {
+        contactInfo.points.push_back(sphere->rb->position);
+        contactInfo.normal = -normal;
+        contacts.push_back(contactInfo);
+        return true;
+    }
+
+
+
+
+
+    return false;
+
+}
 
 
 bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo)
@@ -637,12 +770,12 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
     {
         for(CubeCollider::EdgeIndices eb: bEdges)
         {
-//            glm::vec3 tangentialA = ea.dir*ea.length - glm::dot(ea.dir*ea.length, info.normal)*info.normal;
-//            float aLen = glm::length(tangentialA);
-//            glm::vec3 tangentialB = eb.dir*eb.length - glm::dot(eb.dir*eb.length, info.normal)*info.normal;
-//            float bLen = glm::length(tangentialB);
-//            tangentialA /= aLen;
-//            tangentialB /= bLen;
+            //            glm::vec3 tangentialA = ea.dir*ea.length - glm::dot(ea.dir*ea.length, info.normal)*info.normal;
+            //            float aLen = glm::length(tangentialA);
+            //            glm::vec3 tangentialB = eb.dir*eb.length - glm::dot(eb.dir*eb.length, info.normal)*info.normal;
+            //            float bLen = glm::length(tangentialB);
+            //            tangentialA /= aLen;
+            //            tangentialB /= bLen;
 
             if(closestPointsDoIntersect(ea.midPoint, eb.midPoint, ea.dir, eb.dir, ea.length, eb.length, ea.normalLength, eb.normalLength))
             {
@@ -1028,8 +1161,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
         {
             //if(glm::abs(glm::dot(glm::normalize(gravity), info.normal))<=0.7f)
             {
-               // dynamicCube->rb->restingContact = false;
-               // return;
+                // dynamicCube->rb->restingContact = false;
+                // return;
             }
             glm::vec3 totalVelocity(0,0,0);
             for(int i =0;i<info.points.size();i++)
@@ -1052,7 +1185,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 float j = numerator/(t1+t2+t3+t4);
                 glm::vec3 normalForce = j*info.normal/(dt*info.points.size());
                 glm::vec3 tangentialForce = (glm::length(vt)/glm::length(vn))*glm::abs(j)*glm::normalize(vt)/(dt*info.points.size());
-               // Utilities::PrintVec3(tangentialForce);
+                // Utilities::PrintVec3(tangentialForce);
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
                 dynamicCube->rb->addTorque(glm::cross(ra, normalForce)+glm::cross(dynamicCube->rb->mass*gravity/(float)info.points.size(), ra));
@@ -1086,34 +1219,46 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
             dynamicCube->rb->setVelocity(totalVelocity);
 
-//            glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
+            //            glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
 
-//            glm::vec3 rotationPoint = info.points[0];
-//            if(info.edgePoints == 0)
-//                glm::vec3 rotationPoint = info.points[info.vertexPoints];
-//            glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
+            //            glm::vec3 rotationPoint = info.points[0];
+            //            if(info.edgePoints == 0)
+            //                glm::vec3 rotationPoint = info.points[info.vertexPoints];
+            //            glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
 
-//            if(info.vertexPoints>1)
-//            {
-//                std::vector<glm::vec3> points = dynamicCube->getClosestVerts(glm::normalize(glm::normalize(dynamicCube->rb->velocity)+norm));
-//                if(points.size())
-//                {
-//                    rotationPoint = points[0];
-//                    for(int i = 1;i<points.size();i++)
-//                        rotationPoint+=points[i];
-//                    rotationPoint/=points.size();
-//                    radius = dynamicCube->rb->position-rotationPoint;
-//                }
-//            }
+            //            if(info.vertexPoints>1)
+            //            {
+            //                std::vector<glm::vec3> points = dynamicCube->getClosestVerts(glm::normalize(glm::normalize(dynamicCube->rb->velocity)+norm));
+            //                if(points.size())
+            //                {
+            //                    rotationPoint = points[0];
+            //                    for(int i = 1;i<points.size();i++)
+            //                        rotationPoint+=points[i];
+            //                    rotationPoint/=points.size();
+            //                    radius = dynamicCube->rb->position-rotationPoint;
+            //                }
+            //            }
 
-//            glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
-//            velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
+            //            glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
+            //            velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
 
-//            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
-//            dynamicCube->rb->addTorque(-torsion);
-//            dynamicCube->rb->setVelocity(velocityFromAngular);
+            //            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
+            //            dynamicCube->rb->addTorque(-torsion);
+            //            dynamicCube->rb->setVelocity(velocityFromAngular);
         }
     }
+
+}
+
+void cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
+{
+    glm::vec3 normal = info.normal;
+    sphere->rb->position -= normal*info.penetrationDistance;
+
+    glm::vec3 vc = glm::cross(cube->rb->angularVelocity, info.points[0]);
+    float j = glm::length(sphere->rb->velocity-vc);
+
+
 
 }
 

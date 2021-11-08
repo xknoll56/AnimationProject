@@ -30,7 +30,7 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+        collider = CubeCollider(glm::vec3(10.5f,10.5f,10.5f));
         otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
@@ -42,7 +42,7 @@ public:
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
-        sphereCollider = SphereCollider(3.0f);
+        sphereCollider = SphereCollider(1.0f);
         sphereRb = UniformRigidBody(mass, inertia);
         sphereCollider.rb = &sphereRb;
         sphereRb.position = glm::vec3(5.0f, 2.0f, 0.0f);
@@ -50,7 +50,7 @@ public:
         castDir = glm::vec3(1,0,0);
 
 
-        std::vector<Collider*> colliders = {&otherCollider, &collider, &sphereCollider};
+        std::vector<Collider*> colliders = { &collider, &sphereCollider};
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = false;
         world.setColliders(&colliders);
@@ -101,12 +101,14 @@ public:
             rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
         }
+       // Utilities::PrintVec3(rb.getLocalXAxis());
 
         world.stepWorld(dt);
 
         if(world.contacts.size()>0)
         {
             cube.meshes[1].setColor(glm::vec3(1,0,0));
+            sphere.meshes[1].setColor(glm::vec3(1,0,0));
 
             for(int i =0;i<world.contacts.size();i++)
             {
@@ -119,16 +121,19 @@ public:
                         drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
                         drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
                     }
+
+
                 }
             }
         }
         else
         {
             cube.meshes[1].setColor(glm::vec3(0,1,0));
+            sphere.meshes[1].setColor(glm::vec3(0,1,0));
         }
 
         RayCastData data;
-        qDebug() << elapsedTime;
+        //qDebug() << elapsedTime;
         castDir = glm::vec3(glm::cos(elapsedTime/10.0f), 0.0f, glm::sin(elapsedTime/10.0f));
         if(world.sphereRaycast(glm::vec3(-5,2,0), castDir, data, &sphereCollider))
         {
