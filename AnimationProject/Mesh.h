@@ -69,6 +69,8 @@ static std::vector<glm::vec3> lineVerts =
     glm::vec3(0,0,0),
     glm::vec3(1,0,0)
 };
+
+
 static std::vector<glm::vec3> capsuleVerts;
 
 static std::vector<glm::vec3> boundingCapsuleVerts;

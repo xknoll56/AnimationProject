@@ -30,7 +30,7 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(10.5f,10.5f,10.5f));
+        collider = CubeCollider(glm::vec3(2.5f,2.5f,2.5f));
         otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
@@ -118,8 +118,16 @@ public:
                     point.draw();
                     if(j == 0)
                     {
-                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
-                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
+
+                        glm::vec3 normal = 2.0f*world.contacts[i].normal;
+                        Utilities::PrintVec3(normal);
+                        qDebug() << "from position: ";
+                        Utilities::PrintVec3(world.contacts[i].b->rb->position);
+                        qDebug() << "to position: ";
+                        Utilities::PrintVec3(world.contacts[i].b->rb->position+normal);
+                        glm::vec3 toPosition = world.contacts[i].b->rb->position+normal;
+                        drawLine(lineMesh, world.contacts[i].b->rb->position,world.contacts[i].b->rb->position+ normal);
+                        drawLine(lineMesh, world.contacts[i].a->rb->position,world.contacts[i].a->rb->position -normal);
                     }
 
 

@@ -159,9 +159,12 @@ void PhysicsWorld::checkForCollisions(float dt)
                     {
                         CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
                         ContactInfo info;
-                        if(detectCubeSphereCollision( dt, otherCube, sphere, info))
+                        if(!contactHandled(otherCube, sphere))
                         {
-                            //qDebug() << "collision";
+                            if(detectCubeSphereCollision( dt, otherCube, sphere, info))
+                            {
+
+                            }
                         }
                         break;
                     }
@@ -194,9 +197,12 @@ void PhysicsWorld::checkForCollisions(float dt)
                     {
                         SphereCollider* sphere = dynamic_cast<SphereCollider*>(other);
                         ContactInfo info;
-                        if(detectCubeSphereCollision( dt, cube, sphere, info))
+                        if(!contactHandled(cube, sphere))
                         {
-                            //qDebug() << "collision";
+                            if(detectCubeSphereCollision( dt, cube, sphere, info))
+                            {
+                                //qDebug() << "collision";
+                            }
                         }
                         break;
                     }
@@ -207,79 +213,36 @@ void PhysicsWorld::checkForCollisions(float dt)
         }
         }
     }
-    //    for(auto& collider: colliders)
-    //    {
-    //        switch(collider->type)
-    //        {
-    //        case ColliderType::SPHERE:
-    //        {
-    //            SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
-    //            spherePlaneCollision(dt, sphere);
-    //            for(auto& other: colliders)
-    //            {
-    //                if(other!=collider)
-    //                {
-    //                    switch(other->type)
-    //                    {
-    //                    case ColliderType::SPHERE:
-    //                        SphereCollider* otherSphere = dynamic_cast<SphereCollider*>(other);
-    //                        if(detectSphereSphereCollision(sphere, otherSphere))
-    //                            sphereSphereCollisionResponse(dt, sphere, otherSphere);
-    //                        break;
-    //                    }
-    //                }
-    //            }
-    //            break;
-    //        }
-    //        case ColliderType::CUBE:
-    //        {
-    //            CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
-    //            for(auto& other: colliders)
-    //            {
-    //                if(other!=collider)
-    //                {
-    //                    switch(other->type)
-    //                    {
-    //                    case ColliderType::CUBE:
-    //                        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
-    //                        if(!contactHandled(cube, otherCube))
-    //                        {
-    //                            ContactInfo info;
-    //                            if(detectCubeCubeCollision(dt, cube, otherCube, info))
-    //                                determineCubeCubeContactPoints(info, cube, otherCube);
-    //                        }
-    //                        break;
-    //                    }
-    //                }
-    //            }
-    //            break;
-    //        }
-    //        }
-    //    }
 
+    CollisionResponse(dt);
+}
+
+void PhysicsWorld::CollisionResponse(float dt)
+{
     if(enableResponse)
     {
         for(ContactInfo& info: contacts)
         {
-            CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
-            CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
-            if(cube && otherCube)
+            if(info.a->type == ColliderType::CUBE && info.b->type == ColliderType::CUBE)
             {
-                if(cube->rb->isStatic() && !otherCube->rb->isStatic())
+                CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
+                CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
+                if(cube && otherCube)
                 {
-                    cubeCubeCollisionResponseDynamicVsStatic(info, -info.normal, dt, otherCube, cube);
+                    if(cube->rb->isStatic() && !otherCube->rb->isStatic())
+                    {
+                        cubeCubeCollisionResponseDynamicVsStatic(info, -info.normal, dt, otherCube, cube);
+                    }
+                    else if(otherCube->rb->isStatic() && !cube->rb->isStatic())
+                    {
+                        cubeCubeCollisionResponseDynamicVsStatic(info, info.normal, dt, cube, otherCube);
+                    }
+                    else if(!cube->rb->isStatic() && !otherCube->rb->isStatic())
+                        cubeCubeCollisionResponse(info, dt, cube, otherCube);
                 }
-                else if(otherCube->rb->isStatic() && !cube->rb->isStatic())
-                {
-                    cubeCubeCollisionResponseDynamicVsStatic(info, info.normal, dt, cube, otherCube);
-                }
-                else if(!cube->rb->isStatic() && !otherCube->rb->isStatic())
-                    cubeCubeCollisionResponse(info, dt, cube, otherCube);
             }
-
         }
     }
-
 }
 
 glm::vec3 PhysicsWorld::closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v)
@@ -432,6 +395,28 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
         return true;
     }
 
+    //Thats not all, need to do the edges...
+    std::vector<glm::vec3> closestVerts = cube->getClosestVerts(T);
+    std::vector<CubeCollider::EdgeIndices> edges = cube->getEdgesFromVertexIndices();
+
+    RayCastData rcd2;
+    for(CubeCollider::EdgeIndices edge: edges)
+    {
+        glm::vec3 point1 = edge.midPoint-edge.dir*edge.length;
+        glm::vec3 dir1 = edge.dir;
+
+        glm::vec3 point2 = edge.midPoint+edge.dir*edge.length;
+        glm::vec3 dir2 = -edge.dir;
+        if(sphereRaycast(point1, dir1, rcd, sphere) && sphereRaycast(point2, dir2, rcd2, sphere))
+        {
+            glm::vec3 contactPoint = (rcd.point+rcd2.point)*0.5f;
+            contactInfo.points.push_back(contactPoint);
+            contactInfo.normal = glm::normalize(sphere->rb->position-contactPoint);
+            contactInfo.penetrationDistance = glm::length(contactPoint-sphere->rb->position);
+            contacts.push_back(contactInfo);
+            return true;
+        }
+    }
 
 
 
