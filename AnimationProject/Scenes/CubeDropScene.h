@@ -9,8 +9,10 @@ private:
     PhysicsWorld world;
     CubeCollider collider;
     CubeCollider otherCollider;
+    SphereCollider sphereCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
+    UniformRigidBody sphereRb;
 
 
 public:
@@ -26,12 +28,16 @@ public:
         float inertia = (2.0f/5.0f)*mass*radius*radius;
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
+        sphereRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
         collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
         otherCollider = CubeCollider(glm::vec3(10,5.0f,10));
         otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
+        sphereCollider = SphereCollider(0.5f);
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
+        sphereCollider.rb = &sphereRb;
+        sphereRb.position = glm::vec3(0,10,0);
         rb.position = glm::vec3(-7, 10, 0);
         rb.setVelocity(glm::vec3(5,0,0));
         rb.setAngularVelocity(glm::vec3(0,0,5));
@@ -40,13 +46,13 @@ public:
         otherRb.dynamic = false;
         rb.rotation = glm::quat(glm::vec3(0.3f,0.0f, 0.4f));
        // rb.setAngularVelocity(glm::vec3(0,2,0));
-       // otherRb.rotation = glm::quat(glm::vec3(0.3f, 0,0));
+        otherRb.rotation = glm::quat(glm::vec3(0.3f, 0,0));
         console.rb = &rb;
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
 
-        std::vector<Collider*> colliders = {  &collider, &otherCollider};
-        world.gravity = glm::vec3(0,-10.0f,0);
+        std::vector<Collider*> colliders = {  &sphereCollider, &otherCollider};
+        world.gravity = glm::vec3(0,-1.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
     }
@@ -139,11 +145,17 @@ public:
         cube.setScale(collider.scale);
         cube.draw();
 
+        sphere.setPosition(sphereRb.position);
+        sphere.setRotation(sphereRb.rotation);
+        sphere.setScale(sphereCollider.scale);
+        sphere.draw();
+
+
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);
         cube.draw();
-        plane.draw();
+       // plane.draw();
     }
 
 };

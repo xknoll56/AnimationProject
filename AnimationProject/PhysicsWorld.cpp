@@ -241,6 +241,18 @@ void PhysicsWorld::CollisionResponse(float dt)
                         cubeCubeCollisionResponse(info, dt, cube, otherCube);
                 }
             }
+            else if(info.a->type == ColliderType::CUBE && info.b->type == ColliderType::SPHERE)
+            {
+                CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
+                SphereCollider* sphere = dynamic_cast<SphereCollider*>(info.b);
+                if(cube && sphere)
+                {
+                    if(cube->rb->isStatic())
+                    {
+                        cubeSphereCollisionResponseStaticVsDynamic(info, dt, cube, sphere);
+                    }
+                }
+            }
         }
     }
 }
@@ -287,6 +299,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 
     contactInfo.a = cube;
     contactInfo.b = sphere;
+    contactInfo.faceCollision = false;
 
     glm::vec3 aX = cube->rb->getLocalXAxis();
     glm::vec3 aY = cube->rb->getLocalYAxis();
@@ -335,6 +348,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 
 
 
+
     glm::vec3 normal, normalX, normalY, normalZ;
     normalX = glm::sign(glm::dot(aX, T))*aX;
     normalY = glm::sign(glm::dot(aY, T))*aY;
@@ -353,6 +367,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             {
                 contactInfo.points.push_back(rcd.point);
                 contactInfo.normal = -normalX;
+                contactInfo.faceCollision = true;
                 contacts.push_back(contactInfo);
                 return true;
             }
@@ -368,6 +383,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             {
                 contactInfo.points.push_back(rcd.point);
                 contactInfo.normal = -normalY;
+                contactInfo.faceCollision = true;
                 contacts.push_back(contactInfo);
                 return true;
             }
@@ -380,19 +396,12 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             {
                 contactInfo.points.push_back(rcd.point);
                 contactInfo.normal = -normalZ;
+                contactInfo.faceCollision = true;
                 contacts.push_back(contactInfo);
                 return true;
             }
         }
         break;
-    }
-
-    if(glm::abs(glm::dot(aX, T))<cube->xSize && glm::abs(glm::dot(aZ, T))<cube->zSize && glm::abs(glm::dot(aY, T))<cube->ySize)
-    {
-        contactInfo.points.push_back(sphere->rb->position);
-        contactInfo.normal = -normal;
-        contacts.push_back(contactInfo);
-        return true;
     }
 
     //Thats not all, need to do the edges...
@@ -413,10 +422,22 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             contactInfo.points.push_back(contactPoint);
             contactInfo.normal = glm::normalize(sphere->rb->position-contactPoint);
             contactInfo.penetrationDistance = glm::length(contactPoint-sphere->rb->position);
+            contactInfo.faceCollision = false;
             contacts.push_back(contactInfo);
             return true;
         }
     }
+
+
+    if(glm::abs(glm::dot(aX, T))<cube->xSize && glm::abs(glm::dot(aZ, T))<cube->zSize && glm::abs(glm::dot(aY, T))<cube->ySize)
+    {
+        contactInfo.points.push_back(sphere->rb->position);
+        contactInfo.normal = -normal;
+        contactInfo.faceCollision = true;
+        contacts.push_back(contactInfo);
+        return true;
+    }
+
 
 
 
@@ -1235,15 +1256,49 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
 }
 
-void cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
+void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
 {
     glm::vec3 normal = info.normal;
-    sphere->rb->position -= normal*info.penetrationDistance;
+    sphere->rb->position -= 0.99f*normal*info.penetrationDistance;
+    glm::vec3 r = info.points[0]-sphere->rb->position;
 
-    glm::vec3 vc = glm::cross(cube->rb->angularVelocity, info.points[0]);
-    float j = glm::length(sphere->rb->velocity-vc);
+    glm::vec3 vn = glm::dot(normal, sphere->rb->velocity)*sphere->rb->velocity;
+    glm::vec3 vt = sphere->rb->velocity - vn;
 
+    glm::vec3 force = -1.1f*normal*glm::dot(sphere->rb->velocity, normal)*sphere->rb->mass/dt;
+    float j = glm::length(force);
+    float sMax = 5.0f*restitutionSlope*glm::abs(glm::dot(gravity, normal))+restitutionIntersect;
+    //float sMax = restitutionSlope*-glm::dot(gravity, normal)+restitutionIntersect;
+    //qDebug() << "j: " << j <<" smax: " << sMax;
+    if(j>sMax)
+    {
+       // if(glm::dot(force, normal)>0)
+        {
+            sphere->rb->addForce(force);
+            glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
+            //qDebug() <<"tangential force:";
+            //Utilities::PrintVec3(glm::cross(friction*forceT, r));
+            sphere->rb->setAngularVelocity(glm::cross(normal,vt*sphere->radius));
+        }
+    }
+    else
+    {
+        if(info.faceCollision)
+        {
+            sphere->rb->linearMomentum = glm::cross(glm::cross(normal, sphere->rb->linearMomentum), normal);
+            sphere->rb->setAngularVelocity(glm::cross(normal,sphere->rb->velocity/sphere->radius));
+            sphere->rb->addForce(friction*glm::normalize(sphere->rb->velocity)*glm::dot(gravity, normal));
+        }
+        else
+        {
 
+            if(glm::dot(force, normal)>0)
+            {
+                qDebug() <<"adding force";
+                sphere->rb->addForce(force);
+            }
+        }
+    }
 
 }
 

@@ -30,7 +30,7 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(2.5f,2.5f,2.5f));
+        collider = CubeCollider(glm::vec3(2.5f,0.2f,2.5f));
         otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
