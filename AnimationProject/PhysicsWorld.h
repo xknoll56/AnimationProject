@@ -71,6 +71,7 @@ struct PhysicsWorld
     void cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB);
     void cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, const glm::vec3& norm, float dt, CubeCollider* dynamicCube, CubeCollider* staticCube);
     void cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere);
+    void cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);
     void sphereSphereCollisionResponse(float dt, SphereCollider* sphere, SphereCollider* other);
     void spherePlaneCollision(float dt, SphereCollider* sphere);

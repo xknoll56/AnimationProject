@@ -37,7 +37,7 @@ public:
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         sphereCollider.rb = &sphereRb;
-        sphereRb.position = glm::vec3(0,10,0);
+        sphereRb.position = glm::vec3(2,8,0);
         rb.position = glm::vec3(-7, 10, 0);
         rb.setVelocity(glm::vec3(5,0,0));
         rb.setAngularVelocity(glm::vec3(0,0,5));
@@ -52,7 +52,7 @@ public:
 
 
         std::vector<Collider*> colliders = {  &sphereCollider, &otherCollider};
-        world.gravity = glm::vec3(0,-1.0f,0);
+        world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
     }

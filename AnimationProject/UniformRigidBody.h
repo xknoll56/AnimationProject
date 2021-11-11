@@ -10,8 +10,8 @@ struct UniformRigidBody
 {
 
     //constants
-    const float mass;
-    const float inertia;
+    float mass;
+    float inertia;
     float massInv;
     float inertiaInv;
     float elasticity = 0.25f;

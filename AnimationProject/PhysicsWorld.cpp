@@ -247,10 +247,12 @@ void PhysicsWorld::CollisionResponse(float dt)
                 SphereCollider* sphere = dynamic_cast<SphereCollider*>(info.b);
                 if(cube && sphere)
                 {
-                    if(cube->rb->isStatic())
+                    if(!cube->rb->dynamic)
                     {
                         cubeSphereCollisionResponseStaticVsDynamic(info, dt, cube, sphere);
                     }
+                    else
+                        cubeSphereCollisionResponseDynamicVsDynamic(info, dt, cube, sphere);
                 }
             }
         }
@@ -1117,7 +1119,8 @@ glm::vec3 frictionalSpeed;
 void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, const glm::vec3& norm, float dt, CubeCollider* dynamicCube, CubeCollider* staticCube)
 {
 
-    dynamicCube->rb->position += norm*info.penetrationDistance;
+    //if(info.faceCollision)
+        dynamicCube->rb->position += norm*info.penetrationDistance;
 
     if(!dynamicCube->rb->restingContact)
     {
@@ -1159,6 +1162,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
     else
     {
         //qDebug() <<"in resting state";
+        if(!info.faceCollision)
+            dynamicCube->rb->restingContact = false;
 
         float angularSpeed = glm::length(dynamicCube->rb->angularVelocity);
         float speed = glm::length(dynamicCube->rb->velocity);
@@ -1219,7 +1224,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
                 glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
                 dynamicCube->rb->addTorque(-torsion);
-                totalVelocity+=velocityFromAngular+vt;
+                totalVelocity+=velocityFromAngular;
             }
             totalVelocity/=(float)info.points.size();
 
@@ -1256,10 +1261,45 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
 }
 
+void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
+{
+    qDebug()<<"dynamic response:";
+
+    cube->rb->position += 0.5f*info.normal*info.penetrationDistance;
+    sphere->rb->position -= 0.5f*info.normal*info.penetrationDistance;
+    float epsilon = 0.1f;
+    glm::vec3 ra = info.points[0]-cube->rb->position;
+    glm::vec3 rb = info.points[0]-sphere->rb->position;
+    glm::vec3 va = cube->rb->velocity + glm::cross(cube->rb->angularVelocity, ra);
+    glm::vec3 vb = sphere->rb->velocity + glm::cross(sphere->rb->angularVelocity, rb);
+    float vRel = glm::dot(info.normal, va);
+
+    float numerator = -(1-epsilon)*vRel;
+
+    float t1 = cube->rb->massInv;
+    float t2 = sphere->rb->massInv;
+    float t3 = glm::dot(info.normal, glm::cross(glm::cross(cube->rb->inertiaInv*ra, info.normal), ra));
+    float t4 = glm::dot(info.normal, glm::cross(glm::cross(sphere->rb->inertiaInv*rb, info.normal), rb));
+
+    float j = numerator/(t1+t2+t3+t4);
+    glm::vec3 force = j*info.normal/(dt*info.points.size());
+    qDebug() << j;
+    float angularRel = glm::length(cube->rb->angularVelocity-sphere->rb->angularVelocity);
+
+
+
+    cube->rb->addForce(force, *cube->rb);
+    cube->rb->addTorque(glm::cross(ra, force));
+
+    sphere->rb->addForce(-force, *sphere->rb);
+    sphere->rb->addTorque(glm::cross(rb, -force));
+}
+
 void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
 {
     glm::vec3 normal = info.normal;
-    sphere->rb->position -= 0.99f*normal*info.penetrationDistance;
+    if(info.faceCollision)
+        sphere->rb->position -= normal*info.penetrationDistance;
     glm::vec3 r = info.points[0]-sphere->rb->position;
 
     glm::vec3 vn = glm::dot(normal, sphere->rb->velocity)*sphere->rb->velocity;
@@ -1278,7 +1318,7 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
             glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
             //qDebug() <<"tangential force:";
             //Utilities::PrintVec3(glm::cross(friction*forceT, r));
-            sphere->rb->setAngularVelocity(glm::cross(normal,vt*sphere->radius));
+            sphere->rb->setAngularVelocity(glm::cross(normal,vt/sphere->radius));
         }
     }
     else
@@ -1294,7 +1334,8 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
 
             if(glm::dot(force, normal)>0)
             {
-                qDebug() <<"adding force";
+                //sphere->rb->position -= 0.5f*normal*info.penetrationDistance;
+                //qDebug() <<"adding force";
                 sphere->rb->addForce(force);
             }
         }

@@ -12,7 +12,7 @@ Scene::Scene()
 {
 
     painter.setWorldMatrixEnabled(false);
-    doUpdateConsole = false;
+    doUpdateConsole = true;
     consoleToggle = true;
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)gMainWindow->width()/gMainWindow->height(), 0.1f, 100.0f);
     glm::mat4 trans(1.0f);

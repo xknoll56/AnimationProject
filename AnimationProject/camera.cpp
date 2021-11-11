@@ -117,3 +117,8 @@ const glm::vec3& Camera::getPosition()
 {
     return pos;
 }
+
+void Camera::setPosition(const glm::vec3& pos)
+{
+    this->pos = pos;
+}

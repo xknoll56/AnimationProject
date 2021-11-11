@@ -39,6 +39,7 @@ HEADERS += \
     Scene.h \
     Scenes/CollisionTestScene.h \
     Scenes/CubeDropScene.h \
+    Scenes/DemoScene.h \
     Scenes/StackScene.h \
     Shader.h \
     UniformRigidBody.h

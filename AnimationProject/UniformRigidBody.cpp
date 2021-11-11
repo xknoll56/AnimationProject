@@ -2,8 +2,10 @@
 #include <algorithm>
 
 
-UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), inertia(_inertia)
+UniformRigidBody::UniformRigidBody(float _mass, float _inertia)
 {
+    mass = _mass;
+    inertia = _inertia;
     massInv = 1.0f/mass;
     inertiaInv = 1.0f/inertia;
     position = glm::vec3();
@@ -18,8 +20,10 @@ UniformRigidBody::UniformRigidBody(float _mass, float _inertia): mass(_mass), in
     rotationMatrix = glm::toMat3(rotation);
 }
 
-UniformRigidBody::UniformRigidBody(const UniformRigidBody& other): mass(other.mass), inertia(other.inertia)
+UniformRigidBody::UniformRigidBody(const UniformRigidBody& other)
 {
+    mass = other.mass;
+    inertia = other.inertia;
     massInv = 1.0f/other.mass;
     inertiaInv = 1.0f/other.inertia;
     position = other.position;
@@ -36,6 +40,8 @@ UniformRigidBody::UniformRigidBody(const UniformRigidBody& other): mass(other.ma
 
 UniformRigidBody& UniformRigidBody::operator= (const UniformRigidBody& other)
 {
+    mass = other.mass;
+    inertia = other.inertia;
     massInv = 1.0f/other.mass;
     inertiaInv = 1.0f/other.inertia;
     position = other.position;
