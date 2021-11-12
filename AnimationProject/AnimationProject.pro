@@ -41,6 +41,7 @@ HEADERS += \
     Scenes/CubeDropScene.h \
     Scenes/DemoScene.h \
     Scenes/StackScene.h \
+    Scenes/VaccumeScene.h \
     Shader.h \
     UniformRigidBody.h
 

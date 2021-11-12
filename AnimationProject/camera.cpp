@@ -122,3 +122,9 @@ void Camera::setPosition(const glm::vec3& pos)
 {
     this->pos = pos;
 }
+
+void Camera::setPitchAndYaw(float pitch, float yaw)
+{
+    this->pitch = pitch;
+    this->yaw = yaw;
+}

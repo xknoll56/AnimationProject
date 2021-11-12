@@ -28,6 +28,7 @@ public:
     void rotatePitch(float inc);
     void smoothRotateYaw(float inc);
     void smoothRotatePitch(float inc);
+    void setPitchAndYaw(float pitch, float yaw);
     void setPosition(const glm::vec3& pos);
     const glm::mat4& getView();
     const glm::vec3& getFwd();

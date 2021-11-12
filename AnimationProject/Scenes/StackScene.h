@@ -101,7 +101,8 @@ public:
             thrownRb.linearMomentum = glm::vec3(0,0,0);
             thrownRb.angularMomentum = glm::vec3(0,0,0);
             thrownRb.position = cam.getPosition()+cam.getFwd();
-            thrownRb.addForce(-cam.getFwd()*10000.0f);
+            //thrownRb.addForce(-cam.getFwd()*10000.0f);
+            thrownRb.setVelocity(-cam.getFwd()*20.0f);
             thrownRb.atRest = false;
             thrownRb.restingContact = false;
         }
@@ -118,14 +119,9 @@ public:
             rb.setVelocity(glm::vec3(0,0,0));
         }
 
-        qDebug() << "angular momentum";
-        Utilities::PrintVec3(rb.angularMomentum);
-        qDebug() <<"linear momentum:";
-        Utilities::PrintVec3(rb.linearMomentum);
-
         //rb.setAngularVelocity(glm::vec3(0.2, 0.3, 0.4));
         //world.stepWorld(0.0009f);
-        world.stepWorld(dt);
+        world.stepWorld(dt, 20);
 
         if(world.contacts.size()>0)
         {

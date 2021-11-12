@@ -3,6 +3,7 @@
 #include <Scenes/CollisionTestScene.h>
 #include <Scenes/CubeDropScene.h>
 #include <Scenes/DemoScene.h>
+#include <Scenes/VaccumeScene.h>
 
 
 int main(int argc, char *argv[])
@@ -13,6 +14,7 @@ int main(int argc, char *argv[])
    //ubeDropScene scene;
     DemoScene scene;
     //StackScene scene;
+    //VaccumeScene scene;
     app.scene = &scene;
     app.execute();
 }

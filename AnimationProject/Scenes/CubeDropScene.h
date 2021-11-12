@@ -9,6 +9,7 @@ private:
     PhysicsWorld world;
     CubeCollider collider;
     CubeCollider otherCollider;
+
     SphereCollider sphereCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;

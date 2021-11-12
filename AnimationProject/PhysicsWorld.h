@@ -77,6 +77,7 @@ struct PhysicsWorld
     void spherePlaneCollision(float dt, SphereCollider* sphere);
     void updateQuantities(float dt);
     void stepWorld(float dt);
+    void stepWorld(float dt, int inc);
     bool cubeFlatOnSurface(CubeCollider* cube, glm::vec3& normal, float tolerance);
     bool cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube);
     bool sphereRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, SphereCollider* sphere);

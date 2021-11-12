@@ -257,6 +257,7 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getClosestEdges(const glm::
     return eis;
 }
 
+//TODO- Use a hash table here
 std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
 {
     std::vector<CubeCollider::EdgeIndices> eis;
