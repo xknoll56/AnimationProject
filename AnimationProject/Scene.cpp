@@ -13,7 +13,11 @@ Scene::Scene()
 
     painter.setWorldMatrixEnabled(false);
     doUpdateConsole = true;
-    consoleToggle = true;
+    consoleToggle = false;
+    gMainWindow->toggleWriteEnable();
+    //replys.push_back("");
+    commands.push_back("");
+    replys.push_back("Press Escape to start, or enter a command.\n");
     glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)gMainWindow->width()/gMainWindow->height(), 0.1f, 100.0f);
     glm::mat4 trans(1.0f);
     cam = Camera(glm::vec3(0,2,5));

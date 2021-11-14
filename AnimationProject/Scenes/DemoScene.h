@@ -16,6 +16,7 @@ private:
     CubeCollider leftSideCollider1;
     CubeCollider rightSideCollider1;
     CubeCollider backCollider;
+    CubeCollider backCollider1;
 
     std::vector<SphereCollider> sphereColliders;
     UniformRigidBody blockRb;
@@ -26,6 +27,7 @@ private:
     UniformRigidBody leftSideRb1;
     UniformRigidBody rightSideRb1;
     UniformRigidBody backRb;
+    UniformRigidBody backRb1;
     std::vector<UniformRigidBody> sphereRbs;
     UniformRigidBody floorRb;
     int numBodies = 15;
@@ -53,7 +55,7 @@ public:
             sphereColliders.push_back(SphereCollider(0.5f));
             sphereColliders[sphereColliders.size()-1].rb = &sphereRbs[sphereRbs.size()-1];
             sphereRbs[sphereRbs.size()-1].position =  glm::vec3(-2.5, 15+i, 0);
-            //sphereRbs[sphereRbs.size()-1].setVelocity(glm::vec3(0, 0, 7-i));
+            sphereRbs[sphereRbs.size()-1].setVelocity(glm::vec3(0, 0, (7-i)*0.35f));
 
         }
         floorRb = UniformRigidBody(mass, inertia);
@@ -63,6 +65,7 @@ public:
         leftSideRb1 = UniformRigidBody(mass, inertia);
         rightSideRb1 = UniformRigidBody(mass, inertia);
         backRb = UniformRigidBody(mass, inertia);
+        backRb1 = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
         blockCollider = CubeCollider(glm::vec3(1.0f, 1.0f, 3.0f));
         slope1Collider = CubeCollider(glm::vec3(10.0f,0.1f,5.0f));
@@ -73,11 +76,13 @@ public:
         leftSideCollider1 = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
         rightSideCollider1 = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
         backCollider = CubeCollider(glm::vec3(0.1f, 1.0f, 5.0f));
+         backCollider1 = CubeCollider(glm::vec3(0.1f, 1.0f, 5.0f));
         leftSideCollider1.rb = &leftSideRb1;
         rightSideCollider1.rb = &rightSideRb1;
         leftSideCollider.rb = &leftSideRb;
         rightSideCollider.rb = &rightSideRb;
         backCollider.rb = &backRb;
+        backCollider1.rb = &backRb1;
 
         blockCollider.rb = &blockRb;
         floorCollider.rb = &floorRb;
@@ -88,6 +93,7 @@ public:
         leftSideRb1.position = glm::vec3(12.5f,6.0, -5.1f);
         rightSideRb1.position = glm::vec3(12.5f,6.0, 5.1f);
         backRb.position = glm::vec3(21.9f, 9.12, 0.0f);
+        backRb1.position = glm::vec3(-12.0, 16.5f, 0.0f);
         blockRb.position = glm::vec3(-5.0f, 10.0f, 0.0f);
         floorRb.position = glm::vec3(0,-0.05,0);
         rb.position = glm::vec3(-2.5f, 12.5, 0);
@@ -100,6 +106,7 @@ public:
         leftSideRb1.dynamic = false;
         rightSideRb1.dynamic = false;
         backRb.dynamic = false;
+        backRb1.dynamic = false;
         rb.rotation = glm::quat(glm::vec3(0, 0, -0.3f));
         otherRb.rotation = glm::quat(glm::vec3(0, 0,0.3f));
         leftSideRb.rotation =glm::quat(glm::vec3(0,0,-0.3f));
@@ -107,11 +114,12 @@ public:
         leftSideRb1.rotation =glm::quat(glm::vec3(0,0,0.3f));
         rightSideRb1.rotation =glm::quat(glm::vec3(0,0,0.3f));
         backRb.rotation =glm::quat(glm::vec3(0,0,0.3f));
+        backRb1.rotation =glm::quat(glm::vec3(0,0,-0.3f));
         console.rb = &rb;
 
 
         std::vector<Collider*> colliders = { &slope1Collider, &slope2Collider, &floorCollider,
-                                             &blockCollider, &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider};
+                                             &blockCollider, &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider, &backCollider1};
         for(auto& col: sphereColliders)
             colliders.push_back(&col);
         world.gravity = glm::vec3(0,-10.0f,0);
@@ -137,87 +145,106 @@ public:
             blockRb.position = glm::vec3(-5.0f, 10.0f, 0.0f);
             blockRb.setVelocity(glm::vec3(0,0,0));
             blockRb.setAngularVelocity(glm::vec3(0,0,0));
+            blockRb.rotation = glm::quat(glm::vec3(0,0,0));
         }
 
-        if(world.contacts.size()>0)
+        if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
-            cube.meshes[1].setColor(glm::vec3(1,0,0));
+            blockRb.position = glm::vec3(-5.0f, 10.0f, 0.0f);
+            blockRb.setVelocity(glm::vec3(0,0,0));
+            blockRb.setAngularVelocity(glm::vec3(0,0,0));
+            blockRb.rotation = glm::quat(glm::vec3(0,0,0));
+        }
 
-            for(int i =0;i<world.contacts.size();i++)
-            {
-                for(int j =0;j<world.contacts[i].points.size();j++)
-                {
-                    point.setPosition(world.contacts[i].points[j]);
-                    point.draw();
-                    if(j == 0)
-                    {
-                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
-                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
-                    }
-                }
-            }
-        }
-        else
-        {
-            cube.meshes[1].setColor(glm::vec3(0,1,0));
-        }
+//        if(world.contacts.size()>0)
+//        {
+//            cube.meshes[1].setColor(glm::vec3(1,0,0));
+
+//            for(int i =0;i<world.contacts.size();i++)
+//            {
+//                for(int j =0;j<world.contacts[i].points.size();j++)
+//                {
+//                    point.setPosition(world.contacts[i].points[j]);
+//                    point.draw();
+//                    if(j == 0)
+//                    {
+//                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
+//                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
+//                    }
+//                }
+//            }
+//        }
+//        else
+//        {
+//            cube.meshes[1].setColor(glm::vec3(0,1,0));
+//        }
 
     }
 
     void updateDraw(float dt)
     {
 
-        cube.meshes[0].setColor(glm::vec3(1, 1, 0));
+        cube.meshes[1].setColor(glm::vec3(1, 0, 0));
+        cube.meshes[0].setColor(glm::vec3(0.2, 0.2, 0.87f));
         cube.setPosition(backCollider.rb->position);
         cube.setRotation(backCollider.rb->rotation);
         cube.setScale(backCollider.scale);
         cube.draw();
 
+        cube.setPosition(backCollider1.rb->position);
+        cube.setRotation(backCollider1.rb->rotation);
+        cube.setScale(backCollider1.scale);
+        cube.draw();
 
-        cube.meshes[0].setColor(glm::vec3(1, 1, 0));
+
         cube.setPosition(rightSideCollider1.rb->position);
         cube.setRotation(rightSideCollider1.rb->rotation);
         cube.setScale(rightSideCollider1.scale);
         cube.draw();
 
-        cube.meshes[0].setColor(glm::vec3(1, 1, 0));
         cube.setPosition(leftSideCollider1.rb->position);
         cube.setRotation(leftSideCollider1.rb->rotation);
         cube.setScale(leftSideCollider1.scale);
         cube.draw();
 
 
-        cube.meshes[0].setColor(glm::vec3(1, 1, 0));
         cube.setPosition(rightSideCollider.rb->position);
         cube.setRotation(rightSideCollider.rb->rotation);
         cube.setScale(rightSideCollider.scale);
         cube.draw();
 
-        cube.meshes[0].setColor(glm::vec3(1, 1, 0));
         cube.setPosition(leftSideCollider.rb->position);
         cube.setRotation(leftSideCollider.rb->rotation);
         cube.setScale(leftSideCollider.scale);
         cube.draw();
 
-        cube.meshes[0].setColor(glm::vec3(1, 0, 0));
+        cube.meshes[1].setColor(glm::vec3(0, 1,0));
+        cube.meshes[0].setColor(glm::vec3(1, 1, 1));
+
         cube.setPosition(blockCollider.rb->position);
         cube.setRotation(blockCollider.rb->rotation);
         cube.setScale(blockCollider.scale);
         cube.draw();
 
-
+        cube.meshes[1].setColor(glm::vec3(1, 0, 0));
         cube.meshes[0].setColor(glm::vec3(0, 1, 0));
+
         cube.setPosition(slope1Collider.rb->position);
         cube.setRotation(slope1Collider.rb->rotation);
         cube.setScale(slope1Collider.scale);
         cube.draw();
 
-        cube.meshes[0].setColor(glm::vec3(0, 0, 1));
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
         cube.setScale(slope2Collider.scale);
         cube.draw();
 
+
+
+
+
+        sphere.meshes[0].setColor(glm::vec3(1, 1, 1));
+        sphere.meshes[1].setColor(glm::vec3(0,0,0));
         for(auto& col: sphereColliders)
         {
         sphere.setPosition(col.rb->position);

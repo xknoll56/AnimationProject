@@ -349,7 +349,8 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
     }
 
 
-
+    if(cube->rb->atRest)
+        cube->rb->atRest = false;
 
     glm::vec3 normal, normalX, normalY, normalZ;
     normalX = glm::sign(glm::dot(aX, T))*aX;
@@ -451,6 +452,9 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 
 bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo)
 {
+    if(!cubeA->rb->dynamic && !cubeB->rb->dynamic)
+        return false;
+
     glm::vec3 aX = cubeA->rb->getLocalXAxis();
     glm::vec3 aY = cubeA->rb->getLocalYAxis();
     glm::vec3 aZ = cubeA->rb->getLocalZAxis();
@@ -719,10 +723,12 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     }
     t2+=penetration;
 
-    //    qDebug() << "t1: " << t1;
-    //    qDebug() << "t2: " << t2;
-    //        qDebug() << "face penetration: " << faceInfo.penetrationDistance;
-    //        qDebug() << "edge pentration: " << edgeInfo.penetrationDistance;
+
+
+    if((cubeA->rb->atRest && !cubeB->rb->atRest) && cubeB->rb->dynamic)
+        cubeA->rb->atRest =false;
+    if((!cubeA->rb->atRest && cubeB->rb->atRest) && cubeA->rb->dynamic)
+        cubeB->rb->atRest =false;
 
     faceInfo.normal = glm::sign(glm::dot(T, faceInfo.normal))*faceInfo.normal;
     faceInfo.normal = glm::normalize(faceInfo.normal);
@@ -1161,14 +1167,17 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
     }
     else
     {
-        qDebug() <<"in resting state";
-        //if(!info.faceCollision)
-            //dynamicCube->rb->restingContact = false;
 
         float angularSpeed = glm::length(dynamicCube->rb->angularVelocity);
         float speed = glm::length(dynamicCube->rb->velocity);
 
-        if(info.points.size() && info.faceCollision)
+        if(speed<1.0f && angularSpeed<1.0f && info.points.size()>2)
+        {
+            dynamicCube->rb->restingContact = false;
+            dynamicCube->rb->atRest = true;
+        }
+
+        if(info.points.size())
         {
             //if(glm::abs(glm::dot(glm::normalize(gravity), info.normal))<=0.7f)
             {
@@ -1199,24 +1208,13 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 // Utilities::PrintVec3(tangentialForce);
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
-                dynamicCube->rb->addTorque(glm::cross(ra, normalForce)+glm::cross(dynamicCube->rb->mass*gravity, ra));
-                //dynamicCube->rb->addTorque(glm::cross(ra, force));
+                dynamicCube->rb->addTorque(20.0f/(dynamicCube->xSize+dynamicCube->ySize+dynamicCube->zSize)*glm::cross(dynamicCube->rb->mass*gravity, ra));
+                dynamicCube->rb->addTorque(glm::cross(ra, normalForce));
                 //add the fritional torque
 
-                if(glm::length(tangentialForce)<friction*glm::length(normalForce))
-                {
-                    vt = glm::vec3(0,0,0);
-                }
-                else
-                {
-                    if(!glm::all(glm::isnan(tangentialForce)))
-                    {
-                        vt -= friction*tangentialForce*dt;
-                        dynamicCube->rb->addTorque(glm::cross(ra, -friction*tangentialForce));
-                    }
-                }
                 glm::vec3 rotationPoint = info.points[i];
                 glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
+
 
 
                 glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
@@ -1224,44 +1222,18 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
                 glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
                 dynamicCube->rb->addTorque(-torsion);
-//                if(glm::length(vt)>0.05f)
-//                {
-//                    vt = friction*vt;
-//                }
-//                else
-//                    vt = glm::vec3(0,0,0);
+
+                if(glm::length(vt)<0.1f)
+                    vt = glm::vec3(0,0,0);
+                else
+                {
+                    vt -= 20.0f*glm::dot(dynamicCube->rb->mass*gravity*friction, norm)*glm::normalize(vt)*dt;
+                }
                 totalVelocity+=velocityFromAngular+vt;
             }
             totalVelocity/=(float)info.points.size();
 
             dynamicCube->rb->setVelocity(totalVelocity);
-
-            //            glm::vec3 perpendicularVelocity = dynamicCube->rb->velocity - glm::dot(dynamicCube->rb->velocity, norm)*norm;
-
-            //            glm::vec3 rotationPoint = info.points[0];
-            //            if(info.edgePoints == 0)
-            //                glm::vec3 rotationPoint = info.points[info.vertexPoints];
-            //            glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
-
-            //            if(info.vertexPoints>1)
-            //            {
-            //                std::vector<glm::vec3> points = dynamicCube->getClosestVerts(glm::normalize(glm::normalize(dynamicCube->rb->velocity)+norm));
-            //                if(points.size())
-            //                {
-            //                    rotationPoint = points[0];
-            //                    for(int i = 1;i<points.size();i++)
-            //                        rotationPoint+=points[i];
-            //                    rotationPoint/=points.size();
-            //                    radius = dynamicCube->rb->position-rotationPoint;
-            //                }
-            //            }
-
-            //            glm::vec3 velocityFromAngular = glm::cross(dynamicCube->rb->angularVelocity, radius);
-            //            velocityFromAngular -= glm::dot(velocityFromAngular, norm)*norm;
-
-            //            glm::vec3 torsion = glm::dot(dynamicCube->rb->mass*gravity, norm)*glm::dot(dynamicCube->rb->angularVelocity, norm)*norm;
-            //            dynamicCube->rb->addTorque(-torsion);
-            //            dynamicCube->rb->setVelocity(velocityFromAngular);
         }
     }
 
@@ -1269,11 +1241,13 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
 void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
 {
-   // qDebug()<<"dynamic response:";
+    // qDebug()<<"dynamic response:";
 
-    cube->rb->position += 0.5f*info.normal*info.penetrationDistance;
-    sphere->rb->position -= 0.5f*info.normal*info.penetrationDistance;
-    float epsilon = 0.5f;
+    //cube->rb->position += info.normal*info.penetrationDistance;
+    if(info.faceCollision)
+        sphere->rb->position -= info.normal*info.penetrationDistance;
+
+    float epsilon = 0.0f;
     glm::vec3 ra = info.points[0]-cube->rb->position;
     glm::vec3 rb = info.points[0]-sphere->rb->position;
     glm::vec3 va = cube->rb->velocity + glm::cross(cube->rb->angularVelocity, ra);
@@ -1293,14 +1267,12 @@ void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info
     float angularRel = glm::length(cube->rb->angularVelocity-sphere->rb->angularVelocity);
 
 
-    //if(j<0.1f)
-    {
     cube->rb->addForce(force, *cube->rb);
     cube->rb->addTorque(glm::cross(ra, force));
 
     sphere->rb->addForce(-force, *sphere->rb);
     sphere->rb->addTorque(glm::cross(rb, -force));
-    }
+
 }
 
 void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
@@ -1321,7 +1293,7 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
     //qDebug() << "j: " << j <<" smax: " << sMax;
     if(j>sMax || slope)
     {
-       // if(glm::dot(force, normal)>0)
+        // if(glm::dot(force, normal)>0)
         {
             sphere->rb->addForce(force);
             glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
