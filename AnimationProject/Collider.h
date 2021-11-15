@@ -100,6 +100,8 @@ struct CubeCollider: public Collider
     std::vector<EdgeIndices> getEdgesFromVertexIndices();
     std::vector<glm::vec3> getClosestVerts(const glm::vec3& dir);
     std::vector<EdgeIndices> getClosestEdges(const glm::vec3& dir);
+    ContactDir GetFaceClosestToNormal(const glm::vec3& normal, bool& negative);
+    glm::quat toRotation(ContactDir upMostDir, const glm::vec3& up);
 
 };
 

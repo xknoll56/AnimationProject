@@ -229,24 +229,6 @@ std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
         }
         break;
     }
-
-//    for(int i = 0; i<8;i++)
-//    {
-//        float test = glm::dot(dir, contactVertBuffer[i]);
-//        if(test<min)
-//        {
-//            min = test;
-//        }
-//    }
-//    for(int i = 0; i<8;i++)
-//    {
-//        float test = glm::dot(dir, contactVertBuffer[i]);
-//        if(glm::epsilonEqual(test, min, 0.001f))
-//        {
-//            minVerts.push_back(contactVertBuffer[i]);
-//            indices.push_back(i);
-//        }
-//    }
     return minVerts;
 }
 
@@ -313,6 +295,85 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
         }
     }
     return eis;
+}
+
+CubeCollider::ContactDir CubeCollider::GetFaceClosestToNormal(const glm::vec3& normal, bool& negative)
+{
+     CubeCollider::ContactDir dir = CubeCollider::ContactDir::RIGHT;
+     negative = false;
+     float dirMax = glm::dot(normal, rb->getLocalXAxis());
+     if(dirMax<0)
+     {
+         dirMax = -dirMax;
+         negative = true;
+     }
+
+     float dirTest = glm::dot(normal, rb->getLocalYAxis());
+     bool negTest = dirTest<0;
+     if(negTest)
+         dirTest = -dirTest;
+
+     if(dirTest>dirMax)
+     {
+        dir = CubeCollider::ContactDir::UP;
+        dirMax = dirTest;
+        negative = negTest;
+     }
+
+     dirTest = glm::dot(normal, rb->getLocalZAxis());
+     negTest = dirTest<0;
+     if(negTest)
+         dirTest = -dirTest;
+
+     if(dirTest>dirMax)
+     {
+        dir = CubeCollider::ContactDir::UP;
+        dirMax = dirTest;
+        negative = negTest;
+     }
+
+     return dir;
+}
+
+glm::quat CubeCollider::toRotation(CubeCollider::ContactDir upMostDir, const glm::vec3& up)
+{
+    glm::mat3 rotationMat;
+
+    switch(upMostDir)
+    {
+    case CubeCollider::ContactDir::RIGHT:
+    {
+        rotationMat[0] = up;
+        glm::vec3 y = rb->getLocalYAxis()-glm::dot(rb->getLocalYAxis(), up)*up;
+        y = glm::normalize(y);
+        glm::vec3 z = glm::cross(up, y);
+        rotationMat[1] = y;
+        rotationMat[2] = z;
+    }
+        break;
+    case CubeCollider::ContactDir::UP:
+    {
+        rotationMat[1] = up;
+        glm::vec3 z = rb->getLocalZAxis()-glm::dot(rb->getLocalZAxis(), up)*up;
+        z = glm::normalize(z);
+        glm::vec3 x = glm::cross(up,z);
+        rotationMat[2] = z;
+        rotationMat[0] = x;
+    }
+        break;
+    case CubeCollider::ContactDir::FORWARD:
+    {
+        rotationMat[2] = up;
+        glm::vec3 x = rb->getLocalXAxis()-glm::dot(rb->getLocalXAxis(), up)*up;
+        x = glm::normalize(x);
+        glm::vec3 y = glm::cross(up, x);
+        rotationMat[0] = x;
+        rotationMat[1] = y;
+    }
+        break;
+    }
+
+    return glm::toQuat(rotationMat);
 }
 
 QuadCollider::QuadCollider(const float xSize, const float zSize)

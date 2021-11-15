@@ -1171,13 +1171,23 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
         float angularSpeed = glm::length(dynamicCube->rb->angularVelocity);
         float speed = glm::length(dynamicCube->rb->velocity);
 
-        if(speed<1.0f && angularSpeed<1.0f && info.points.size()>2)
+        if(speed<1.0f && angularSpeed<1.0f)
         {
             dynamicCube->rb->restingContact = false;
             dynamicCube->rb->atRest = true;
-        }
+            bool reverseDir;
+            CubeCollider::ContactDir upDir = dynamicCube->GetFaceClosestToNormal(info.normal, reverseDir);
+            glm::vec3 up = info.normal;
+            if(reverseDir)
+                up = -up;
+            glm::quat toRotation = dynamicCube->toRotation(upDir, up);
 
-        if(info.points.size())
+            dynamicCube->rb->rotation = toRotation;
+            //dynamicCube->rb->rotation = glm::slerp(dynamicCube->rb->rotation, toRotation, 0.1f);
+
+            qDebug() << "stabalizing";
+        }
+        else if(info.points.size())
         {
             //if(glm::abs(glm::dot(glm::normalize(gravity), info.normal))<=0.7f)
             {
@@ -1187,7 +1197,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             glm::vec3 totalVelocity(0,0,0);
             for(int i =0;i<info.points.size();i++)
             {
-                float epsilon = 0.1f;
+                float epsilon = 0.5f;
                 glm::vec3 ra = info.points[i]-dynamicCube->rb->position;
                 glm::vec3 rb = info.points[i]-staticCube->rb->position;
                 glm::vec3 va = dynamicCube->rb->velocity + glm::cross(dynamicCube->rb->angularVelocity, ra);

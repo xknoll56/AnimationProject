@@ -34,6 +34,7 @@ public:
             UniformRigidBody rb(mass, inertia);
             rb.position = glm::vec3(i%5, j%5, 0);
             rb.dynamic = true;
+            rb.atRest = true;
             rbs.push_back(rb);
             cubeColliders.push_back(CubeCollider(glm::vec3(0.5f,0.5f,0.5f)));
             cubeColliders[cubeColliders.size()-1].rb = &rbs[rbs.size()-1];
