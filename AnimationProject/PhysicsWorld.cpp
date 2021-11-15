@@ -845,6 +845,7 @@ bool PhysicsWorld::sphereRaycast(const glm::vec3& start, const glm::vec3& dir, R
             dat.length = glm::length(point-start);
             dat.normal = rightComp+upComp+dirComp;
             dat.point = point;
+            dat.collider = sphere;
         }
     }
 
@@ -936,6 +937,7 @@ bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, Ray
                     dat.point = intersection;
                     dat.length = dist;
                     doesHit = true;
+                    dat.collider = cube;
                 }
             }
 

@@ -92,6 +92,30 @@ void Scene::update(float dt)
 
 }
 
+void Scene::drawCrosshair()
+{
+    openglFunctions->glDisable(GL_DEPTH_TEST);
+    openglFunctions->glDisable(GL_CULL_FACE);
+
+    painter.begin(gPaintDevice);
+    painter.setBrush(Qt::red);
+    painter.setPen(Qt::transparent);
+
+    QRectF rect(gMainWindow->size().width()*(0.5f-0.005f),gMainWindow->size().height()*(0.5f-0.0025f),
+                gMainWindow->size().width()*(0.01f), gMainWindow->size().height()*(0.005f));
+
+    float adjustedLength = (float)gMainWindow->height()*0.005f/gMainWindow->width();
+    float adjustedWidth = (float)gMainWindow->width()*0.01f/gMainWindow->height();
+
+    QRectF rect2(gMainWindow->size().width()*(0.5f-adjustedLength/2),gMainWindow->size().height()*(0.5f-adjustedWidth/2),
+                gMainWindow->size().width()*(adjustedLength), gMainWindow->size().height()*(adjustedWidth));
+
+
+    painter.drawRect(rect);
+    painter.drawRect(rect2);
+    painter.end();
+}
+
 void Scene::updateConsole(float dt)
 {
     openglFunctions->glDisable(GL_DEPTH_TEST);
@@ -139,6 +163,18 @@ void Scene::updateConsole(float dt)
     }
     else
         consoleToggle = true;
+}
+
+void Scene::selectRigidBody(PhysicsWorld& world)
+{
+    if(gMainWindow->getMouseDown(Qt::MouseButton::RightButton))
+    {
+        RayCastData rcd;
+        if(world.raycastAll(cam.getPosition(), -cam.getFwd(), rcd))
+        {
+            selectedRb = rcd.collider->rb;
+        }
+    }
 }
 
 void Scene::updateDraw(float dt)

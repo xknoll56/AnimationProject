@@ -10,6 +10,7 @@ struct RayCastData
     glm::vec3 point;
     glm::vec3 normal;
     float length;
+    Collider* collider;
 };
 
 struct ContactInfo

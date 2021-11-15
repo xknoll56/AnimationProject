@@ -42,6 +42,8 @@ public:
     virtual void update(float dt);
     virtual void updateConsole(float dt);
     virtual void updateDraw(float dt);
+    virtual void drawCrosshair();
+    virtual void selectRigidBody(PhysicsWorld& world);
 
     float elapsedTime;
     bool doUpdateConsole;
@@ -62,6 +64,7 @@ protected:
     ConsoleInterface console;
     std::list<QString> commands;
     std::list<QString> replys;
+    UniformRigidBody* selectedRb;
 
 
 

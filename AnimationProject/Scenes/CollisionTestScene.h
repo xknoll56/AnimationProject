@@ -39,7 +39,7 @@ public:
         rb.position = glm::vec3(0, 1.5, 0);
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,2.0f, -4);
-        otherRb.dynamic = false;
+       // otherRb.dynamic = false;
         //rb.rotation = glm::quat(glm::vec3(PI/3.0f,0.0f, PI/3.0f));
         rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
@@ -56,51 +56,53 @@ public:
         world.enableResponse = false;
         world.setColliders(&colliders);
 
+        selectedRb = &rb;
+
     }
     void update(float dt)
     {
         Scene::update(dt);
-        rb.setVelocity(glm::vec3());
+        selectedRb->setVelocity(glm::vec3());
         if(gMainWindow->getKey(Qt::Key_Right))
         {
-            rb.setVelocity(1.0f*cam.getRight());
+            selectedRb->setVelocity(1.0f*cam.getRight());
             //rb.addForce(2.0f*cam.getRight());
         }
         if(gMainWindow->getKey(Qt::Key_Left))
         {
-            rb.setVelocity(-1.0f*cam.getRight());
+            selectedRb->setVelocity(-1.0f*cam.getRight());
             //rb.addForce(-2.0f*cam.getRight());
         }
         if(gMainWindow->getKey(Qt::Key_E))
         {
-            rb.setVelocity(1.0f*glm::vec3(0,1,0));
+            selectedRb->setVelocity(1.0f*glm::vec3(0,1,0));
         }
         if(gMainWindow->getKey(Qt::Key_Q))
         {
-            rb.setVelocity(-1.0f*glm::vec3(0,1,0));
+            selectedRb->setVelocity(-1.0f*glm::vec3(0,1,0));
         }
         if(gMainWindow->getKey(Qt::Key_Up))
         {
-            rb.setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
+            selectedRb->setVelocity(glm::cross(glm::vec3(0,1,0), cam.getRight()));
             //rb.addForce(glm::cross(glm::vec3(0,2,0), cam.getRight()));
 
         }
         if(gMainWindow->getKey(Qt::Key_Down))
         {
-            rb.setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
+            selectedRb->setVelocity(glm::cross(glm::vec3(0,-1,0), cam.getRight()));
             //rb.addForce(glm::cross(glm::vec3(0,-2,0), cam.getRight()));
 
         }
         if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
-            rb.addForce(glm::vec3(0,800,0));
+            selectedRb->addForce(glm::vec3(0,800,0));
         }
         if(gMainWindow->getKeyDown(Qt::Key_R))
         {
-            rb.setVelocity(glm::vec3(0,0,0));
+            selectedRb->setVelocity(glm::vec3(0,0,0));
             //rb.position = glm::vec3(0,1,0);
-            rb.setAngularVelocity(glm::vec3(0.01,0.02,0.03));
-            rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
+            selectedRb->setAngularVelocity(glm::vec3(0.01,0.02,0.03));
+            selectedRb->rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
         }
         if(gMainWindow->getMouseDown(Qt::MouseButton::RightButton))
@@ -109,11 +111,12 @@ public:
             if(world.raycastAll(cam.getPosition(), -cam.getFwd(), rcd))
             {
                 hitPosition = rcd.point;
+                selectedRb = rcd.collider->rb;
             }
         }
-       // Utilities::PrintVec3(rb.getLocalXAxis());
+        // Utilities::PrintVec3(rb.getLocalXAxis());
 
-        world.stepWorld(dt);
+        world.stepWorld(dt, 10);
 
         if(world.contacts.size()>0)
         {
@@ -130,11 +133,6 @@ public:
                     {
 
                         glm::vec3 normal = 2.0f*world.contacts[i].normal;
-                        Utilities::PrintVec3(normal);
-                        qDebug() << "from position: ";
-                        Utilities::PrintVec3(world.contacts[i].b->rb->position);
-                        qDebug() << "to position: ";
-                        Utilities::PrintVec3(world.contacts[i].b->rb->position+normal);
                         glm::vec3 toPosition = world.contacts[i].b->rb->position+normal;
                         drawLine(lineMesh, world.contacts[i].b->rb->position,world.contacts[i].b->rb->position+ normal);
                         drawLine(lineMesh, world.contacts[i].a->rb->position,world.contacts[i].a->rb->position -normal);
@@ -160,6 +158,8 @@ public:
             point.draw();
         }
 
+
+
     }
 
     void updateDraw(float dt)
@@ -168,24 +168,47 @@ public:
         point.setPosition(hitPosition);
         point.draw();
 
+        if(&rb==selectedRb)
+        {
+            cube.meshes[1].setColor(glm::vec3(0,0,1));
+        }
+        else
+        {
+            cube.meshes[1].setColor(glm::vec3(0,1,0));
+        }
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);
         cube.draw();
 
-//        unitDirs.setPosition(rb.position);
-//        unitDirs.setRotation(rb.rotation);
-//        unitDirs.draw();
-
+        if(&sphereRb==selectedRb)
+        {
+            sphere.meshes[1].setColor(glm::vec3(0,0,1));
+        }
+        else
+        {
+            sphere.meshes[1].setColor(glm::vec3(0,1,0));
+        }
         sphere.setPosition(sphereRb.position);
         sphere.setRotation(sphereRb.rotation);
         sphere.setScale(sphereCollider.scale);
         sphere.draw();
 
+
+        if(&otherRb==selectedRb)
+        {
+            cube.meshes[1].setColor(glm::vec3(0,0,1));
+        }
+        else
+        {
+            cube.meshes[1].setColor(glm::vec3(0,1,0));
+        }
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);
         cube.draw();
         plane.draw();
+
+        drawCrosshair();
     }
 };
