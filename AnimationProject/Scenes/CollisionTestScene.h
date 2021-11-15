@@ -14,6 +14,7 @@ private:
     SphereCollider sphereCollider;
     UniformRigidBody sphereRb;
     glm::vec3 castDir;
+    glm::vec3 hitPosition;
 
 
 public:
@@ -50,10 +51,11 @@ public:
         castDir = glm::vec3(1,0,0);
 
 
-        std::vector<Collider*> colliders = { &collider, &sphereCollider};
+        std::vector<Collider*> colliders = { &collider, &sphereCollider, &otherCollider};
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = false;
         world.setColliders(&colliders);
+
     }
     void update(float dt)
     {
@@ -100,6 +102,14 @@ public:
             rb.setAngularVelocity(glm::vec3(0.01,0.02,0.03));
             rb.rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
+        }
+        if(gMainWindow->getMouseDown(Qt::MouseButton::RightButton))
+        {
+            RayCastData rcd;
+            if(world.raycastAll(cam.getPosition(), -cam.getFwd(), rcd))
+            {
+                hitPosition = rcd.point;
+            }
         }
        // Utilities::PrintVec3(rb.getLocalXAxis());
 
@@ -154,6 +164,10 @@ public:
 
     void updateDraw(float dt)
     {
+
+        point.setPosition(hitPosition);
+        point.draw();
+
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);

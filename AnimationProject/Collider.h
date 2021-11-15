@@ -21,6 +21,7 @@ struct Collider
     UniformRigidBody* rb = nullptr;
     bool collisionDetected = false;
     unsigned int id;
+    int mask;
     Collider()
     {
         type = ColliderType::NONE;

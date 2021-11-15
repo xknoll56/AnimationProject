@@ -69,67 +69,6 @@ bool PhysicsWorld::contactHandled(Collider* a, Collider* b)
     return false;
 }
 
-bool PhysicsWorld::Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider)
-{
-    switch(collider->type)
-    {
-    case ColliderType::PLANE:
-        PlaneCollider* pc = dynamic_cast<PlaneCollider*>(collider);
-        float d = glm::dot((pc->point1-start), pc->normal)/glm::dot(dir, pc->normal);
-        glm::vec3 pos = start+dir*d;
-        data.length = d;
-        data.point = pos;
-        data.normal = pc->normal;
-        if(glm::dot(dir, pos-start)>0)
-        {
-            glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
-            glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
-            glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
-            if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
-                return true;
-            float mag1 = glm::dot(dir1, dir2);
-            float mag2 = glm::dot(dir1, dir3);
-            float mag3 = glm::dot(dir2, dir3);
-            if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
-                return true;
-        }
-        break;
-    }
-    return false;
-}
-
-bool PhysicsWorld::Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data)
-{
-    for(Collider* collider: colliders)
-    {
-        switch(collider->type)
-        {
-        case ColliderType::PLANE:
-            PlaneCollider* pc = dynamic_cast<PlaneCollider*>(collider);
-            float d = glm::dot((pc->point1-start), pc->normal)/glm::dot(dir, pc->normal);
-            glm::vec3 pos = start+dir*d;
-            data.length = d;
-            data.point = pos;
-            data.normal = pc->normal;
-            if(glm::dot(dir, pos-start)>0)
-            {
-                glm::vec3 dir1 = glm::normalize(glm::cross(pos-pc->point1, pc->point2-pc->point1));
-                glm::vec3 dir2 = glm::normalize(glm::cross(pos-pc->point2, pc->point3-pc->point2));
-                glm::vec3 dir3 = glm::normalize(glm::cross(pos-pc->point3, pc->point1-pc->point3));
-                if(glm::all(glm::isnan(dir1))||glm::all(glm::isnan(dir2))||glm::all(glm::isnan(dir3)))
-                    return true;
-                float mag1 = glm::dot(dir1, dir2);
-                float mag2 = glm::dot(dir1, dir3);
-                float mag3 = glm::dot(dir2, dir3);
-                if(glm::epsilonEqual(mag1, mag2, 0.1f) && glm::epsilonEqual(mag2, mag3, 0.1f))
-                    return true;
-            }
-            break;
-        }
-    }
-    return false;
-}
-
 
 void PhysicsWorld::checkForCollisions(float dt)
 {
@@ -1358,35 +1297,102 @@ void PhysicsWorld::sphereSphereCollisionResponse(float dt, SphereCollider* spher
         other->rb->addForce((1.0f/dt)*relativeMomentumNorm);
     }
 }
-void PhysicsWorld::spherePlaneCollision(float dt, SphereCollider* sphere)
+
+bool PhysicsWorld::raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat)
 {
-
-    if(Raycast(sphere->rb->position, glm::vec3(0,-1,0), rcd))
+    float minDist = std::numeric_limits<float>().max();
+    RayCastData tempData;
+    bool didHit = false;
+    for(Collider* collider: colliders)
     {
-        if(rcd.length<=sphere->radius)
+        switch(collider->type)
         {
-            float velNorm = glm::dot(glm::vec3(0,-1,0), sphere->rb->velocity);
-            float sMax = restitutionSlope*-gravity.y+restitutionIntersect;
-            if(velNorm<sMax)
+        case ColliderType::CUBE:
+        {
+            CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+            if(cubeRaycast(start, dir, tempData, cube))
             {
-                sphere->rb->position = glm::vec3(0,1,0)*sphere->radius+rcd.point;
-                sphere->rb->linearMomentum = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
-                sphere->rb->setAngularVelocity(glm::cross(glm::vec3(0,1,0),sphere->rb->velocity/sphere->radius));
-                sphere->rb->addForce(-friction*sphere->rb->velocity);
+                didHit = true;
+                if(tempData.length<minDist)
+                {
+                    dat = tempData;
+                    minDist = tempData.length;
+                }
             }
-            else
-            {
-                sphere->rb->position = glm::vec3(sphere->rb->position.x, 0.05f+sphere->radius, sphere->rb->position.z);
-                //sphere->addForce(glm::vec3(0, -2.0f*(sphere->velocity.y)/dt, 0));
-                glm::vec3 pNorm = glm::dot(glm::vec3(0,1,0), sphere->rb->linearMomentum)*sphere->rb->elasticity*glm::vec3(0,1,0);
-                glm::vec3 pPerp = glm::cross(glm::cross(glm::vec3(0,1,0), sphere->rb->linearMomentum), glm::vec3(0,1,0));
-                sphere->rb->linearMomentum = pPerp-pNorm;
-                sphere->rb->addTorque(glm::cross(glm::vec3(0,1,0),friction/dt*pPerp));
+        }
+            break;
 
+        case ColliderType::SPHERE:
+        {
+            SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
+            if(sphereRaycast(start, dir, tempData, sphere))
+            {
+                didHit = true;
+                if(tempData.length<minDist)
+                {
+                    dat = tempData;
+                    minDist = tempData.length;
+                }
+            }
+        }
+            break;
+        }
+    }
+
+    return didHit;
+}
+bool PhysicsWorld::raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, int mask)
+{
+    return false;
+}
+bool PhysicsWorld::raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, ColliderType type)
+{
+    float minDist = std::numeric_limits<float>().max();
+    RayCastData tempData;
+    bool didHit = false;
+    for(Collider* collider: colliders)
+    {
+        if(collider->type == type)
+        {
+            switch(type)
+            {
+            case ColliderType::CUBE:
+            {
+                CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+                if(cubeRaycast(start, dir, tempData, cube))
+                {
+                    didHit = true;
+                    if(tempData.length<minDist)
+                    {
+                        dat = tempData;
+                        minDist = tempData.length;
+                    }
+                }
+            }
+                break;
+
+            case ColliderType::SPHERE:
+            {
+                SphereCollider* sphere = dynamic_cast<SphereCollider*>(collider);
+                if(sphereRaycast(start, dir, tempData, sphere))
+                {
+                    didHit = true;
+                    if(tempData.length<minDist)
+                    {
+                        dat = tempData;
+                        minDist = tempData.length;
+                    }
+                }
+            }
+                break;
             }
         }
     }
+
+    return didHit;
 }
+
+
 void PhysicsWorld::updateQuantities(float dt)
 {
     for(const auto& collider: colliders)

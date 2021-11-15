@@ -55,9 +55,6 @@ struct PhysicsWorld
     PhysicsWorld();
     void setColliders(std::vector<Collider*>* colliders);
     bool contactHandled(Collider* a, Collider* b);
-    bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, Collider* collider);
-    bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data);
-    bool Raycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& data, CubeCollider* cubeCollider);
     void checkForCollisions(float dt);
     void CollisionResponse(float dt);
     glm::vec3 closestPointBetweenLines(glm::vec3& p0,  glm::vec3& p1, const glm::vec3& u, const glm::vec3& v);
@@ -74,13 +71,15 @@ struct PhysicsWorld
     void cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere);
     bool detectSphereSphereCollision(SphereCollider* sphere, SphereCollider* other);
     void sphereSphereCollisionResponse(float dt, SphereCollider* sphere, SphereCollider* other);
-    void spherePlaneCollision(float dt, SphereCollider* sphere);
     void updateQuantities(float dt);
     void stepWorld(float dt);
     void stepWorld(float dt, int inc);
     bool cubeFlatOnSurface(CubeCollider* cube, glm::vec3& normal, float tolerance);
     bool cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube);
     bool sphereRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, SphereCollider* sphere);
+    bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat);
+    bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, int mask);
+    bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, ColliderType type);
 };
 
 class Utilities
