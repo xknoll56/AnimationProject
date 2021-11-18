@@ -8,6 +8,7 @@ extern MainWindow* gMainWindow;
 extern QPaintDevice* gPaintDevice;
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
+
 Scene::Scene()
 {
 
@@ -108,7 +109,7 @@ void Scene::drawCrosshair()
     float adjustedWidth = (float)gMainWindow->width()*0.01f/gMainWindow->height();
 
     QRectF rect2(gMainWindow->size().width()*(0.5f-adjustedLength/2),gMainWindow->size().height()*(0.5f-adjustedWidth/2),
-                gMainWindow->size().width()*(adjustedLength), gMainWindow->size().height()*(adjustedWidth));
+                 gMainWindow->size().width()*(adjustedLength), gMainWindow->size().height()*(adjustedWidth));
 
 
     painter.drawRect(rect);
@@ -126,7 +127,7 @@ void Scene::updateConsole(float dt)
         QString text = gMainWindow->writtenText;
         if(text.compare("exit")==0)
             gMainWindow->quit();
-        commands.push_front(text);    
+        commands.push_front(text);
         for(QString& reply: replys)
             reply.append("\n\n");
         replys.push_front(console.ParseCommand(text)+"\n");
@@ -181,3 +182,74 @@ void Scene::updateDraw(float dt)
 {
 
 }
+
+void Scene::drawBoundedCollider(Collider& collider, const glm::vec3& baseColor, const glm::vec3& boundsColor)
+{
+    switch(collider.type)
+    {
+    case ColliderType::CUBE:
+    {
+        CubeCollider* cc = dynamic_cast<CubeCollider*>(&collider);
+        if(cc)
+        {
+            cube.setScale(cc->scale);
+            cube.setRotation(cc->rb->rotation);
+            cube.setPosition(cc->rb->position);
+            cube.meshes[0].setColor(baseColor);
+            cube.meshes[1].setColor(boundsColor);
+            cube.draw();
+        }
+    }
+        break;
+
+    case ColliderType::SPHERE:
+    {
+        SphereCollider* sc = dynamic_cast<SphereCollider*>(&collider);
+        if(sc)
+        {
+            sphere.setScale(sc->scale);
+            sphere.setRotation(sc->rb->rotation);
+            sphere.setPosition(sc->rb->position);
+            sphere.meshes[0].setColor(baseColor);
+            sphere.meshes[1].setColor(boundsColor);
+            sphere.draw();
+        }
+    }
+        break;
+    }
+}
+
+void Scene::drawBoundedCollider(Collider& collider)
+{
+    switch(collider.type)
+    {
+    case ColliderType::CUBE:
+    {
+        CubeCollider* cc = dynamic_cast<CubeCollider*>(&collider);
+        if(cc)
+        {
+            cube.setScale(cc->scale);
+            cube.setRotation(cc->rb->rotation);
+            cube.setPosition(cc->rb->position);
+            cube.draw();
+        }
+    }
+        break;
+
+    case ColliderType::SPHERE:
+    {
+        SphereCollider* sc = dynamic_cast<SphereCollider*>(&collider);
+        if(sc)
+        {
+            sphere.setScale(sc->scale);
+            sphere.setRotation(sc->rb->rotation);
+            sphere.setPosition(sc->rb->position);
+            sphere.draw();
+        }
+    }
+        break;
+    }
+}
+
+
+

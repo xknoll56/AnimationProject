@@ -5,7 +5,27 @@ extern MainWindow* gMainWindow;
 
 class DemoScene: public Scene
 {
+
+
 private:
+
+
+    struct AnimationTimer
+    {
+        float timer = 0.0f;
+        float timeMax = 3.0f;
+        glm::vec3 spawnPosition;
+        bool shouldUpdate = false;
+        bool respawned = false;
+    };
+
+    struct SpawnZone
+    {
+        float xMin, xSize, zMin, zSize, height, ySize;
+    };
+
+
+
     PhysicsWorld world;
     CubeCollider slope1Collider;
     CubeCollider slope2Collider;
@@ -19,6 +39,7 @@ private:
     CubeCollider backCollider1;
 
     std::vector<SphereCollider> sphereColliders;
+    std::vector<AnimationTimer> animationTimers;
     UniformRigidBody blockRb;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
@@ -30,6 +51,7 @@ private:
     UniformRigidBody backRb1;
     std::vector<UniformRigidBody> sphereRbs;
     UniformRigidBody floorRb;
+    SpawnZone spawnZone;
     int numBodies = 15;
 
 
@@ -39,8 +61,51 @@ public:
 
     }
 
-    void start()
+    glm::vec3 getRandomPointInSpawnZone()
     {
+        float xOffset = (rand()%1000/1000.0f)*spawnZone.xSize;
+        float zOffset = (rand()%1000/1000.0f)*spawnZone.zSize;
+        float yOffset = (rand()%1000/1000.0f)*spawnZone.ySize;
+        return glm::vec3(spawnZone.xMin+xOffset, spawnZone.height+yOffset, spawnZone.zMin+zOffset);
+    }
+
+    void respawnAnimation(float dt, int sphereIndex)
+    {
+        AnimationTimer *animTimer = &animationTimers[sphereIndex];
+        animTimer->timer += dt;
+        cone.setRotation(glm::quat(glm::vec3(0, 5.0f*animTimer->timer, 0)));
+        cone.setPosition(animTimer->spawnPosition);
+
+
+        float s = animTimer->timer;
+        if(animTimer->timer >= animTimer->timeMax*0.5f && !animTimer->respawned)
+        {
+            sphereColliders[sphereIndex].rb->position = animTimer->spawnPosition;
+            animTimer->respawned = true;
+             glm::vec3 velocity((rand()%100-50.0f)/20, -2.0f, (rand()%100-50.0f)/20);
+             sphereColliders[sphereIndex].rb->setVelocity(velocity);
+             sphereColliders[sphereIndex].scale = glm::vec3(0,0,0);
+        }
+        else if(animTimer->timer >= animTimer->timeMax*0.5f && animTimer->timer<animTimer->timeMax)
+        {
+            float sphereScale = (animTimer->timer - animTimer->timeMax*0.5f)/1.5f;
+            sphereColliders[sphereIndex].scale = glm::vec3(sphereScale, sphereScale, sphereScale);
+            s = animTimer->timeMax- animTimer->timer;
+        }
+        else if(animTimer->timer>=animTimer->timeMax)
+        {
+            sphereColliders[sphereIndex].scale = glm::vec3(1.0f,1.0f,1.0f);
+            s = animTimer->timeMax- animTimer->timer;
+            animTimer->timer = 0.0f;
+            animTimer->shouldUpdate = false;
+            animTimer->respawned = false;
+        }
+        cone.setScale(glm::vec3(s,s,s));
+        cone.draw();
+    }
+
+    void start()
+   {
         float mass = 1.0f;
         float radius = 1.0f;
         float inertia = (2.0f/5.0f)*mass*radius*radius;
@@ -48,14 +113,23 @@ public:
         otherRb = UniformRigidBody(mass, inertia);
         sphereRbs.reserve(numBodies);
         sphereColliders.reserve(numBodies);
+        spawnZone.height = 18;
+        spawnZone.xMin = -8;
+        spawnZone.zMin = -2.5f;
+        spawnZone.xSize = 5.0f;
+        spawnZone.zSize = 5.0f;
+        spawnZone.ySize = 5.0f;
         for(int i  =0; i<numBodies; i++)
         {
             UniformRigidBody sphereRb(mass, inertia);
             sphereRbs.push_back(sphereRb);
             sphereColliders.push_back(SphereCollider(0.5f));
             sphereColliders[sphereColliders.size()-1].rb = &sphereRbs[sphereRbs.size()-1];
-            sphereRbs[sphereRbs.size()-1].position =  glm::vec3(-2.5, 15+i, 0);
-            sphereRbs[sphereRbs.size()-1].setVelocity(glm::vec3(0, 0, (7-i)*0.35f));
+            animationTimers.push_back(AnimationTimer());
+            animationTimers[animationTimers.size()-1].spawnPosition = sphereRbs[sphereRbs.size()-1].position;
+            animationTimers[animationTimers.size()-1].shouldUpdate = true;
+            animationTimers[animationTimers.size()-1].spawnPosition = getRandomPointInSpawnZone();
+
 
         }
         floorRb = UniformRigidBody(mass, inertia);
@@ -127,6 +201,9 @@ public:
         world.setColliders(&colliders);
         cam.setPosition(glm::vec3(12,18,20));
         cam.setPitchAndYaw(-0.3f, 0.5f);
+
+        cone.meshes[0].setColor(glm::vec3(0,1,1));
+        cone.meshes[1].setColor(glm::vec3(0.75, 0, 0));
     }
 
     void update(float dt)
@@ -134,10 +211,19 @@ public:
         Scene::update(dt);
         world.stepWorld(dt, 5);
 
-        for(auto& col: sphereColliders)
+        for(int i = 0; i<sphereColliders.size(); i++)
         {
+            SphereCollider col = sphereColliders[i];
             if(col.rb->position.y<-10.0f)
-                col.rb->position =  glm::vec3(-2.5, 15, 0);
+            {
+                animationTimers[i].shouldUpdate = true;
+            }
+        }
+
+        for(int i = 0; i<animationTimers.size(); i++)
+        {
+            if(animationTimers[i].shouldUpdate)
+                respawnAnimation(dt, i);
         }
 
         if(blockRb.position.y<-10.0f)
@@ -183,74 +269,20 @@ public:
 
     void updateDraw(float dt)
     {
-
-        cube.meshes[1].setColor(glm::vec3(1, 0, 0));
-        cube.meshes[0].setColor(glm::vec3(0.2, 0.2, 0.87f));
-        cube.setPosition(backCollider.rb->position);
-        cube.setRotation(backCollider.rb->rotation);
-        cube.setScale(backCollider.scale);
-        cube.draw();
-
-        cube.setPosition(backCollider1.rb->position);
-        cube.setRotation(backCollider1.rb->rotation);
-        cube.setScale(backCollider1.scale);
-        cube.draw();
-
-
-        cube.setPosition(rightSideCollider1.rb->position);
-        cube.setRotation(rightSideCollider1.rb->rotation);
-        cube.setScale(rightSideCollider1.scale);
-        cube.draw();
-
-        cube.setPosition(leftSideCollider1.rb->position);
-        cube.setRotation(leftSideCollider1.rb->rotation);
-        cube.setScale(leftSideCollider1.scale);
-        cube.draw();
-
-
-        cube.setPosition(rightSideCollider.rb->position);
-        cube.setRotation(rightSideCollider.rb->rotation);
-        cube.setScale(rightSideCollider.scale);
-        cube.draw();
-
-        cube.setPosition(leftSideCollider.rb->position);
-        cube.setRotation(leftSideCollider.rb->rotation);
-        cube.setScale(leftSideCollider.scale);
-        cube.draw();
-
-        cube.meshes[1].setColor(glm::vec3(0, 1,0));
-        cube.meshes[0].setColor(glm::vec3(1, 1, 1));
-
-        cube.setPosition(blockCollider.rb->position);
-        cube.setRotation(blockCollider.rb->rotation);
-        cube.setScale(blockCollider.scale);
-        cube.draw();
-
-        cube.meshes[1].setColor(glm::vec3(1, 0, 0));
-        cube.meshes[0].setColor(glm::vec3(0, 1, 0));
-
-        cube.setPosition(slope1Collider.rb->position);
-        cube.setRotation(slope1Collider.rb->rotation);
-        cube.setScale(slope1Collider.scale);
-        cube.draw();
-
-        cube.setPosition(otherRb.position);
-        cube.setRotation(otherRb.rotation);
-        cube.setScale(slope2Collider.scale);
-        cube.draw();
-
-
-
-
-
+        drawBoundedCollider(backCollider, glm::vec3(0.2, 0.2, 0.87f), glm::vec3(1, 0, 0));
+        drawBoundedCollider(backCollider1);
+        drawBoundedCollider(rightSideCollider);
+        drawBoundedCollider(rightSideCollider1);
+        drawBoundedCollider(leftSideCollider);
+        drawBoundedCollider(leftSideCollider1);
+        drawBoundedCollider(blockCollider, glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
+        drawBoundedCollider(slope1Collider, glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
+        drawBoundedCollider(slope2Collider);
         sphere.meshes[0].setColor(glm::vec3(1, 1, 1));
         sphere.meshes[1].setColor(glm::vec3(0,0,0));
         for(auto& col: sphereColliders)
         {
-        sphere.setPosition(col.rb->position);
-        sphere.setRotation(col.rb->rotation);
-        sphere.setScale(col.scale);
-        sphere.draw();
+            drawBoundedCollider(col);
         }
 
         plane.draw();

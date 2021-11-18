@@ -31,12 +31,12 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(2.5f,0.2f,2.5f));
+        collider = CubeCollider(glm::vec3(2.5f,0.5f,2.5f));
         otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
-        rb.position = glm::vec3(0, 1.5, 0);
+        rb.position = glm::vec3(0, 1.5,4);
         rb.dynamic = true;
         otherRb.position = glm::vec3(0,2.0f, -4);
        // otherRb.dynamic = false;
@@ -55,6 +55,7 @@ public:
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = false;
         world.setColliders(&colliders);
+        cam.setPosition(glm::vec3(0, 5, 8));
 
         selectedRb = &rb;
 
@@ -116,7 +117,7 @@ public:
         }
         // Utilities::PrintVec3(rb.getLocalXAxis());
 
-        world.stepWorld(dt, 10);
+        world.stepWorld(dt);
 
         if(world.contacts.size()>0)
         {
@@ -151,11 +152,18 @@ public:
         RayCastData data;
         //qDebug() << elapsedTime;
         castDir = glm::vec3(glm::cos(elapsedTime/10.0f), 0.0f, glm::sin(elapsedTime/10.0f));
-        if(world.sphereRaycast(glm::vec3(-5,2,0), castDir, data, &sphereCollider))
+        glm::vec3 castPoint(0, 2, 0);
+        point.setPosition(castPoint);
+        point.draw();
+        if(world.raycastAll(castPoint, castDir, data))
         {
-            drawLine(lineMesh,glm::vec3(-5,2,0), data.point);
+            drawLine(lineMesh,castPoint, data.point);
             point.setPosition(data.point);
             point.draw();
+        }
+        else
+        {
+            drawLine(lineMesh, castPoint, castPoint+castDir);
         }
 
 

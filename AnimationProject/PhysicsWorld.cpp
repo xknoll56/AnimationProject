@@ -1126,7 +1126,6 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             dynamicCube->rb->rotation = toRotation;
             //dynamicCube->rb->rotation = glm::slerp(dynamicCube->rb->rotation, toRotation, 0.1f);
 
-            qDebug() << "stabalizing";
         }
         else if(info.points.size())
         {

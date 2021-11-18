@@ -44,6 +44,8 @@ public:
     virtual void updateDraw(float dt);
     virtual void drawCrosshair();
     virtual void selectRigidBody(PhysicsWorld& world);
+    virtual void drawBoundedCollider(Collider& collider, const glm::vec3& baseColor, const glm::vec3& boundsColor);
+    virtual void drawBoundedCollider(Collider& collider);
 
     float elapsedTime;
     bool doUpdateConsole;
