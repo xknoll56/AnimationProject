@@ -27,9 +27,105 @@ public:
             {
                 response.append("x: "+QString::number(rb->position.x)+" y: "+QString::number(rb->position.y)+" z: "+QString::number(rb->position.z));
             }
+            else if(tokens[1].compare("rotation")==0)
+            {
+                response.append("x: "+QString::number(rb->rotation.x)+" y: "+QString::number(rb->rotation.y)+
+                                " z: "+QString::number(rb->rotation.z)+" w: "+QString::number(rb->rotation.w));
+            }
+            else if(tokens[1].compare("velocity")==0)
+            {
+                response.append("x: "+QString::number(rb->velocity.x)+" y: "+QString::number(rb->velocity.y)+" z: "+QString::number(rb->velocity.z));
+            }
+            else if(tokens[1].compare("angular_velocity")==0)
+            {
+                response.append("x: "+QString::number(rb->angularVelocity.x)+" y: "+QString::number(rb->angularVelocity.y)+" z: "+QString::number(rb->angularVelocity.z));
+            }
+            else if(tokens[1].compare("mass")==0)
+            {
+                response.append("mass: "+QString::number(rb->mass));
+            }
+            else if(tokens[1].compare("inertia")==0)
+            {
+                response.append("inertia: "+QString::number(rb->inertia));
+            }
+        }
+        if(tokens[0].compare("set")==0)
+        {
+            if(tokens[1].compare("position")==0)
+            {
+                glm::vec3 vec = getVec3Args(tokens);
+                if(glm::any(glm::isnan(vec)))
+                {
+                    response.append("failed to convert to vector");
+                }
+                else
+                {
+                    rb->position = vec;
+                    response.append("position set");
+                }
+            }
+            else if(tokens[1].compare("euler")==0)
+            {
+                glm::vec3 vec = getVec3Args(tokens);
+                if(glm::any(glm::isnan(vec)))
+                {
+                    response.append("failed to convert to vector");
+                }
+                else
+                {
+                    rb->rotation = glm::quat(vec);
+                    response.append("rotation set");
+                }
+            }
+            else if(tokens[1].compare("velocity")==0)
+            {
+                glm::vec3 vec = getVec3Args(tokens);
+                if(glm::any(glm::isnan(vec)))
+                {
+                    response.append("failed to convert to vector");
+                }
+                else
+                {
+                    rb->setVelocity(vec);
+                    response.append("velocity set");
+                }
+            }
+            else if(tokens[1].compare("angular_velocity")==0)
+            {
+                glm::vec3 vec = getVec3Args(tokens);
+                if(glm::any(glm::isnan(vec)))
+                {
+                    response.append("failed to convert to vector");
+                }
+                else
+                {
+                    rb->setAngularVelocity(vec);
+                    response.append("angular velocity set");
+                }
+            }
         }
 
         return response;
+    }
+
+    glm::vec3 getVec3Args(QStringList& tokens)
+    {
+        glm::vec3 returnVec(0,0,0);
+        for(int i = 2; i<5; i++)
+        {
+//            bool isNan = false;
+//            for(QChar& c: tokens[i])
+//            {
+//                if(!c.isDigit())
+//                {
+//                    isNan = true;
+//                }
+//            }
+//            if(isNan)
+//                break;
+            returnVec[i-2] = tokens[i].toFloat();
+        }
+        return returnVec;
     }
 };
 
@@ -67,6 +163,12 @@ protected:
     std::list<QString> commands;
     std::list<QString> replys;
     UniformRigidBody* selectedRb;
+
+    float nearPlane;
+    float farPlane;
+    float aspectRatio;
+    float fov;
+    glm::mat4 projection;
 
 
 

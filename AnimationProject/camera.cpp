@@ -81,7 +81,7 @@ void Camera::rotateYaw(float inc)
 void Camera::rotatePitch(float inc)
 {
     pitch += rotationSpeed*inc;
-    pitch = glm::clamp(pitch, -PI*0.495f, PI*0.495f);
+    pitch = glm::clamp(pitch, -PI*0.45f, PI*0.45f);
 }
 
 void Camera::smoothRotateYaw(float inc)
@@ -91,7 +91,7 @@ void Camera::smoothRotateYaw(float inc)
 void Camera::smoothRotatePitch(float inc)
 {
     targPitch += inc;
-    targPitch = glm::clamp(targPitch, -PI*0.495f, PI*0.495f);
+    targPitch = glm::clamp(targPitch, -PI*0.45f, PI*0.45f);
 }
 
 const glm::mat4& Camera::getView()

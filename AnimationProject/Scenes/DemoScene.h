@@ -211,6 +211,8 @@ public:
         Scene::update(dt);
         world.stepWorld(dt, 5);
 
+        selectRigidBody(world);
+
         for(int i = 0; i<sphereColliders.size(); i++)
         {
             SphereCollider col = sphereColliders[i];
@@ -282,6 +284,10 @@ public:
         sphere.meshes[1].setColor(glm::vec3(0,0,0));
         for(auto& col: sphereColliders)
         {
+            if(col.rb == selectedRb)
+                sphere.meshes[1].setColor(glm::vec3(1,0,0));
+            else
+                sphere.meshes[1].setColor(glm::vec3(0,0,0));
             drawBoundedCollider(col);
         }
 

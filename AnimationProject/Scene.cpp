@@ -19,7 +19,11 @@ Scene::Scene()
     //replys.push_back("");
     commands.push_back("");
     replys.push_back("Press Escape to start, or enter a command.\n");
-    glm::mat4 projection = glm::perspective((float)PI*0.33f, (float)gMainWindow->width()/gMainWindow->height(), 0.1f, 100.0f);
+    nearPlane = 0.1f;
+    farPlane = 100.0f;
+    aspectRatio = (float)gMainWindow->width()/gMainWindow->height();
+    fov = (float)PI*0.33f;
+    projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
     glm::mat4 trans(1.0f);
     cam = Camera(glm::vec3(0,2,5));
     cam.updateView();
@@ -170,10 +174,21 @@ void Scene::selectRigidBody(PhysicsWorld& world)
 {
     if(gMainWindow->getMouseDown(Qt::MouseButton::RightButton))
     {
+        QPoint mouse = QCursor::pos(gMainWindow->screen())-gMainWindow->position();
+        glm::vec3 rayNds((mouse.x()-(float)gMainWindow->width()/2)/(gMainWindow->width()/2),
+                                   (-mouse.y()+(float)gMainWindow->height()/2)/(gMainWindow->height()/2), 2.0f);
+        glm::vec4 rayClip(rayNds.x, rayNds.y, -1.0f, 1.0f);
+        glm::vec4 rayEye = glm::inverse(projection)*rayClip;
+        rayEye.z = -1.0f;
+        rayEye.w = 0.0f;
+        glm::vec3 rayWor = (glm::inverse(cam.getView())*rayEye);
+        rayWor = glm::normalize(rayWor);
+
         RayCastData rcd;
-        if(world.raycastAll(cam.getPosition(), -cam.getFwd(), rcd))
+        if(world.raycastAll(cam.getPosition(), rayWor, rcd))
         {
             selectedRb = rcd.collider->rb;
+            console.rb = selectedRb;
         }
     }
 }

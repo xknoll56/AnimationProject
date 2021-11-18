@@ -15,6 +15,7 @@ private:
     UniformRigidBody sphereRb;
     glm::vec3 castDir;
     glm::vec3 hitPosition;
+    glm::vec3 worldCoords;
 
 
 public:
@@ -49,6 +50,7 @@ public:
         sphereRb.position = glm::vec3(5.0f, 2.0f, 0.0f);
         sphereRb.setAngularVelocity(glm::vec3(0.1,0.2,0.3));
         castDir = glm::vec3(1,0,0);
+
 
 
         std::vector<Collider*> colliders = { &collider, &sphereCollider, &otherCollider};
@@ -106,16 +108,7 @@ public:
             selectedRb->rotation = glm::quat(glm::vec3(2*PI/(rand()%8+1), 2*PI/(rand()%8+1), 2*PI/(rand()%8+1)));
 
         }
-        if(gMainWindow->getMouseDown(Qt::MouseButton::RightButton))
-        {
-            RayCastData rcd;
-            if(world.raycastAll(cam.getPosition(), -cam.getFwd(), rcd))
-            {
-                hitPosition = rcd.point;
-                selectedRb = rcd.collider->rb;
-            }
-        }
-        // Utilities::PrintVec3(rb.getLocalXAxis());
+        selectRigidBody(world);
 
         world.stepWorld(dt);
 
@@ -157,12 +150,14 @@ public:
         point.draw();
         if(world.raycastAll(castPoint, castDir, data))
         {
+            lineMesh.setColor(glm::vec3(1,0,0));
             drawLine(lineMesh,castPoint, data.point);
             point.setPosition(data.point);
             point.draw();
         }
         else
         {
+            lineMesh.setColor(glm::vec3(0,0,1));
             drawLine(lineMesh, castPoint, castPoint+castDir);
         }
 
