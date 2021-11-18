@@ -1239,18 +1239,13 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
     float j = glm::length(force);
     float sMax = 5.0f*restitutionSlope*glm::abs(glm::dot(gravity, normal))+restitutionIntersect;
     float slope = glm::dot(info.normal, glm::vec3(0,1,0));
-    //float sMax = restitutionSlope*-glm::dot(gravity, normal)+restitutionIntersect;
-    //qDebug() << "j: " << j <<" smax: " << sMax;
-    if(j>sMax || slope)
+
+    if(j>sMax || slope<0.0f)
     {
-        // if(glm::dot(force, normal)>0)
-        {
-            sphere->rb->addForce(force);
-            glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
-            //qDebug() <<"tangential force:";
-            //Utilities::PrintVec3(glm::cross(friction*forceT, r));
-            sphere->rb->setAngularVelocity(glm::cross(normal,vt/sphere->radius));
-        }
+
+        sphere->rb->addForce(force);
+        glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
+        sphere->rb->setAngularVelocity(glm::cross(normal,vt/sphere->radius));
     }
     else
     {
@@ -1265,8 +1260,6 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
 
             if(glm::dot(force, normal)>0)
             {
-                //sphere->rb->position -= 0.5f*normal*info.penetrationDistance;
-                //qDebug() <<"adding force";
                 sphere->rb->addForce(force);
             }
         }

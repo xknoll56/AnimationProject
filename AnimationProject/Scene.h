@@ -51,56 +51,59 @@ public:
         }
         if(tokens[0].compare("set")==0)
         {
-            if(tokens[1].compare("position")==0)
+            if(rb->dynamic)
             {
-                glm::vec3 vec = getVec3Args(tokens);
-                if(glm::any(glm::isnan(vec)))
+                if(tokens[1].compare("position")==0)
                 {
-                    response.append("failed to convert to vector");
+                    glm::vec3 vec;
+                    if(!getVec3Args(tokens, vec))
+                    {
+                        response.append("failed to convert to vector");
+                    }
+                    else
+                    {
+                        rb->position = vec;
+                        response.append("position set");
+                    }
                 }
-                else
+                else if(tokens[1].compare("euler")==0)
                 {
-                    rb->position = vec;
-                    response.append("position set");
+                    glm::vec3 vec;
+                    if(!getVec3Args(tokens, vec))
+                    {
+                        response.append("failed to convert to vector");
+                    }
+                    else
+                    {
+                        rb->rotation = glm::quat(vec);
+                        response.append("rotation set");
+                    }
                 }
-            }
-            else if(tokens[1].compare("euler")==0)
-            {
-                glm::vec3 vec = getVec3Args(tokens);
-                if(glm::any(glm::isnan(vec)))
+                else if(tokens[1].compare("velocity")==0)
                 {
-                    response.append("failed to convert to vector");
+                    glm::vec3 vec;
+                    if(!getVec3Args(tokens, vec))
+                    {
+                        response.append("failed to convert to vector");
+                    }
+                    else
+                    {
+                        rb->setVelocity(vec);
+                        response.append("velocity set");
+                    }
                 }
-                else
+                else if(tokens[1].compare("angular_velocity")==0)
                 {
-                    rb->rotation = glm::quat(vec);
-                    response.append("rotation set");
-                }
-            }
-            else if(tokens[1].compare("velocity")==0)
-            {
-                glm::vec3 vec = getVec3Args(tokens);
-                if(glm::any(glm::isnan(vec)))
-                {
-                    response.append("failed to convert to vector");
-                }
-                else
-                {
-                    rb->setVelocity(vec);
-                    response.append("velocity set");
-                }
-            }
-            else if(tokens[1].compare("angular_velocity")==0)
-            {
-                glm::vec3 vec = getVec3Args(tokens);
-                if(glm::any(glm::isnan(vec)))
-                {
-                    response.append("failed to convert to vector");
-                }
-                else
-                {
-                    rb->setAngularVelocity(vec);
-                    response.append("angular velocity set");
+                    glm::vec3 vec;
+                    if(!getVec3Args(tokens, vec))
+                    {
+                        response.append("failed to convert to vector");
+                    }
+                    else
+                    {
+                        rb->setAngularVelocity(vec);
+                        response.append("angular velocity set");
+                    }
                 }
             }
         }
@@ -108,24 +111,20 @@ public:
         return response;
     }
 
-    glm::vec3 getVec3Args(QStringList& tokens)
+    bool getVec3Args(QStringList& tokens, glm::vec3& returnVec)
     {
-        glm::vec3 returnVec(0,0,0);
         for(int i = 2; i<5; i++)
         {
-//            bool isNan = false;
-//            for(QChar& c: tokens[i])
-//            {
-//                if(!c.isDigit())
-//                {
-//                    isNan = true;
-//                }
-//            }
-//            if(isNan)
-//                break;
+            for(QChar& c: tokens[i])
+            {
+                if(!c.isDigit())
+                {
+                    return false;
+                }
+            }
             returnVec[i-2] = tokens[i].toFloat();
         }
-        return returnVec;
+        return true;
     }
 };
 
