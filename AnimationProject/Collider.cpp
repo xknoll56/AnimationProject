@@ -16,11 +16,17 @@ PlaneCollider::PlaneCollider(const glm::vec3& point1, const glm::vec3& point2, c
     type = ColliderType::PLANE;
 }
 
+void SphereCollider::setAABB()
+{
+    aabb.xSize = aabb.ySize = aabb.zSize = radius;
+}
+
 SphereCollider::SphereCollider()
 {
     this->radius = 0.5f;
     type = ColliderType::SPHERE;
     scale = 2.0f*glm::vec3(radius, radius, radius);
+    setAABB();
 }
 
 SphereCollider::SphereCollider(const float radius)
@@ -28,6 +34,7 @@ SphereCollider::SphereCollider(const float radius)
     this->radius = radius;
     type = ColliderType::SPHERE;
     scale = 2.0f*glm::vec3(radius, radius, radius);
+    setAABB();
 }
 
 SphereCollider::SphereCollider(const float radius, UniformRigidBody* const rb)
@@ -36,6 +43,7 @@ SphereCollider::SphereCollider(const float radius, UniformRigidBody* const rb)
     type = ColliderType::SPHERE;
     this->rb = rb;
     scale = 2.0f*glm::vec3(radius, radius, radius);
+    setAABB();
 }
 
 SphereCollider& SphereCollider::operator= (const SphereCollider& other)
@@ -46,6 +54,19 @@ SphereCollider& SphereCollider::operator= (const SphereCollider& other)
     return *this;
 }
 
+SphereCollider::SphereCollider(const SphereCollider& other): Collider(other)
+{
+    this->radius = other.radius;
+    this->type = ColliderType::SPHERE;
+    scale = 2.0f*glm::vec3(radius, radius, radius);
+    this->rb = other.rb;
+}
+
+void CubeCollider::setAABB()
+{
+    aabb.xSize = aabb.ySize = aabb.zSize = glm::sqrt(xSize*xSize+ySize*ySize+zSize*zSize);
+}
+
 CubeCollider::CubeCollider(const glm::vec3& sizes)
 {
     xSize = sizes.x;
@@ -54,6 +75,7 @@ CubeCollider::CubeCollider(const glm::vec3& sizes)
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
     initEdges();
+    setAABB();
 }
 
 CubeCollider::CubeCollider()
@@ -64,8 +86,9 @@ CubeCollider::CubeCollider()
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
     initEdges();
+    setAABB();
 }
-CubeCollider::CubeCollider(const CubeCollider& other)
+CubeCollider::CubeCollider(const CubeCollider& other): Collider(other)
 {
     xSize = other.xSize;
     ySize = other.ySize;
@@ -73,6 +96,7 @@ CubeCollider::CubeCollider(const CubeCollider& other)
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
     initEdges();
+    setAABB();
 }
 
 CubeCollider& CubeCollider::operator= (const CubeCollider& other)
@@ -83,6 +107,7 @@ CubeCollider& CubeCollider::operator= (const CubeCollider& other)
     scale = glm::vec3(2*xSize, 2*ySize, 2*zSize);
     type = ColliderType::CUBE;
     initEdges();
+    this->aabb = other.aabb;
     return *this;
 }
 

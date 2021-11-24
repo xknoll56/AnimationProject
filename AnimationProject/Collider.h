@@ -13,6 +13,12 @@ enum ColliderType
     NONE = 4
 };
 
+struct AABB
+{
+    float xSize;
+    float ySize;
+    float zSize;
+};
 
 
 struct Collider
@@ -22,6 +28,7 @@ struct Collider
     bool collisionDetected = false;
     unsigned int id;
     int mask;
+    AABB aabb;
     Collider()
     {
         type = ColliderType::NONE;
@@ -31,12 +38,18 @@ struct Collider
         type = other.type;
         rb = other.rb;
         collisionDetected = other.collisionDetected;
+        id = other.id;
+        aabb = other.aabb;
+        mask = other.mask;
     }
     Collider& operator= (const Collider& other)
     {
         type = other.type;
         rb = other.rb;
         collisionDetected = other.collisionDetected;
+        id = other.id;
+        aabb = other.aabb;
+        mask = other.mask;
         return *this;
     }
     virtual ~Collider();
@@ -59,6 +72,8 @@ struct SphereCollider: public Collider
     SphereCollider(const float radius);
     SphereCollider(const float radius, UniformRigidBody* const rb);
     SphereCollider& operator= (const SphereCollider& other);
+    SphereCollider(const SphereCollider& other);
+    void setAABB();
 };
 
 struct CubeCollider: public Collider
@@ -103,6 +118,7 @@ struct CubeCollider: public Collider
     std::vector<EdgeIndices> getClosestEdges(const glm::vec3& dir);
     ContactDir GetFaceClosestToNormal(const glm::vec3& normal, bool& negative);
     glm::quat toRotation(ContactDir upMostDir, const glm::vec3& up);
+    void setAABB();
 
 };
 

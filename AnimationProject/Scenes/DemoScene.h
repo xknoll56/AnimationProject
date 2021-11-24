@@ -123,7 +123,8 @@ public:
         {
             UniformRigidBody sphereRb(mass, inertia);
             sphereRbs.push_back(sphereRb);
-            sphereColliders.push_back(SphereCollider(0.5f));
+            SphereCollider sc(0.5f);
+            sphereColliders.push_back(sc);
             sphereColliders[sphereColliders.size()-1].rb = &sphereRbs[sphereRbs.size()-1];
             animationTimers.push_back(AnimationTimer());
             animationTimers[animationTimers.size()-1].spawnPosition = sphereRbs[sphereRbs.size()-1].position;

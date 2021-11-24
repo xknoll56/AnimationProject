@@ -81,6 +81,7 @@ struct PhysicsWorld
     bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat);
     bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, int mask);
     bool raycastAll(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, ColliderType type);
+    bool narrowPhaseCollisionDetection(Collider& colA, Collider& colB);
 };
 
 class Utilities
