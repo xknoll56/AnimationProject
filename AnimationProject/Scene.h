@@ -15,7 +15,8 @@ class ConsoleInterface
 {
 public:
 
-    UniformRigidBody* rb;
+    UniformRigidBody* rb = nullptr;
+    int sceneIndex = 0;
 
     QString ParseCommand(QString& command)
     {
@@ -51,7 +52,7 @@ public:
         }
         if(tokens[0].compare("set")==0)
         {
-            if(rb->dynamic)
+            if(rb!=nullptr && rb->dynamic)
             {
                 if(tokens[1].compare("position")==0)
                 {
@@ -105,6 +106,31 @@ public:
                         response.append("angular velocity set");
                     }
                 }
+
+            }
+            if(tokens[1].compare("scene")==0)
+            {
+                if(tokens[2].compare("collision")==0)
+                {
+                    sceneIndex = 2;
+                }
+                else if(tokens[2].compare("demo")==0)
+                {
+                    sceneIndex = 0;
+                }
+                else if(tokens[2].compare("drop")==0)
+                {
+                    sceneIndex = 1;
+                }
+                else if(tokens[2].compare("vaccume")==0)
+                {
+                    sceneIndex = 3;
+                }
+                else  if(tokens[2].compare("stack")==0)
+                {
+                    sceneIndex = 4;
+                }
+
             }
         }
 
@@ -145,6 +171,8 @@ public:
     float elapsedTime;
     bool doUpdateConsole;
     bool consoleToggle;
+    ConsoleInterface console;
+
 protected:
     Entity plane;
     Mesh lineMesh;
@@ -158,7 +186,7 @@ protected:
     Camera cam;
     Entity point;
     QPainter painter;
-    ConsoleInterface console;
+
     std::list<QString> commands;
     std::list<QString> replys;
     UniformRigidBody* selectedRb;
@@ -168,6 +196,7 @@ protected:
     float aspectRatio;
     float fov;
     glm::mat4 projection;
+
 
 
 

@@ -2,6 +2,7 @@
 #include "Debug.h"
 #include <QDebug>
 
+
 extern Shader* modelShader;
 extern Shader* gridShader;
 extern MainWindow* gMainWindow;
@@ -9,9 +10,9 @@ extern QPaintDevice* gPaintDevice;
 extern QOpenGLFunctions_4_5_Core* openglFunctions;
 
 
+
 Scene::Scene()
 {
-
     painter.setWorldMatrixEnabled(false);
     doUpdateConsole = true;
     consoleToggle = false;
@@ -58,6 +59,7 @@ void Scene::start()
 {
 
 }
+
 
 void Scene::update(float dt)
 {

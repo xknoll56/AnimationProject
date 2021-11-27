@@ -100,10 +100,6 @@ void UniformRigidBody::addTorque(const glm::vec3& torque,  UniformRigidBody& oth
 {
     appliedTorques.push_back(torque);
     applyTorque = true;
-    if(!(std::find(appliedBodies.begin(), appliedBodies.end(), &other)!=appliedBodies.end()))
-    {
-        appliedBodies.push_back(&other);
-    }
 }
 
 void UniformRigidBody::setVelocity(const glm::vec3& velocity)

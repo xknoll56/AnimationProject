@@ -34,7 +34,6 @@ struct UniformRigidBody
     //applied force/torque will be applie for a single step
     std::vector<glm::vec3> appliedForces;
     std::vector<glm::vec3> appliedTorques;
-    std::vector<UniformRigidBody*> appliedBodies;
     bool applyForce = false;
     bool applyTorque = false;
     bool dynamic = true;

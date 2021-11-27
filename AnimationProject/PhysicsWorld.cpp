@@ -13,6 +13,7 @@ PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders, glm::vec3 gravity)
     }
     for(auto& collider: *colliders)
     {
+        assert(collider->rb!=nullptr);
         if(collider->rb!=nullptr)
             collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }
@@ -31,6 +32,7 @@ PhysicsWorld::PhysicsWorld(std::vector<Collider*>* colliders)
     }
     for(auto& collider: *colliders)
     {
+        assert(collider->rb!=nullptr);
         if(collider->rb!=nullptr)
             collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }
@@ -53,6 +55,7 @@ void PhysicsWorld::setColliders(std::vector<Collider *> *colliders)
     }
     for(auto& collider: *colliders)
     {
+        assert(collider->rb!=nullptr);
         if(collider->rb!=nullptr)
             collider->rb->gravitionalForce += collider->rb->mass*gravity;
     }

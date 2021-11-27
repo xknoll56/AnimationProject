@@ -1,10 +1,12 @@
 #include "MainApplication.h"
 
+
 QOpenGLFunctions_4_5_Core* openglFunctions;
 Shader* modelShader;
 Shader* gridShader;
 MainWindow* gMainWindow;
 QPaintDevice* gPaintDevice;
+
 
 MainApplication::MainApplication(int argc, char *argv[]): QGuiApplication(argc, argv)
 {
@@ -77,26 +79,68 @@ bool MainApplication::setup(int windowWidth, int windowHeight)
     gridShader->insertUniform("view");
     gridShader->insertUniform("projection");
     gridShader->insertUniform("color");
+
+
+
+    currentScene = new DemoScene();
+    currentSceneIndex = 0;
+
     return true;
 }
 
 int MainApplication::execute()
 {
-    scene->start();
+    currentScene->start();
     QElapsedTimer elapsedTimer;
     elapsedTimer.start();
     QElapsedTimer sceneTimer;
     sceneTimer.start();
     long time = elapsedTimer.nsecsElapsed();
     float dt;
-    scene->elapsedTime = 0.0f;
+    currentScene->elapsedTime = 0.0f;
+
     while(window.shouldRun())
     {
-
+        if(currentSceneIndex!=currentScene->console.sceneIndex)
+        {
+            int newIndex = currentScene->console.sceneIndex;
+            //In case the index has be changes from leaving the scene
+            currentSceneIndex = newIndex;
+            delete currentScene;
+            switch(currentSceneIndex)
+            {
+            case 0:
+                demoScene = new DemoScene();
+                currentScene = demoScene;
+                break;
+            case 1:
+                cubeDropScene = new CubeDropScene();
+                currentScene = cubeDropScene;
+                break;
+            case 2:
+                collisionTestScene = new CollisionTestScene();
+                currentScene = collisionTestScene;
+                break;
+            case 3:
+                vaccumeScene = new VaccumeScene();
+                currentScene = vaccumeScene;
+                break;
+            case 4:
+                delete stackScene;
+                stackScene = new StackScene();
+                currentScene = stackScene;
+                break;
+            }
+            currentScene->console.sceneIndex = newIndex;
+            currentScene->start();
+            gMainWindow->toggleWriteEnable();
+            currentScene->elapsedTime = 0.0f;
+            sceneTimer.restart();
+        }
         long timeNow = elapsedTimer.nsecsElapsed();
         dt = elapsedTimer.nsecsElapsed()/1000000000.0f;
         elapsedTimer.restart();
-        scene->elapsedTime = sceneTimer.elapsed()/1000.0f;
+        currentScene->elapsedTime = sceneTimer.elapsed()/1000.0f;
 
         openglFunctions->glEnable(GL_DEPTH_TEST);
         openglFunctions->glEnable(GL_CULL_FACE);
@@ -112,13 +156,13 @@ int MainApplication::execute()
         }
 
 
-        if(!scene->doUpdateConsole)
-            scene->update(dt);
+        if(!currentScene->doUpdateConsole)
+            currentScene->update(dt);
 
-        scene->updateDraw(dt);
+        currentScene->updateDraw(dt);
 
-        if(scene->doUpdateConsole)
-            scene->updateConsole(dt);
+        if(currentScene->doUpdateConsole)
+            currentScene->updateConsole(dt);
 
 
 
