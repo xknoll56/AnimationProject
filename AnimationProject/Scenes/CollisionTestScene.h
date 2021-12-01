@@ -114,9 +114,6 @@ public:
 
         if(world.contacts.size()>0)
         {
-            cube.meshes[1].setColor(glm::vec3(1,0,0));
-            sphere.meshes[1].setColor(glm::vec3(1,0,0));
-
             for(int i =0;i<world.contacts.size();i++)
             {
                 for(int j =0;j<world.contacts[i].points.size();j++)
@@ -135,11 +132,6 @@ public:
 
                 }
             }
-        }
-        else
-        {
-            cube.meshes[1].setColor(glm::vec3(0,1,0));
-            sphere.meshes[1].setColor(glm::vec3(0,1,0));
         }
 
         RayCastData data;

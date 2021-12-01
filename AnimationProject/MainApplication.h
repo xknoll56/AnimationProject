@@ -19,18 +19,19 @@
 class MainApplication: QGuiApplication
 {
 public:
-    Scene* currentScene;
     MainWindow window;
     MainApplication(int argc, char *argv[]);
     bool setup(int windowWidth, int windowHeight);
     int execute();
 private:
+    Scene* currentScene;
     StackScene* stackScene;
     CollisionTestScene* collisionTestScene;
     CubeDropScene* cubeDropScene;
     DemoScene* demoScene;
     VaccumeScene* vaccumeScene;
     QOpenGLContext* context;
+    void swapScenes(QElapsedTimer* sceneTimer);
     QElapsedTimer elapsedTimer;
     QOpenGLPaintDevice* paintDevice;
     CloseEventFilter *closeFilter;

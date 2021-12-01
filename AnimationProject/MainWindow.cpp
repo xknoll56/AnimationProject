@@ -15,6 +15,7 @@ MainWindow::MainWindow() : QWindow()
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
+    adjustMouse = true;
     inputs[event->button()] = true;
     if(!inputsDownReset[event->button()])
     {
@@ -26,10 +27,8 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-
     inputs[event->button()] = false;
     inputsDownReset[event->button()] = false;
-
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -113,6 +112,41 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         inputsDown[event->key()] = true;
         inputsDownReset[event->key()] = true;
     }
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent* event)
+{
+    if(lockCursor)
+    {
+        if(!adjustMouse)
+        {
+            mouseDx = (float)QCursor::pos().x()-position().x()-width()/2.0f;
+            mouseDy = (float)QCursor::pos().y()-position().y()-height()/2.0f;
+            QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
+        }
+        else
+        {
+            mouseDx = 0.0f;
+            mouseDy = 0.0f;
+            QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
+            adjustMouse = false;
+        }
+    }
+}
+
+void MainWindow::lockCursorState()
+{
+    lockCursor = true;
+    QCursor cursor(Qt::BlankCursor);
+    QApplication::setOverrideCursor(cursor);
+    QApplication::changeOverrideCursor(cursor);
+}
+void MainWindow::unlockCursorState()
+{
+    lockCursor = false;
+    QCursor cursor;
+    QApplication::setOverrideCursor(cursor);
+    QApplication::changeOverrideCursor(cursor);
 }
 
 void MainWindow::quit()

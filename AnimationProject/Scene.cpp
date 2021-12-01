@@ -87,11 +87,15 @@ void Scene::update(float dt)
     }
     if(gMainWindow->getMouse(Qt::MouseButton::LeftButton))
     {
-        QPointF deltaPos = QCursor::pos()-gMainWindow->mousePos;
-        gMainWindow->mousePos = QCursor::pos();
+        gMainWindow->lockCursorState();
+        //QPointF deltaPos = QCursor::pos()-gMainWindow->mousePos;
+        QPointF deltaPos(gMainWindow->mouseDx, gMainWindow->mouseDy);
+        //gMainWindow->mousePos = QCursor::pos();
         cam.rotateYaw(-dt*deltaPos.x());
         cam.rotatePitch(-dt*deltaPos.y());
     }
+    else
+        gMainWindow->unlockCursorState();
 
     cam.updateView();
     modelShader->setMat4("view", cam.view);

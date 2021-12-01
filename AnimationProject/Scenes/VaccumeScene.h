@@ -11,7 +11,7 @@ private:
     std::vector<UniformRigidBody> rbs;
     SphereCollider sphereCollider;
     UniformRigidBody sphereRb;
-
+    std::vector<bool> inContact;
 
 
 public:
@@ -25,19 +25,21 @@ public:
         float mass = 1.0f;
         float radius = 1.0f;
         float inertia = (2.0f/5.0f)*mass*radius*radius;
-        cubeColliders.reserve(25);
-        rbs.reserve(25);
-        for(int i = 0;i<5;i++)
+        cubeColliders.reserve(100);
+        rbs.reserve(100);
+        inContact.reserve(100);
+        for(int i = 0;i<6;i++)
         {
-            for(int j = 0; j<5;j++)
+            for(int j = 0; j<6;j++)
             {
             UniformRigidBody rb(mass, inertia);
-            rb.position = glm::vec3(i%5, j%5, 0);
+            rb.position = glm::vec3(i%6*1.05f, j%6*1.05f, 0);
             rb.dynamic = true;
             rb.atRest = true;
             rbs.push_back(rb);
             cubeColliders.push_back(CubeCollider(glm::vec3(0.5f,0.5f,0.5f)));
             cubeColliders[cubeColliders.size()-1].rb = &rbs[rbs.size()-1];
+            inContact.push_back(false);
             }
         }
         sphereRb = UniformRigidBody(mass, inertia);
@@ -45,7 +47,7 @@ public:
 
         sphereCollider = SphereCollider(0.5f);
         sphereCollider.rb = &sphereRb;
-        sphereRb.position = glm::vec3(2,8,0);
+        sphereRb.position = glm::vec3(2,8,10);
 
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
@@ -62,7 +64,8 @@ public:
         Scene::update(dt);
         for(auto& col: cubeColliders)
             col.rb->atRest = false;
-        world.stepWorld(dt, 3);
+        world.stepWorld(dt);
+        selectRigidBody(world);
 
         if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
@@ -76,8 +79,51 @@ public:
 
     void updateDraw(float dt)
     {
+        std::vector<Collider*> contactColliders;
+        if(world.contacts.size()>0)
+        {
+            //cube.meshes[1].setColor(glm::vec3(1,0,0));
+
+            for(int i =0;i<world.contacts.size();i++)
+            {
+                for(int j =0;j<world.contacts[i].points.size();j++)
+                {
+                    contactColliders.push_back(world.contacts[i].a);
+                    contactColliders.push_back(world.contacts[i].b);
+                    point.setPosition(world.contacts[i].points[j]);
+                    point.draw();
+                    if(j == 0)
+                    {
+                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
+                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
+                    }
+                }
+            }
+        }
+
+
         for(auto& col: cubeColliders)
         {
+            bool found = false;
+            for(Collider* c: contactColliders)
+            {
+                CubeCollider* cc = dynamic_cast<CubeCollider*>(c);
+                if(cc)
+                {
+                    if(cc==&col)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+            if(found)
+                cube.meshes[1].setColor(glm::vec3(1,0,0));
+            else
+                cube.meshes[1].setColor(glm::vec3(0,1,0));;
+            if(col.rb == selectedRb)
+                cube.meshes[1].setColor(glm::vec3(0,0,1));
             cube.setPosition(col.rb->position);
             cube.setRotation(col.rb->rotation);
             cube.setScale(col.scale);
@@ -89,28 +135,7 @@ public:
         sphere.setScale(sphereCollider.scale);
         sphere.draw();
 
-//        if(world.contacts.size()>0)
-//        {
-//            cube.meshes[1].setColor(glm::vec3(1,0,0));
 
-//            for(int i =0;i<world.contacts.size();i++)
-//            {
-//                for(int j =0;j<world.contacts[i].points.size();j++)
-//                {
-//                    point.setPosition(world.contacts[i].points[j]);
-//                    point.draw();
-//                    if(j == 0)
-//                    {
-//                        drawLine(lineMesh, world.contacts[i].b->rb->position, world.contacts[i].b->rb->position+2.0f*world.contacts[i].normal);
-//                        drawLine(lineMesh, world.contacts[i].a->rb->position, world.contacts[i].a->rb->position-2.0f*world.contacts[i].normal);
-//                    }
-//                }
-//            }
-//        }
-//        else
-//        {
-//            cube.meshes[1].setColor(glm::vec3(0,1,0));
-//        }
     }
 
 };

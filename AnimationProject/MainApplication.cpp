@@ -101,42 +101,7 @@ int MainApplication::execute()
 
     while(window.shouldRun())
     {
-        if(currentSceneIndex!=currentScene->console.sceneIndex)
-        {
-            int newIndex = currentScene->console.sceneIndex;
-            //In case the index has be changes from leaving the scene
-            currentSceneIndex = newIndex;
-            delete currentScene;
-            switch(currentSceneIndex)
-            {
-            case 0:
-                demoScene = new DemoScene();
-                currentScene = demoScene;
-                break;
-            case 1:
-                cubeDropScene = new CubeDropScene();
-                currentScene = cubeDropScene;
-                break;
-            case 2:
-                collisionTestScene = new CollisionTestScene();
-                currentScene = collisionTestScene;
-                break;
-            case 3:
-                vaccumeScene = new VaccumeScene();
-                currentScene = vaccumeScene;
-                break;
-            case 4:
-                delete stackScene;
-                stackScene = new StackScene();
-                currentScene = stackScene;
-                break;
-            }
-            currentScene->console.sceneIndex = newIndex;
-            currentScene->start();
-            gMainWindow->toggleWriteEnable();
-            currentScene->elapsedTime = 0.0f;
-            sceneTimer.restart();
-        }
+        swapScenes(&sceneTimer);
         long timeNow = elapsedTimer.nsecsElapsed();
         dt = elapsedTimer.nsecsElapsed()/1000000000.0f;
         elapsedTimer.restart();
@@ -174,4 +139,43 @@ int MainApplication::execute()
 
     quit();
     return 0;
+}
+
+void MainApplication::swapScenes(QElapsedTimer* sceneTimer)
+{
+    if(currentSceneIndex!=currentScene->console.sceneIndex)
+    {
+        int newIndex = currentScene->console.sceneIndex;
+        //In case the index has be changes from leaving the scene
+        currentSceneIndex = newIndex;
+        delete currentScene;
+        switch(currentSceneIndex)
+        {
+        case 0:
+            demoScene = new DemoScene();
+            currentScene = demoScene;
+            break;
+        case 1:
+            cubeDropScene = new CubeDropScene();
+            currentScene = cubeDropScene;
+            break;
+        case 2:
+            collisionTestScene = new CollisionTestScene();
+            currentScene = collisionTestScene;
+            break;
+        case 3:
+            vaccumeScene = new VaccumeScene();
+            currentScene = vaccumeScene;
+            break;
+        case 4:
+            stackScene = new StackScene();
+            currentScene = stackScene;
+            break;
+        }
+        currentScene->console.sceneIndex = newIndex;
+        currentScene->start();
+        gMainWindow->toggleWriteEnable();
+        currentScene->elapsedTime = 0.0f;
+        sceneTimer->restart();
+    }
 }

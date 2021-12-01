@@ -19,6 +19,7 @@ public:
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
     void resizeEvent(QResizeEvent *ev) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
     void resetInputs();
     bool shouldRun();
     void quit();
@@ -28,7 +29,11 @@ public:
     bool getKeyDown(Qt::Key);
     bool getMouse(Qt::MouseButton);
     bool getMouseDown(Qt::MouseButton);
+    void lockCursorState();
+    void unlockCursorState();
     bool openglInitialized = false;
+    float mouseDx;
+    float mouseDy;
     bool windowResized()
     {
         bool temp = resized;
@@ -45,6 +50,9 @@ private:
     bool resized = false;
     bool enableWrite = false;
     bool caps = false;
+    bool lockCursor = false;
+    bool adjustMouse;
+
 };
 
 class CloseEventFilter : public QObject
