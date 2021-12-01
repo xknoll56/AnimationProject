@@ -30,7 +30,6 @@ private:
     BoxCollider slope1Collider;
     BoxCollider slope2Collider;
     BoxCollider floorCollider;
-    BoxCollider blockCollider;
     BoxCollider leftSideCollider;
     BoxCollider rightSideCollider;
     BoxCollider leftSideCollider1;
@@ -142,7 +141,6 @@ public:
         backRb = UniformRigidBody(mass, inertia);
         backRb1 = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        blockCollider = BoxCollider(glm::vec3(1.0f, 1.0f, 3.0f));
         slope1Collider = BoxCollider(glm::vec3(10.0f,0.1f,5.0f));
         slope2Collider = BoxCollider(glm::vec3(10.0f,0.1f,5.0f));
         floorCollider = BoxCollider(glm::vec3(10.0f, 0.1f,10.0f));
@@ -159,7 +157,6 @@ public:
         backCollider.rb = &backRb;
         backCollider1.rb = &backRb1;
 
-        blockCollider.rb = &blockRb;
         floorCollider.rb = &floorRb;
         slope1Collider.rb = &rb;
         slope2Collider.rb = &otherRb;
@@ -194,7 +191,7 @@ public:
 
 
         std::vector<Collider*> colliders = { &slope1Collider, &slope2Collider, &floorCollider,
-                                             &blockCollider, &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider, &backCollider1};
+                                              &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider, &backCollider1};
         for(auto& col: sphereColliders)
             colliders.push_back(&col);
         world.gravity = glm::vec3(0,-10.0f,0);
@@ -229,13 +226,6 @@ public:
                 respawnAnimation(dt, i);
         }
 
-        if(blockRb.position.y<-10.0f)
-        {
-            blockRb.position = glm::vec3(-5.0f, 10.0f, 0.0f);
-            blockRb.setVelocity(glm::vec3(0,0,0));
-            blockRb.setAngularVelocity(glm::vec3(0,0,0));
-            blockRb.rotation = glm::quat(glm::vec3(0,0,0));
-        }
 
         if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
@@ -278,7 +268,6 @@ public:
         drawBoundedCollider(rightSideCollider1);
         drawBoundedCollider(leftSideCollider);
         drawBoundedCollider(leftSideCollider1);
-        drawBoundedCollider(blockCollider, glm::vec3(1, 1, 1), glm::vec3(0, 1, 0));
         drawBoundedCollider(slope1Collider, glm::vec3(0, 1, 0), glm::vec3(1, 0, 0));
         drawBoundedCollider(slope2Collider);
         sphere.meshes[0].setColor(glm::vec3(1, 1, 1));
