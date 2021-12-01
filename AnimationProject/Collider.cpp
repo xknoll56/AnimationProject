@@ -62,12 +62,12 @@ SphereCollider::SphereCollider(const SphereCollider& other): Collider(other)
     this->rb = other.rb;
 }
 
-void CubeCollider::setAABB()
+void BoxCollider::setAABB()
 {
     aabb.xSize = aabb.ySize = aabb.zSize = glm::sqrt(xSize*xSize+ySize*ySize+zSize*zSize);
 }
 
-CubeCollider::CubeCollider(const glm::vec3& sizes)
+BoxCollider::BoxCollider(const glm::vec3& sizes)
 {
     xSize = sizes.x;
     ySize = sizes.y;
@@ -78,7 +78,7 @@ CubeCollider::CubeCollider(const glm::vec3& sizes)
     setAABB();
 }
 
-CubeCollider::CubeCollider()
+BoxCollider::BoxCollider()
 {
     xSize = 0.5f;
     ySize = 0.5f;
@@ -88,7 +88,7 @@ CubeCollider::CubeCollider()
     initEdges();
     setAABB();
 }
-CubeCollider::CubeCollider(const CubeCollider& other): Collider(other)
+BoxCollider::BoxCollider(const BoxCollider& other): Collider(other)
 {
     xSize = other.xSize;
     ySize = other.ySize;
@@ -99,7 +99,7 @@ CubeCollider::CubeCollider(const CubeCollider& other): Collider(other)
     setAABB();
 }
 
-CubeCollider& CubeCollider::operator= (const CubeCollider& other)
+BoxCollider& BoxCollider::operator= (const BoxCollider& other)
 {
     xSize = other.xSize;
     ySize = other.ySize;
@@ -111,7 +111,7 @@ CubeCollider& CubeCollider::operator= (const CubeCollider& other)
     return *this;
 }
 
-void CubeCollider::initEdges()
+void BoxCollider::initEdges()
 {
     edges[0] = {0,1, zSize};
     edges[1] = {1,2, xSize};
@@ -129,7 +129,7 @@ void CubeCollider::initEdges()
     edges[11] = {7,4, xSize};
 }
 
-void CubeCollider::updateContactVerts()
+void BoxCollider::updateContactVerts()
 {
     glm::vec3 px = xSize*rb->getLocalXAxis();
     glm::vec3 py = ySize*rb->getLocalYAxis();
@@ -146,7 +146,7 @@ void CubeCollider::updateContactVerts()
 
 
 
-std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
+std::vector<glm::vec3> BoxCollider::getClosestVerts(const glm::vec3& dir)
 {
     //todo return all of the edges in the face of the closest dir
     updateContactVerts();
@@ -257,17 +257,17 @@ std::vector<glm::vec3> CubeCollider::getClosestVerts(const glm::vec3& dir)
     return minVerts;
 }
 
-std::vector<CubeCollider::EdgeIndices> CubeCollider::getClosestEdges(const glm::vec3& dir)
+std::vector<BoxCollider::EdgeIndices> BoxCollider::getClosestEdges(const glm::vec3& dir)
 {
-    std::vector<CubeCollider::EdgeIndices> eis = getEdgesFromVertexIndices();
+    std::vector<BoxCollider::EdgeIndices> eis = getEdgesFromVertexIndices();
 
     return eis;
 }
 
 //TODO- Use a hash table here
-std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
+std::vector<BoxCollider::EdgeIndices> BoxCollider::getEdgesFromVertexIndices()
 {
-    std::vector<CubeCollider::EdgeIndices> eis;
+    std::vector<BoxCollider::EdgeIndices> eis;
     for(int i0: indices)
     {
         for(int i1: indices)
@@ -308,9 +308,9 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
         }
     }
 
-    for(CubeCollider::EdgeIndices& edge: eis)
+    for(BoxCollider::EdgeIndices& edge: eis)
     {
-        for(CubeCollider::EdgeIndices& otherEdge: eis)
+        for(BoxCollider::EdgeIndices& otherEdge: eis)
         {
             if(glm::dot(edge.dir, otherEdge.dir)<0.5f)
             {
@@ -322,9 +322,9 @@ std::vector<CubeCollider::EdgeIndices> CubeCollider::getEdgesFromVertexIndices()
     return eis;
 }
 
-CubeCollider::ContactDir CubeCollider::GetFaceClosestToNormal(const glm::vec3& normal, bool& negative)
+BoxCollider::ContactDir BoxCollider::GetFaceClosestToNormal(const glm::vec3& normal, bool& negative)
 {
-     CubeCollider::ContactDir dir = CubeCollider::ContactDir::RIGHT;
+     BoxCollider::ContactDir dir = BoxCollider::ContactDir::RIGHT;
      negative = false;
      float dirMax = glm::dot(normal, rb->getLocalXAxis());
      if(dirMax<0)
@@ -340,7 +340,7 @@ CubeCollider::ContactDir CubeCollider::GetFaceClosestToNormal(const glm::vec3& n
 
      if(dirTest>dirMax)
      {
-        dir = CubeCollider::ContactDir::UP;
+        dir = BoxCollider::ContactDir::UP;
         dirMax = dirTest;
         negative = negTest;
      }
@@ -352,7 +352,7 @@ CubeCollider::ContactDir CubeCollider::GetFaceClosestToNormal(const glm::vec3& n
 
      if(dirTest>dirMax)
      {
-        dir = CubeCollider::ContactDir::UP;
+        dir = BoxCollider::ContactDir::UP;
         dirMax = dirTest;
         negative = negTest;
      }
@@ -360,13 +360,13 @@ CubeCollider::ContactDir CubeCollider::GetFaceClosestToNormal(const glm::vec3& n
      return dir;
 }
 
-glm::quat CubeCollider::toRotation(CubeCollider::ContactDir upMostDir, const glm::vec3& up)
+glm::quat BoxCollider::toRotation(BoxCollider::ContactDir upMostDir, const glm::vec3& up)
 {
     glm::mat3 rotationMat;
 
     switch(upMostDir)
     {
-    case CubeCollider::ContactDir::RIGHT:
+    case BoxCollider::ContactDir::RIGHT:
     {
         rotationMat[0] = up;
         glm::vec3 y = rb->getLocalYAxis()-glm::dot(rb->getLocalYAxis(), up)*up;
@@ -376,7 +376,7 @@ glm::quat CubeCollider::toRotation(CubeCollider::ContactDir upMostDir, const glm
         rotationMat[2] = z;
     }
         break;
-    case CubeCollider::ContactDir::UP:
+    case BoxCollider::ContactDir::UP:
     {
         rotationMat[1] = up;
         glm::vec3 z = rb->getLocalZAxis()-glm::dot(rb->getLocalZAxis(), up)*up;
@@ -386,7 +386,7 @@ glm::quat CubeCollider::toRotation(CubeCollider::ContactDir upMostDir, const glm
         rotationMat[0] = x;
     }
         break;
-    case CubeCollider::ContactDir::FORWARD:
+    case BoxCollider::ContactDir::FORWARD:
     {
         rotationMat[2] = up;
         glm::vec3 x = rb->getLocalXAxis()-glm::dot(rb->getLocalXAxis(), up)*up;

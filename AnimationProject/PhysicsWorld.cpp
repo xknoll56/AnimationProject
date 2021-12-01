@@ -99,7 +99,7 @@ void PhysicsWorld::checkForCollisions(float dt)
                     }
                     case ColliderType::CUBE:
                     {
-                        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
+                        BoxCollider* otherCube = dynamic_cast<BoxCollider*>(other);
                         ContactInfo info;
                         if(!contactHandled(otherCube, sphere))
                         {
@@ -117,7 +117,7 @@ void PhysicsWorld::checkForCollisions(float dt)
         }
         case ColliderType::CUBE:
         {
-            CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+            BoxCollider* cube = dynamic_cast<BoxCollider*>(collider);
             for(auto& other: colliders)
             {
                 if(other!=collider)
@@ -126,7 +126,7 @@ void PhysicsWorld::checkForCollisions(float dt)
                     {
                     case ColliderType::CUBE:
                     {
-                        CubeCollider* otherCube = dynamic_cast<CubeCollider*>(other);
+                        BoxCollider* otherCube = dynamic_cast<BoxCollider*>(other);
                         if(!contactHandled(cube, otherCube))
                         {
                             ContactInfo info;
@@ -167,8 +167,8 @@ void PhysicsWorld::CollisionResponse(float dt)
         {
             if(info.a->type == ColliderType::CUBE && info.b->type == ColliderType::CUBE)
             {
-                CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
-                CubeCollider* otherCube = dynamic_cast<CubeCollider*>(info.b);
+                BoxCollider* cube = dynamic_cast<BoxCollider*>(info.a);
+                BoxCollider* otherCube = dynamic_cast<BoxCollider*>(info.b);
                 if(cube && otherCube)
                 {
                     if(cube->rb->isStatic() && !otherCube->rb->isStatic())
@@ -185,7 +185,7 @@ void PhysicsWorld::CollisionResponse(float dt)
             }
             else if(info.a->type == ColliderType::CUBE && info.b->type == ColliderType::SPHERE)
             {
-                CubeCollider* cube = dynamic_cast<CubeCollider*>(info.a);
+                BoxCollider* cube = dynamic_cast<BoxCollider*>(info.a);
                 SphereCollider* sphere = dynamic_cast<SphereCollider*>(info.b);
                 if(cube && sphere)
                 {
@@ -236,7 +236,7 @@ bool PhysicsWorld::closestPointsDoIntersect(glm::vec3& p0,  glm::vec3& p1,  cons
 }
 
 
-bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, SphereCollider* sphere, ContactInfo& contactInfo)
+bool PhysicsWorld::detectCubeSphereCollision(float dt, BoxCollider* cube, SphereCollider* sphere, ContactInfo& contactInfo)
 {
     cube->collisionDetected = false;
     sphere->collisionDetected = false;
@@ -259,7 +259,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 
         return false;
     }
-    contactInfo.aDir = CubeCollider::ContactDir::RIGHT;
+    contactInfo.aDir = BoxCollider::ContactDir::RIGHT;
     contactInfo.penetrationDistance = penetration;
     penetrationX = glm::abs(penetration);
 
@@ -272,7 +272,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
     penetrationY = glm::abs(penetration);
     if(penetration > contactInfo.penetrationDistance)
     {
-        contactInfo.aDir = CubeCollider::ContactDir::UP;
+        contactInfo.aDir = BoxCollider::ContactDir::UP;
         contactInfo.penetrationDistance = penetration;
     }
 
@@ -286,7 +286,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
     penetrationZ = penetration;
     if(penetration > contactInfo.penetrationDistance)
     {
-        contactInfo.aDir = CubeCollider::ContactDir::FORWARD;
+        contactInfo.aDir = BoxCollider::ContactDir::FORWARD;
         contactInfo.penetrationDistance = penetration;
     }
 
@@ -302,7 +302,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
     glm::vec3 castDir;
     switch(contactInfo.aDir)
     {
-    case(CubeCollider::ContactDir::RIGHT):
+    case(BoxCollider::ContactDir::RIGHT):
         normal = normalX;
         size = cube->xSize;
         castDir = glm::normalize(-normalY-normalZ);
@@ -318,7 +318,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             }
         }
         break;
-    case(CubeCollider::ContactDir::UP):
+    case(BoxCollider::ContactDir::UP):
         normal = normalY;
         size = cube->ySize;
         castDir = glm::normalize(-normalX-normalZ);
@@ -334,7 +334,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
             }
         }
         break;
-    case(CubeCollider::ContactDir::FORWARD):
+    case(BoxCollider::ContactDir::FORWARD):
         if(cubeRaycast(sphere->rb->position, normalZ, rcd, cube))
         {
             if(rcd.length<sphere->radius)
@@ -351,10 +351,10 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 
     //Thats not all, need to do the edges...
     std::vector<glm::vec3> closestVerts = cube->getClosestVerts(T);
-    std::vector<CubeCollider::EdgeIndices> edges = cube->getEdgesFromVertexIndices();
+    std::vector<BoxCollider::EdgeIndices> edges = cube->getEdgesFromVertexIndices();
 
     RayCastData rcd2;
-    for(CubeCollider::EdgeIndices edge: edges)
+    for(BoxCollider::EdgeIndices edge: edges)
     {
         glm::vec3 point1 = edge.midPoint-edge.dir*edge.length;
         glm::vec3 dir1 = edge.dir;
@@ -392,7 +392,7 @@ bool PhysicsWorld::detectCubeSphereCollision(float dt, CubeCollider* cube, Spher
 }
 
 
-bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCollider* cubeB, ContactInfo& contactInfo)
+bool PhysicsWorld::detectCubeCubeCollision(float dt, BoxCollider* cubeA, BoxCollider* cubeB, ContactInfo& contactInfo)
 {
     if(!cubeA->rb->dynamic && !cubeB->rb->dynamic)
         return false;
@@ -440,7 +440,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
     faceInfo.penetrationDistance = penetration;
     faceInfo.normal = aX;
     faceInfo.faceCollision = true;
-    faceInfo.aDir = CubeCollider::ContactDir::RIGHT;
+    faceInfo.aDir = BoxCollider::ContactDir::RIGHT;
     t1 += penetration;
 
     penetration = glm::abs(glm::dot(T, aY)) - (cubeA->ySize + glm::abs(cubeB->xSize*ryx) + glm::abs(cubeB->ySize*ryy) + glm::abs(cubeB->zSize*ryz));
@@ -454,7 +454,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         faceInfo.penetrationDistance = penetration;
         faceInfo.normal = aY;
         faceInfo.faceCollision = true;
-        faceInfo.aDir = CubeCollider::ContactDir::UP;
+        faceInfo.aDir = BoxCollider::ContactDir::UP;
     }
     t1 += penetration;
 
@@ -469,7 +469,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         faceInfo.penetrationDistance = penetration;
         faceInfo.normal = aZ;
         faceInfo.faceCollision = true;
-        faceInfo.aDir = CubeCollider::ContactDir::FORWARD;
+        faceInfo.aDir = BoxCollider::ContactDir::FORWARD;
     }
     t1 += penetration;
 
@@ -484,7 +484,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         lowestBPenetration = penetration;
 
         faceInfo.faceCollision = true;
-        faceInfo.bDir = CubeCollider::ContactDir::RIGHT;
+        faceInfo.bDir = BoxCollider::ContactDir::RIGHT;
         if(penetration>faceInfo.penetrationDistance)
         {
             faceInfo.penetrationDistance = penetration;
@@ -503,7 +503,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         lowestBPenetration = penetration;
 
         faceInfo.faceCollision = true;
-        faceInfo.bDir = CubeCollider::ContactDir::UP;
+        faceInfo.bDir = BoxCollider::ContactDir::UP;
         if(penetration>faceInfo.penetrationDistance)
         {
             faceInfo.penetrationDistance = penetration;
@@ -522,7 +522,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         lowestBPenetration = penetration;
 
         faceInfo.faceCollision = true;
-        faceInfo.bDir = CubeCollider::ContactDir::FORWARD;
+        faceInfo.bDir = BoxCollider::ContactDir::FORWARD;
         if(penetration>faceInfo.penetrationDistance)
         {
             faceInfo.penetrationDistance = penetration;
@@ -540,8 +540,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aX, bX);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
-        edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
+        edgeInfo.aDir = BoxCollider::ContactDir::RIGHT;
+        edgeInfo.bDir = BoxCollider::ContactDir::RIGHT;
     }
     t2 += penetration;
 
@@ -555,8 +555,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aX, bY);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
-        edgeInfo.bDir = CubeCollider::ContactDir::UP;
+        edgeInfo.aDir = BoxCollider::ContactDir::RIGHT;
+        edgeInfo.bDir = BoxCollider::ContactDir::UP;
     }
     t2+=penetration;
 
@@ -570,8 +570,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aX, bZ);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::RIGHT;
-        edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
+        edgeInfo.aDir = BoxCollider::ContactDir::RIGHT;
+        edgeInfo.bDir = BoxCollider::ContactDir::FORWARD;
     }
     t2+=penetration;
 
@@ -585,8 +585,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aY, bX);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::UP;
-        edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
+        edgeInfo.aDir = BoxCollider::ContactDir::UP;
+        edgeInfo.bDir = BoxCollider::ContactDir::RIGHT;
     }
     t2+=penetration;
 
@@ -600,8 +600,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aY, bY);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::UP;
-        edgeInfo.bDir = CubeCollider::ContactDir::UP;
+        edgeInfo.aDir = BoxCollider::ContactDir::UP;
+        edgeInfo.bDir = BoxCollider::ContactDir::UP;
     }
     t2+=penetration;
 
@@ -615,8 +615,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aY, bZ);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::UP;
-        edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
+        edgeInfo.aDir = BoxCollider::ContactDir::UP;
+        edgeInfo.bDir = BoxCollider::ContactDir::FORWARD;
     }
     t2+=penetration;
 
@@ -630,8 +630,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aZ, bX);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
-        edgeInfo.bDir = CubeCollider::ContactDir::RIGHT;
+        edgeInfo.aDir = BoxCollider::ContactDir::FORWARD;
+        edgeInfo.bDir = BoxCollider::ContactDir::RIGHT;
     }
     t2+=penetration;
 
@@ -645,8 +645,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aZ, bY);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
-        edgeInfo.bDir = CubeCollider::ContactDir::UP;
+        edgeInfo.aDir = BoxCollider::ContactDir::FORWARD;
+        edgeInfo.bDir = BoxCollider::ContactDir::UP;
     }
     t2+=penetration;
 
@@ -660,8 +660,8 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
         edgeInfo.penetrationDistance = penetration;
         edgeInfo.normal = glm::cross(aZ, bZ);
         edgeInfo.faceCollision = false;
-        edgeInfo.aDir = CubeCollider::ContactDir::FORWARD;
-        edgeInfo.bDir = CubeCollider::ContactDir::FORWARD;
+        edgeInfo.aDir = BoxCollider::ContactDir::FORWARD;
+        edgeInfo.bDir = BoxCollider::ContactDir::FORWARD;
     }
     t2+=penetration;
 
@@ -709,7 +709,7 @@ bool PhysicsWorld::detectCubeCubeCollision(float dt, CubeCollider* cubeA, CubeCo
 
 }
 
-void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollider* cubeA, CubeCollider* cubeB)
+void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, BoxCollider* cubeA, BoxCollider* cubeB)
 {
     glm::vec3 T = cubeB->rb->position - cubeA->rb->position;
     info.normal = glm::sign(glm::dot(T, info.normal))*info.normal;
@@ -718,13 +718,13 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
     std::vector<glm::vec3> closestVertsB = cubeB->getClosestVerts(info.normal);
 
 
-    std::vector<CubeCollider::EdgeIndices> aEdges = cubeA->getEdgesFromVertexIndices();
-    std::vector<CubeCollider::EdgeIndices> bEdges = cubeB->getEdgesFromVertexIndices();
+    std::vector<BoxCollider::EdgeIndices> aEdges = cubeA->getEdgesFromVertexIndices();
+    std::vector<BoxCollider::EdgeIndices> bEdges = cubeB->getEdgesFromVertexIndices();
     float minDist = std::numeric_limits<float>().max();
     RayCastData data;
-    for(CubeCollider::EdgeIndices ea: aEdges)
+    for(BoxCollider::EdgeIndices ea: aEdges)
     {
-        for(CubeCollider::EdgeIndices eb: bEdges)
+        for(BoxCollider::EdgeIndices eb: bEdges)
         {
             //            glm::vec3 tangentialA = ea.dir*ea.length - glm::dot(ea.dir*ea.length, info.normal)*info.normal;
             //            float aLen = glm::length(tangentialA);
@@ -762,7 +762,7 @@ void PhysicsWorld::determineCubeCubeContactPoints(ContactInfo& info, CubeCollide
     contacts.push_back(info);
 }
 
-bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir)
+bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vector<glm::vec3>& points, BoxCollider* toCube, BoxCollider::ContactDir dir)
 {
     glm::vec3 p0 = toCube->rb->position + toCube->rb->getLocalXAxis()*toCube->xSize;
     glm::vec3 adj1 = toCube->rb->getLocalYAxis();
@@ -772,11 +772,11 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
     float tolerance = 0.005f;
     switch(dir)
     {
-    case CubeCollider::ContactDir::RIGHT:
+    case BoxCollider::ContactDir::RIGHT:
         if(glm::dot(normal, toCube->rb->getLocalXAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalXAxis()*toCube->xSize;
         break;
-    case CubeCollider::ContactDir::UP:
+    case BoxCollider::ContactDir::UP:
         p0 = toCube->rb->position + toCube->rb->getLocalYAxis()*toCube->ySize;
         if(glm::dot(normal, toCube->rb->getLocalYAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalYAxis()*toCube->ySize;
@@ -785,7 +785,7 @@ bool PhysicsWorld::isCubeCubePetrusion(const glm::vec3& normal, const std::vecto
         adj2 = toCube->rb->getLocalZAxis();
         maxDist2 = toCube->zSize;
         break;
-    case CubeCollider::ContactDir::FORWARD:
+    case BoxCollider::ContactDir::FORWARD:
         p0 = toCube->rb->position + toCube->rb->getLocalZAxis()*toCube->zSize;
         if(glm::dot(normal, toCube->rb->getLocalZAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalZAxis()*toCube->zSize;
@@ -855,7 +855,7 @@ bool PhysicsWorld::sphereRaycast(const glm::vec3& start, const glm::vec3& dir, R
     return hits;
 }
 
-bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, CubeCollider* cube)
+bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, RayCastData& dat, BoxCollider* cube)
 {
     float minDist = std::numeric_limits<float>().max();
     //normal of the plane
@@ -950,7 +950,7 @@ bool PhysicsWorld::cubeRaycast(const glm::vec3& start, const glm::vec3& dir, Ray
     return doesHit;
 }
 
-void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm::vec3& normal, const std::vector<glm::vec3>& points, CubeCollider* toCube, CubeCollider::ContactDir dir, bool adjustPenetration)
+void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm::vec3& normal, const std::vector<glm::vec3>& points, BoxCollider* toCube, BoxCollider::ContactDir dir, bool adjustPenetration)
 {
     glm::vec3 p0 = toCube->rb->position + toCube->rb->getLocalXAxis()*toCube->xSize;
     glm::vec3 adj1 = toCube->rb->getLocalYAxis();
@@ -959,11 +959,11 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
     float maxDist2 = toCube->zSize;
     switch(dir)
     {
-    case CubeCollider::ContactDir::RIGHT:
+    case BoxCollider::ContactDir::RIGHT:
         if(glm::dot(normal, toCube->rb->getLocalXAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalXAxis()*toCube->xSize;
         break;
-    case CubeCollider::ContactDir::UP:
+    case BoxCollider::ContactDir::UP:
         p0 = toCube->rb->position + toCube->rb->getLocalYAxis()*toCube->ySize;
         if(glm::dot(normal, toCube->rb->getLocalYAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalYAxis()*toCube->ySize;
@@ -972,7 +972,7 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
         adj2 = toCube->rb->getLocalZAxis();
         maxDist2 = toCube->zSize;
         break;
-    case CubeCollider::ContactDir::FORWARD:
+    case BoxCollider::ContactDir::FORWARD:
         p0 = toCube->rb->position + toCube->rb->getLocalZAxis()*toCube->zSize;
         if(glm::dot(normal, toCube->rb->getLocalZAxis())<0)
             p0 = toCube->rb->position - toCube->rb->getLocalZAxis()*toCube->zSize;
@@ -1008,7 +1008,7 @@ void PhysicsWorld::determineCubeCubePetrusionVerts(ContactInfo& info, const glm:
     }
 }
 
-void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCollider* cubeA, CubeCollider* cubeB)
+void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, BoxCollider* cubeA, BoxCollider* cubeB)
 {
 
     cubeA->rb->position += 0.5f*info.normal*info.penetrationDistance;
@@ -1066,7 +1066,7 @@ void PhysicsWorld::cubeCubeCollisionResponse(ContactInfo& info, float dt, CubeCo
 
 glm::vec3 landingHorizontalSpeed;
 glm::vec3 frictionalSpeed;
-void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, const glm::vec3& norm, float dt, CubeCollider* dynamicCube, CubeCollider* staticCube)
+void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, const glm::vec3& norm, float dt, BoxCollider* dynamicCube, BoxCollider* staticCube)
 {
 
     if(info.faceCollision)
@@ -1120,7 +1120,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             dynamicCube->rb->restingContact = false;
             dynamicCube->rb->atRest = true;
             bool reverseDir;
-            CubeCollider::ContactDir upDir = dynamicCube->GetFaceClosestToNormal(info.normal, reverseDir);
+            BoxCollider::ContactDir upDir = dynamicCube->GetFaceClosestToNormal(info.normal, reverseDir);
             glm::vec3 up = info.normal;
             if(reverseDir)
                 up = -up;
@@ -1192,7 +1192,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
 
 }
 
-void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
+void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info, float dt, BoxCollider* cube, SphereCollider* sphere)
 {
     // qDebug()<<"dynamic response:";
 
@@ -1228,7 +1228,7 @@ void PhysicsWorld::cubeSphereCollisionResponseDynamicVsDynamic(ContactInfo& info
 
 }
 
-void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, CubeCollider* cube, SphereCollider* sphere)
+void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info, float dt, BoxCollider* cube, SphereCollider* sphere)
 {
     glm::vec3 normal = info.normal;
     if(info.faceCollision)
@@ -1306,7 +1306,7 @@ bool PhysicsWorld::raycastAll(const glm::vec3& start, const glm::vec3& dir, RayC
         {
         case ColliderType::CUBE:
         {
-            CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+            BoxCollider* cube = dynamic_cast<BoxCollider*>(collider);
             if(cubeRaycast(start, dir, tempData, cube))
             {
                 didHit = true;
@@ -1355,7 +1355,7 @@ bool PhysicsWorld::raycastAll(const glm::vec3& start, const glm::vec3& dir, RayC
             {
             case ColliderType::CUBE:
             {
-                CubeCollider* cube = dynamic_cast<CubeCollider*>(collider);
+                BoxCollider* cube = dynamic_cast<BoxCollider*>(collider);
                 if(cubeRaycast(start, dir, tempData, cube))
                 {
                     didHit = true;
@@ -1414,7 +1414,7 @@ void PhysicsWorld::stepWorld(float dt, int inc)
     }
 }
 
-bool PhysicsWorld::cubeFlatOnSurface(CubeCollider* cube, glm::vec3& normal, float tolerance)
+bool PhysicsWorld::cubeFlatOnSurface(BoxCollider* cube, glm::vec3& normal, float tolerance)
 {
     return true;
 }

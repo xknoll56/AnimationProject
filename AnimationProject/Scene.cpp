@@ -210,7 +210,7 @@ void Scene::drawBoundedCollider(Collider& collider, const glm::vec3& baseColor, 
     {
     case ColliderType::CUBE:
     {
-        CubeCollider* cc = dynamic_cast<CubeCollider*>(&collider);
+        BoxCollider* cc = dynamic_cast<BoxCollider*>(&collider);
         if(cc)
         {
             cube.setScale(cc->scale);
@@ -246,7 +246,7 @@ void Scene::drawBoundedCollider(Collider& collider)
     {
     case ColliderType::CUBE:
     {
-        CubeCollider* cc = dynamic_cast<CubeCollider*>(&collider);
+        BoxCollider* cc = dynamic_cast<BoxCollider*>(&collider);
         if(cc)
         {
             cube.setScale(cc->scale);

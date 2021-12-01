@@ -7,8 +7,8 @@ class CubeDropScene: public Scene
 {
 private:
     PhysicsWorld world;
-    CubeCollider collider;
-    CubeCollider otherCollider;
+    BoxCollider collider;
+    BoxCollider otherCollider;
 
     SphereCollider sphereCollider;
     UniformRigidBody rb;
@@ -31,9 +31,9 @@ public:
         otherRb = UniformRigidBody(mass, inertia);
         sphereRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-        otherCollider = CubeCollider(glm::vec3(10,5.0f,10));
-        otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
+        collider = BoxCollider(glm::vec3(0.5f,0.5f,0.5f));
+        otherCollider = BoxCollider(glm::vec3(10,5.0f,10));
+        otherCollider = BoxCollider(glm::vec3(10.0f,0.1f,10.0f));
         sphereCollider = SphereCollider(0.5f);
         collider.rb = &rb;
         otherCollider.rb = &otherRb;

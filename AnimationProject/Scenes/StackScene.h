@@ -7,14 +7,14 @@ class StackScene: public Scene
 {
 private:
     PhysicsWorld world;
-    CubeCollider collider;
-    CubeCollider stackedCollider;
+    BoxCollider collider;
+    BoxCollider stackedCollider;
     UniformRigidBody stackedRb;
-    CubeCollider otherCollider;
+    BoxCollider otherCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
     UniformRigidBody thrownRb;
-    CubeCollider thrownCube;
+    BoxCollider thrownCube;
 
 
 public:
@@ -30,9 +30,9 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
-        otherCollider = CubeCollider(glm::vec3(10,5.0f,10));
-        otherCollider = CubeCollider(glm::vec3(10.0f,0.1f,10.0f));
+        collider = BoxCollider(glm::vec3(0.5f,0.5f,0.5f));
+        otherCollider = BoxCollider(glm::vec3(10,5.0f,10));
+        otherCollider = BoxCollider(glm::vec3(10.0f,0.1f,10.0f));
         collider.rb = &rb;
         otherCollider.rb = &otherRb;
         rb.position = glm::vec3(0, 1, 0);
@@ -44,13 +44,13 @@ public:
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
         stackedRb = UniformRigidBody(mass, inertia);
-        stackedCollider = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+        stackedCollider = BoxCollider(glm::vec3(0.5f,0.5f,0.5f));
         stackedCollider.rb = &stackedRb;
         stackedRb.position = glm::vec3(0.0f, 6.0f, 0.0f);
         stackedRb.rotation = glm::quat(glm::vec3(0.0f, 0.0f, 0.0f));
         console.rb = &stackedRb;
 
-        thrownCube = CubeCollider(glm::vec3(0.5f,0.5f,0.5f));
+        thrownCube = BoxCollider(glm::vec3(0.5f,0.5f,0.5f));
         thrownRb = UniformRigidBody(mass, inertia);
         thrownCube.rb = &thrownRb;
         thrownRb.position = glm::vec3(5, 3, 5);

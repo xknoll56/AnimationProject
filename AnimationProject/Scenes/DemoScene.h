@@ -27,16 +27,16 @@ private:
 
 
     PhysicsWorld world;
-    CubeCollider slope1Collider;
-    CubeCollider slope2Collider;
-    CubeCollider floorCollider;
-    CubeCollider blockCollider;
-    CubeCollider leftSideCollider;
-    CubeCollider rightSideCollider;
-    CubeCollider leftSideCollider1;
-    CubeCollider rightSideCollider1;
-    CubeCollider backCollider;
-    CubeCollider backCollider1;
+    BoxCollider slope1Collider;
+    BoxCollider slope2Collider;
+    BoxCollider floorCollider;
+    BoxCollider blockCollider;
+    BoxCollider leftSideCollider;
+    BoxCollider rightSideCollider;
+    BoxCollider leftSideCollider1;
+    BoxCollider rightSideCollider1;
+    BoxCollider backCollider;
+    BoxCollider backCollider1;
 
     std::vector<SphereCollider> sphereColliders;
     std::vector<AnimationTimer> animationTimers;
@@ -142,16 +142,16 @@ public:
         backRb = UniformRigidBody(mass, inertia);
         backRb1 = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        blockCollider = CubeCollider(glm::vec3(1.0f, 1.0f, 3.0f));
-        slope1Collider = CubeCollider(glm::vec3(10.0f,0.1f,5.0f));
-        slope2Collider = CubeCollider(glm::vec3(10.0f,0.1f,5.0f));
-        floorCollider = CubeCollider(glm::vec3(10.0f, 0.1f,10.0f));
-        leftSideCollider = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
-        rightSideCollider = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
-        leftSideCollider1 = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
-        rightSideCollider1 = CubeCollider(glm::vec3(10.0f, 1.0f, 0.1f));
-        backCollider = CubeCollider(glm::vec3(0.1f, 1.0f, 5.0f));
-         backCollider1 = CubeCollider(glm::vec3(0.1f, 1.0f, 5.0f));
+        blockCollider = BoxCollider(glm::vec3(1.0f, 1.0f, 3.0f));
+        slope1Collider = BoxCollider(glm::vec3(10.0f,0.1f,5.0f));
+        slope2Collider = BoxCollider(glm::vec3(10.0f,0.1f,5.0f));
+        floorCollider = BoxCollider(glm::vec3(10.0f, 0.1f,10.0f));
+        leftSideCollider = BoxCollider(glm::vec3(10.0f, 1.0f, 0.1f));
+        rightSideCollider = BoxCollider(glm::vec3(10.0f, 1.0f, 0.1f));
+        leftSideCollider1 = BoxCollider(glm::vec3(10.0f, 1.0f, 0.1f));
+        rightSideCollider1 = BoxCollider(glm::vec3(10.0f, 1.0f, 0.1f));
+        backCollider = BoxCollider(glm::vec3(0.1f, 1.0f, 5.0f));
+         backCollider1 = BoxCollider(glm::vec3(0.1f, 1.0f, 5.0f));
         leftSideCollider1.rb = &leftSideRb1;
         rightSideCollider1.rb = &rightSideRb1;
         leftSideCollider.rb = &leftSideRb;

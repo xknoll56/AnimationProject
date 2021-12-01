@@ -7,8 +7,8 @@ class CollisionTestScene: public Scene
 {
 private:
     PhysicsWorld world;
-    CubeCollider collider;
-    CubeCollider otherCollider;
+    BoxCollider collider;
+    BoxCollider otherCollider;
     UniformRigidBody rb;
     UniformRigidBody otherRb;
     SphereCollider sphereCollider;
@@ -32,8 +32,8 @@ public:
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
-        collider = CubeCollider(glm::vec3(2.5f,0.5f,2.5f));
-        otherCollider = CubeCollider(glm::vec3(1.0f,0.5f,0.5f));
+        collider = BoxCollider(glm::vec3(2.5f,0.5f,2.5f));
+        otherCollider = BoxCollider(glm::vec3(1.0f,0.5f,0.5f));
 
         collider.rb = &rb;
         otherCollider.rb = &otherRb;

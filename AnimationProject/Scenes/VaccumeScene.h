@@ -7,7 +7,7 @@ class VaccumeScene: public Scene
 {
 private:
     PhysicsWorld world;
-    std::vector<CubeCollider> cubeColliders;
+    std::vector<BoxCollider> BoxColliders;
     std::vector<UniformRigidBody> rbs;
     SphereCollider sphereCollider;
     UniformRigidBody sphereRb;
@@ -25,7 +25,7 @@ public:
         float mass = 1.0f;
         float radius = 1.0f;
         float inertia = (2.0f/5.0f)*mass*radius*radius;
-        cubeColliders.reserve(100);
+        BoxColliders.reserve(100);
         rbs.reserve(100);
         inContact.reserve(100);
         for(int i = 0;i<6;i++)
@@ -37,8 +37,8 @@ public:
             rb.dynamic = true;
             rb.atRest = true;
             rbs.push_back(rb);
-            cubeColliders.push_back(CubeCollider(glm::vec3(0.5f,0.5f,0.5f)));
-            cubeColliders[cubeColliders.size()-1].rb = &rbs[rbs.size()-1];
+            BoxColliders.push_back(BoxCollider(glm::vec3(0.5f,0.5f,0.5f)));
+            BoxColliders[BoxColliders.size()-1].rb = &rbs[rbs.size()-1];
             inContact.push_back(false);
             }
         }
@@ -52,7 +52,7 @@ public:
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
         std::vector<Collider*> colliders = {  &sphereCollider};
-        for(auto& col: cubeColliders)
+        for(auto& col: BoxColliders)
             colliders.push_back(&col);
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = true;
@@ -62,7 +62,7 @@ public:
     void update(float dt)
     {
         Scene::update(dt);
-        for(auto& col: cubeColliders)
+        for(auto& col: BoxColliders)
             col.rb->atRest = false;
         world.stepWorld(dt);
         selectRigidBody(world);
@@ -102,12 +102,12 @@ public:
         }
 
 
-        for(auto& col: cubeColliders)
+        for(auto& col: BoxColliders)
         {
             bool found = false;
             for(Collider* c: contactColliders)
             {
-                CubeCollider* cc = dynamic_cast<CubeCollider*>(c);
+                BoxCollider* cc = dynamic_cast<BoxCollider*>(c);
                 if(cc)
                 {
                     if(cc==&col)

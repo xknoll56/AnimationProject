@@ -76,7 +76,7 @@ struct SphereCollider: public Collider
     void setAABB();
 };
 
-struct CubeCollider: public Collider
+struct BoxCollider: public Collider
 {
     //The sizes from the origin of the cube (halfs)
     float xSize, ySize, zSize;
@@ -106,10 +106,10 @@ struct CubeCollider: public Collider
 
 
 
-    CubeCollider();
-    CubeCollider(const CubeCollider& other);
-    CubeCollider(const glm::vec3& sizes);
-    CubeCollider& operator= (const CubeCollider& other);
+    BoxCollider();
+    BoxCollider(const BoxCollider& other);
+    BoxCollider(const glm::vec3& sizes);
+    BoxCollider& operator= (const BoxCollider& other);
     void initEdges();
     void updateContactVerts();
     void updateContactEdges();
