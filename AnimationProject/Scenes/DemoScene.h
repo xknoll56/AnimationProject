@@ -38,6 +38,7 @@ private:
     BoxCollider backCollider1;
 
     std::vector<SphereCollider> sphereColliders;
+    std::vector<BoxCollider> boxColliders;
     std::vector<AnimationTimer> animationTimers;
     UniformRigidBody blockRb;
     UniformRigidBody rb;
@@ -49,6 +50,8 @@ private:
     UniformRigidBody backRb;
     UniformRigidBody backRb1;
     std::vector<UniformRigidBody> sphereRbs;
+    std::vector<UniformRigidBody> boxRbs;
+    std::vector<glm::vec3> boxSpawns;
     UniformRigidBody floorRb;
     SpawnZone spawnZone;
     int numBodies = 15;
@@ -112,6 +115,8 @@ public:
         otherRb = UniformRigidBody(mass, inertia);
         sphereRbs.reserve(numBodies);
         sphereColliders.reserve(numBodies);
+        boxRbs.reserve(4);
+        boxColliders.reserve(4);
         spawnZone.height = 18;
         spawnZone.xMin = -8;
         spawnZone.zMin = -2.5f;
@@ -129,8 +134,16 @@ public:
             animationTimers[animationTimers.size()-1].spawnPosition = sphereRbs[sphereRbs.size()-1].position;
             animationTimers[animationTimers.size()-1].shouldUpdate = true;
             animationTimers[animationTimers.size()-1].spawnPosition = getRandomPointInSpawnZone();
-
-
+        }
+        for(int i  =0; i<4; i++)
+        {
+            UniformRigidBody boxRb(mass, inertia);
+            boxRbs.push_back(boxRb);
+            BoxCollider bc(glm::vec3(0.5f, 0.5f,0.5f));
+            boxColliders.push_back(bc);
+            boxColliders[boxColliders.size()-1].rb = &boxRbs[boxRbs.size()-1];
+            boxSpawns.push_back(glm::vec3(-8, 8, 4-i*2));
+            boxColliders[boxColliders.size()-1].rb->position = boxSpawns[boxSpawns.size()-1];
         }
         floorRb = UniformRigidBody(mass, inertia);
         blockRb = UniformRigidBody(4.0f, inertia);
@@ -194,6 +207,8 @@ public:
                                               &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider, &backCollider1};
         for(auto& col: sphereColliders)
             colliders.push_back(&col);
+        for(auto& col: boxColliders)
+            colliders.push_back(&col);
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
@@ -219,6 +234,20 @@ public:
                 animationTimers[i].shouldUpdate = true;
             }
         }
+
+        for(int i = 0; i<boxColliders.size(); i++)
+        {
+            BoxCollider col = boxColliders[i];
+            if(col.rb->position.y<-10.0f)
+            {
+                boxColliders[i].rb->position = boxSpawns[i];
+                boxColliders[i].rb->setVelocity(glm::vec3(0,0,0));
+                boxColliders[i].rb->atRest = false;
+                boxColliders[i].rb->restingContact = false;
+            }
+        }
+
+
 
         for(int i = 0; i<animationTimers.size(); i++)
         {
@@ -279,6 +308,16 @@ public:
             else
                 sphere.meshes[1].setColor(glm::vec3(0,0,0));
             drawBoundedCollider(col);
+        }
+
+        for(auto& col: boxColliders)
+        {
+            if(col.rb == selectedRb)
+                cube.meshes[1].setColor(glm::vec3(1,0,0));
+            else
+                cube.meshes[1].setColor(glm::vec3(0,0,0));
+            cube.meshes[0].setColor(glm::vec3(1,1,1));
+            drawBoundedCollider(col );
         }
 
         plane.draw();
