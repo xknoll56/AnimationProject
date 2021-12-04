@@ -16,6 +16,9 @@ private:
     glm::vec3 castDir;
     glm::vec3 hitPosition;
     glm::vec3 worldCoords;
+    bool collisionDetectedOnCollider;
+    bool collisionDetectedOnOtherCollider;
+    bool collisionDetectedOnSphereCollider;
 
 
 public:
@@ -112,6 +115,11 @@ public:
 
         world.stepWorld(dt);
 
+
+        collisionDetectedOnCollider = false;
+        collisionDetectedOnOtherCollider = false;
+        collisionDetectedOnSphereCollider = false;
+
         if(world.contacts.size()>0)
         {
             for(int i =0;i<world.contacts.size();i++)
@@ -129,29 +137,61 @@ public:
                         drawLine(lineMesh, world.contacts[i].a->rb->position,world.contacts[i].a->rb->position -normal);
                     }
 
+                    BoxCollider* bc = dynamic_cast<BoxCollider*>(world.contacts[i].a);
+                    if(bc)
+                    {
+                        if(bc == &collider)
+                            collisionDetectedOnCollider = true;
+                        else if(bc == &otherCollider)
+                            collisionDetectedOnOtherCollider = true;
+                    }
+
+                    bc = dynamic_cast<BoxCollider*>(world.contacts[i].b);
+                    if(bc)
+                    {
+                        if(bc == &collider)
+                            collisionDetectedOnCollider = true;
+                        else if(bc == &otherCollider)
+                            collisionDetectedOnOtherCollider = true;
+                    }
+
+                    SphereCollider* sc = dynamic_cast<SphereCollider*>(world.contacts[i].a);
+                    if(sc)
+                    {
+                        if(sc == &sphereCollider)
+                            collisionDetectedOnSphereCollider = true;;
+                    }
+
+                    sc = dynamic_cast<SphereCollider*>(world.contacts[i].b);
+                    if(sc)
+                    {
+                        if(sc == &sphereCollider)
+                            collisionDetectedOnSphereCollider = true;
+                    }
+
 
                 }
             }
         }
 
-        RayCastData data;
-        //qDebug() << elapsedTime;
-        castDir = glm::vec3(glm::cos(elapsedTime/10.0f), 0.0f, glm::sin(elapsedTime/10.0f));
-        glm::vec3 castPoint(0, 2, 0);
-        point.setPosition(castPoint);
-        point.draw();
-        if(world.raycastAll(castPoint, castDir, data))
-        {
-            lineMesh.setColor(glm::vec3(1,0,0));
-            drawLine(lineMesh,castPoint, data.point);
-            point.setPosition(data.point);
-            point.draw();
-        }
-        else
-        {
-            lineMesh.setColor(glm::vec3(0,0,1));
-            drawLine(lineMesh, castPoint, castPoint+castDir);
-        }
+//        RayCastData data;
+//        //qDebug() << elapsedTime;
+//        castDir = glm::vec3(glm::cos(elapsedTime/10.0f), 0.0f, glm::sin(elapsedTime/10.0f));
+//        glm::vec3 castPoint(0, 2, 0);
+//        point.setPosition(castPoint);
+//        point.draw();
+//        if(world.raycastAll(castPoint, castDir, data))
+//        {
+//            lineMesh.setColor(glm::vec3(1,0,0));
+//            drawLine(lineMesh,castPoint, data.point);
+//            point.setPosition(data.point);
+//            point.draw();
+//        }
+//        else
+//        {
+//            lineMesh.setColor(glm::vec3(0,0,1));
+//            drawLine(lineMesh, castPoint, castPoint+castDir);
+//        }
 
 
 
@@ -171,6 +211,10 @@ public:
         {
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
+        //override the color if in contact
+        if(collisionDetectedOnCollider)
+            cube.meshes[1].setColor(glm::vec3(1,0,0));
+
         cube.setPosition(rb.position);
         cube.setRotation(rb.rotation);
         cube.setScale(collider.scale);
@@ -184,6 +228,9 @@ public:
         {
             sphere.meshes[1].setColor(glm::vec3(0,1,0));
         }
+        //override the color if in contact
+        if(collisionDetectedOnSphereCollider)
+            sphere.meshes[1].setColor(glm::vec3(1,0,0));
         sphere.setPosition(sphereRb.position);
         sphere.setRotation(sphereRb.rotation);
         sphere.setScale(sphereCollider.scale);
@@ -198,6 +245,9 @@ public:
         {
             cube.meshes[1].setColor(glm::vec3(0,1,0));
         }
+        //override the color if in contact
+        if(collisionDetectedOnOtherCollider)
+            cube.meshes[1].setColor(glm::vec3(1,0,0));
         cube.setPosition(otherRb.position);
         cube.setRotation(otherRb.rotation);
         cube.setScale(otherCollider.scale);

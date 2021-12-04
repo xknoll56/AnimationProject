@@ -1111,23 +1111,26 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
     }
     else
     {
+        //Handle the behaviour of resting contact
 
         float angularSpeed = glm::length(dynamicCube->rb->angularVelocity);
         float speed = glm::length(dynamicCube->rb->velocity);
 
         if(speed<0.1f && angularSpeed<0.1f)
         {
-            dynamicCube->rb->restingContact = false;
-            dynamicCube->rb->atRest = true;
             bool reverseDir;
-            BoxCollider::ContactDir upDir = dynamicCube->GetFaceClosestToNormal(info.normal, reverseDir);
-            glm::vec3 up = info.normal;
-            if(reverseDir)
-                up = -up;
-            glm::quat toRotation = dynamicCube->toRotation(upDir, up);
-
-            dynamicCube->rb->rotation = toRotation;
-            //dynamicCube->rb->rotation = glm::slerp(dynamicCube->rb->rotation, toRotation, 0.1f);
+            glm::vec3 faceDir;
+            BoxCollider::ContactDir upDir = dynamicCube->GetFaceClosestToNormal(info.normal, reverseDir, faceDir);
+            if(glm::abs(glm::dot(faceDir, info.normal))>0.975f)
+            {
+                dynamicCube->rb->restingContact = false;
+                dynamicCube->rb->atRest = true;
+                glm::vec3 up = info.normal;
+                if(reverseDir)
+                    up = -up;
+                glm::quat toRotation = dynamicCube->toRotation(upDir, up);
+                dynamicCube->rb->rotation = toRotation;
+            }
 
         }
         else if(info.points.size())
@@ -1158,8 +1161,8 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
                 dynamicCube->rb->addTorque(glm::cross(dynamicCube->rb->mass*gravity, ra));
-                dynamicCube->rb->addTorque(glm::cross(ra, normalForce));
-                //add the fritional torque
+                if(j<0)
+                    dynamicCube->rb->addTorque(glm::cross(ra, normalForce));
 
                 glm::vec3 rotationPoint = info.points[i];
                 glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
@@ -1175,14 +1178,12 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 if(glm::length(vt)<0.1f)
                     vt = glm::vec3(0,0,0);
                 else
-                {
                     vt -= 5.0f*glm::dot(dynamicCube->rb->mass*gravity*friction, norm)*glm::normalize(vt)*dt;
-                }
                 totalVelocity+=velocityFromAngular+vt;
             }
             totalVelocity/=(float)info.points.size();
-
-            dynamicCube->rb->setVelocity(totalVelocity);
+            if(!glm::all(glm::isnan(totalVelocity)))
+                dynamicCube->rb->setVelocity(totalVelocity);
         }
     }
 

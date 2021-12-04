@@ -143,7 +143,7 @@ public:
         {
             for(QChar& c: tokens[i])
             {
-                if(!c.isDigit())
+                if(!c.isDigit() && c!='-')
                 {
                     return false;
                 }

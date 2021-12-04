@@ -322,9 +322,10 @@ std::vector<BoxCollider::EdgeIndices> BoxCollider::getEdgesFromVertexIndices()
     return eis;
 }
 
-BoxCollider::ContactDir BoxCollider::GetFaceClosestToNormal(const glm::vec3& normal, bool& negative)
+BoxCollider::ContactDir BoxCollider::GetFaceClosestToNormal(const glm::vec3& normal, bool& negative, glm::vec3& faceDir)
 {
      BoxCollider::ContactDir dir = BoxCollider::ContactDir::RIGHT;
+     faceDir = rb->getLocalXAxis();
      negative = false;
      float dirMax = glm::dot(normal, rb->getLocalXAxis());
      if(dirMax<0)
@@ -343,6 +344,7 @@ BoxCollider::ContactDir BoxCollider::GetFaceClosestToNormal(const glm::vec3& nor
         dir = BoxCollider::ContactDir::UP;
         dirMax = dirTest;
         negative = negTest;
+        faceDir = rb->getLocalYAxis();
      }
 
      dirTest = glm::dot(normal, rb->getLocalZAxis());
@@ -352,9 +354,10 @@ BoxCollider::ContactDir BoxCollider::GetFaceClosestToNormal(const glm::vec3& nor
 
      if(dirTest>dirMax)
      {
-        dir = BoxCollider::ContactDir::UP;
+        dir = BoxCollider::ContactDir::FORWARD;
         dirMax = dirTest;
         negative = negTest;
+        faceDir = rb->getLocalZAxis();
      }
 
      return dir;
