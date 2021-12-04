@@ -1139,7 +1139,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
             glm::vec3 totalVelocity(0,0,0);
             for(int i =0;i<info.points.size();i++)
             {
-                float epsilon = 0.5f;
+                float epsilon = 0.1f;
                 glm::vec3 ra = info.points[i]-dynamicCube->rb->position;
                 glm::vec3 rb = info.points[i]-staticCube->rb->position;
                 glm::vec3 va = dynamicCube->rb->velocity + glm::cross(dynamicCube->rb->angularVelocity, ra);
@@ -1160,9 +1160,9 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 // Utilities::PrintVec3(tangentialForce);
                 float angularRel = glm::length(dynamicCube->rb->angularVelocity-staticCube->rb->angularVelocity);
 
-                dynamicCube->rb->addTorque(glm::cross(dynamicCube->rb->mass*gravity, ra));
-                if(j<0)
-                    dynamicCube->rb->addTorque(glm::cross(ra, normalForce));
+                dynamicCube->rb->addTorque(10.0f*glm::cross(dynamicCube->rb->mass*gravity, ra));
+                //if(j<0)
+                dynamicCube->rb->addTorque(glm::cross(ra, normalForce));
 
                 glm::vec3 rotationPoint = info.points[i];
                 glm::vec3 radius = dynamicCube->rb->position-rotationPoint;
@@ -1178,7 +1178,7 @@ void PhysicsWorld::cubeCubeCollisionResponseDynamicVsStatic(ContactInfo& info, c
                 if(glm::length(vt)<0.1f)
                     vt = glm::vec3(0,0,0);
                 else
-                    vt -= 5.0f*glm::dot(dynamicCube->rb->mass*gravity*friction, norm)*glm::normalize(vt)*dt;
+                    vt = vt - glm::normalize(vt)*friction*0.4f;
                 totalVelocity+=velocityFromAngular+vt;
             }
             totalVelocity/=(float)info.points.size();

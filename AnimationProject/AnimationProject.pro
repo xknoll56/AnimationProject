@@ -16,7 +16,6 @@ SOURCES += \
     Collider.cpp \
     Entity.cpp \
     MainApplication.cpp \
-    MainDump.cpp \
     MainWindow.cpp \
     Camera.cpp \
     Mesh.cpp \

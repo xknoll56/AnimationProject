@@ -210,8 +210,8 @@ public:
                                               &leftSideCollider, &rightSideCollider, &leftSideCollider1, &rightSideCollider1, &backCollider, &backCollider1};
         for(auto& col: sphereColliders)
             colliders.push_back(&col);
-        for(auto& col: boxColliders)
-            colliders.push_back(&col);
+//        for(auto& col: boxColliders)
+//            colliders.push_back(&col);
         world.gravity = glm::vec3(0,-10.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
@@ -238,18 +238,18 @@ public:
             }
         }
 
-        for(int i = 0; i<boxColliders.size(); i++)
-        {
-            BoxCollider col = boxColliders[i];
-            if(col.rb->position.y<-10.0f)
-            {
-                boxColliders[i].rb->position = boxSpawns[i];
-                boxColliders[i].rb->setVelocity(glm::vec3(0,0,0));
-                boxColliders[i].rb->atRest = false;
-                boxColliders[i].rb->restingContact = false;
-                boxColliders[i].rb->setAngularVelocity(glm::vec3(0,0,0));
-            }
-        }
+//        for(int i = 0; i<boxColliders.size(); i++)
+//        {
+//            BoxCollider col = boxColliders[i];
+//            if(col.rb->position.y<-10.0f)
+//            {
+//                boxColliders[i].rb->position = boxSpawns[i];
+//                boxColliders[i].rb->setVelocity(glm::vec3(0,0,0));
+//                boxColliders[i].rb->atRest = false;
+//                boxColliders[i].rb->restingContact = false;
+//                boxColliders[i].rb->setAngularVelocity(glm::vec3(0,0,0));
+//            }
+//        }
 
 
 
@@ -314,15 +314,15 @@ public:
             drawBoundedCollider(col);
         }
 
-        for(auto& col: boxColliders)
-        {
-            if(col.rb == selectedRb)
-                cube.meshes[1].setColor(glm::vec3(1,0,0));
-            else
-                cube.meshes[1].setColor(glm::vec3(0,0,0));
-            cube.meshes[0].setColor(glm::vec3(1,1,1));
-            drawBoundedCollider(col );
-        }
+//        for(auto& col: boxColliders)
+//        {
+//            if(col.rb == selectedRb)
+//                cube.meshes[1].setColor(glm::vec3(1,0,0));
+//            else
+//                cube.meshes[1].setColor(glm::vec3(0,0,0));
+//            cube.meshes[0].setColor(glm::vec3(1,1,1));
+//            drawBoundedCollider(col );
+//        }
 
         plane.draw();
     }
