@@ -23,7 +23,7 @@ public:
     void start()
     {
         float mass = 1.0f;
-        float radius = 1.0f;
+        float radius = 0.5f;
         float inertia = (2.0f/5.0f)*mass*radius*radius;
         BoxColliders.reserve(100);
         rbs.reserve(100);
@@ -42,10 +42,11 @@ public:
             inContact.push_back(false);
             }
         }
-        sphereRb = UniformRigidBody(mass, inertia);
+        inertia = (2.0f/5.0f)*10.0f*radius*radius;
+        sphereRb = UniformRigidBody(10.0f, inertia);
         // SphereBody otherRb(mass, 0.5f);
 
-        sphereCollider = SphereCollider(0.5f);
+        sphereCollider = SphereCollider(radius);
         sphereCollider.rb = &sphereRb;
         sphereRb.position = glm::vec3(2,8,10);
 

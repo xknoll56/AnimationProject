@@ -138,16 +138,16 @@ public:
             animationTimers[animationTimers.size()-1].shouldUpdate = true;
             animationTimers[animationTimers.size()-1].spawnPosition = getRandomPointInSpawnZone();
         }
-        for(int i  =0; i<1; i++)
-        {
-            UniformRigidBody boxRb(mass, inertia);
-            boxRbs.push_back(boxRb);
-            BoxCollider bc(glm::vec3(0.5f, 0.5f,1.5f));
-            boxColliders.push_back(bc);
-            boxColliders[boxColliders.size()-1].rb = &boxRbs[boxRbs.size()-1];
-            boxSpawns.push_back(glm::vec3(-8, 8, 0));
-            boxColliders[boxColliders.size()-1].rb->position = boxSpawns[boxSpawns.size()-1];
-        }
+//        for(int i  =0; i<5; i++)
+//        {
+//            UniformRigidBody boxRb(mass, inertia);
+//            boxRbs.push_back(boxRb);
+//            BoxCollider bc(glm::vec3(0.5f, 0.5f,0.5f));
+//            boxColliders.push_back(bc);
+//            boxColliders[boxColliders.size()-1].rb = &boxRbs[boxRbs.size()-1];
+//            boxSpawns.push_back(glm::vec3(-8, 8, 4-2*i));
+//            boxColliders[boxColliders.size()-1].rb->position = boxSpawns[boxSpawns.size()-1];
+//        }
         floorRb = UniformRigidBody(mass, inertia);
         blockRb = UniformRigidBody(4.0f, inertia);
         leftSideRb = UniformRigidBody(mass, inertia);
@@ -238,18 +238,18 @@ public:
             }
         }
 
-//        for(int i = 0; i<boxColliders.size(); i++)
-//        {
-//            BoxCollider col = boxColliders[i];
-//            if(col.rb->position.y<-10.0f)
-//            {
-//                boxColliders[i].rb->position = boxSpawns[i];
-//                boxColliders[i].rb->setVelocity(glm::vec3(0,0,0));
-//                boxColliders[i].rb->atRest = false;
-//                boxColliders[i].rb->restingContact = false;
-//                boxColliders[i].rb->setAngularVelocity(glm::vec3(0,0,0));
-//            }
-//        }
+        for(int i = 0; i<boxColliders.size(); i++)
+        {
+            BoxCollider col = boxColliders[i];
+            if(col.rb->position.y<-10.0f)
+            {
+                boxColliders[i].rb->position = boxSpawns[i];
+                boxColliders[i].rb->setVelocity(glm::vec3(0,0,0));
+                boxColliders[i].rb->atRest = false;
+                boxColliders[i].rb->restingContact = false;
+                boxColliders[i].rb->setAngularVelocity(glm::vec3(0,0,0));
+            }
+        }
 
 
 
