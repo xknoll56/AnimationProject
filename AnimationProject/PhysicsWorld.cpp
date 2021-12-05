@@ -1296,7 +1296,7 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
 
         sphere->rb->addForce(force);
         glm::vec3 forceT = glm::normalize(vt)*glm::length(vt)/glm::length(vn);
-        sphere->rb->setAngularVelocity(glm::cross(r,-vt/sphere->radius));
+
     }
     else
     {

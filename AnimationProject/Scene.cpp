@@ -89,10 +89,13 @@ void Scene::update(float dt)
     {
         gMainWindow->lockCursorState();
         //QPointF deltaPos = QCursor::pos()-gMainWindow->mousePos;
-        QPointF deltaPos(gMainWindow->mouseDx, gMainWindow->mouseDy);
+        QPointF deltaPos((float)QCursor::pos().x()-gMainWindow->position().x()-gMainWindow->width()/2.0f,
+                         (float)QCursor::pos().y()-gMainWindow->position().y()-gMainWindow->height()/2.0f);
         //gMainWindow->mousePos = QCursor::pos();
         cam.rotateYaw(-dt*deltaPos.x());
         cam.rotatePitch(-dt*deltaPos.y());
+        QCursor::setPos(gMainWindow->position().x()+gMainWindow->width()/2,
+                        gMainWindow->position().y()+gMainWindow->height()/2);
     }
     else
         gMainWindow->unlockCursorState();
