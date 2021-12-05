@@ -24,7 +24,7 @@ public:
     {
         float mass = 1.0f;
         float radius = 0.5f;
-        float inertia = (2.0f/5.0f)*mass*radius*radius;
+        float inertia = 1.0f;
         BoxColliders.reserve(100);
         rbs.reserve(100);
         inContact.reserve(100);

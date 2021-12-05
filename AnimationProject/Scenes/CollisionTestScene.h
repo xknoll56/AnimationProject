@@ -31,7 +31,7 @@ public:
 
         float mass = 1.0f;
         float radius = 0.5f;
-        float inertia = (2.0f/5.0f)*mass*radius*radius;
+        float inertia = 1.0f;
         rb = UniformRigidBody(mass, inertia);
         otherRb = UniformRigidBody(mass, inertia);
         // SphereBody otherRb(mass, 0.5f);
