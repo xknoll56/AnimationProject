@@ -23,7 +23,7 @@ public:
     void start()
     {
         float mass = 1.0f;
-        float radius = 0.5f;
+        float radius = 1.0f;
         float inertia = 1.0f;
         BoxColliders.reserve(100);
         rbs.reserve(100);

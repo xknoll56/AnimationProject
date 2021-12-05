@@ -23,6 +23,9 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         inputsDown[event->button()] = true;
         inputsDownReset[event->button()] = true;
     }
+
+    if(lockCursor)
+        QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
@@ -118,19 +121,18 @@ void MainWindow::mouseMoveEvent(QMouseEvent* event)
 {
     if(lockCursor)
     {
-        if(!adjustMouse)
-        {
-            mouseDx = (float)QCursor::pos().x()-position().x()-width()/2.0f;
-            mouseDy = (float)QCursor::pos().y()-position().y()-height()/2.0f;
-            QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
-        }
-        else
+        if(adjustMouse)
         {
             mouseDx = 0.0f;
             mouseDy = 0.0f;
             QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
             adjustMouse = false;
         }
+
+        mouseDx = (float)QCursor::pos().x()-position().x()-width()/2.0f;
+        mouseDy = (float)QCursor::pos().y()-position().y()-height()/2.0f;
+        QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
+
     }
 }
 
