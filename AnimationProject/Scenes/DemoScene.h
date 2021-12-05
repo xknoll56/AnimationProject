@@ -86,6 +86,7 @@ public:
             animTimer->respawned = true;
              glm::vec3 velocity((rand()%100-50.0f)/20, -2.0f, (rand()%100-50.0f)/20);
              sphereColliders[sphereIndex].rb->setVelocity(velocity);
+             sphereColliders[sphereIndex].rb->setAngularVelocity(glm::vec3(0,0,0));
              sphereColliders[sphereIndex].scale = glm::vec3(0,0,0);
         }
         else if(animTimer->timer >= animTimer->timeMax*0.5f && animTimer->timer<animTimer->timeMax)
