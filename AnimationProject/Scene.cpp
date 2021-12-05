@@ -92,8 +92,11 @@ void Scene::update(float dt)
         QPointF deltaPos((float)QCursor::pos().x()-gMainWindow->position().x()-gMainWindow->width()/2.0f,
                          (float)QCursor::pos().y()-gMainWindow->position().y()-gMainWindow->height()/2.0f);
         //gMainWindow->mousePos = QCursor::pos();
+        if(glm::abs(deltaPos.x())<50 && glm::abs(deltaPos.y())<50)
+        {
         cam.rotateYaw(-dt*deltaPos.x());
         cam.rotatePitch(-dt*deltaPos.y());
+        }
         QCursor::setPos(gMainWindow->position().x()+gMainWindow->width()/2,
                         gMainWindow->position().y()+gMainWindow->height()/2);
     }
