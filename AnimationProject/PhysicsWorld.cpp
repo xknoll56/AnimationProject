@@ -1300,17 +1300,17 @@ void PhysicsWorld::cubeSphereCollisionResponseStaticVsDynamic(ContactInfo& info,
     }
     else
     {
-        if(info.faceCollision)
+        //if(info.faceCollision)
         {
             sphere->rb->linearMomentum = glm::cross(glm::cross(normal, sphere->rb->linearMomentum), normal);
             sphere->rb->setAngularVelocity(glm::cross(normal,sphere->rb->velocity/sphere->radius));
             sphere->rb->addForce(friction*glm::normalize(sphere->rb->velocity)*glm::dot(gravity, normal));
         }
-        else
-        {
-            if(j<0)
-                sphere->rb->addForce(force);
-        }
+//        else
+//        {
+//            //if(j<0)
+//                sphere->rb->addForce(force);
+//        }
     }
 
 }
