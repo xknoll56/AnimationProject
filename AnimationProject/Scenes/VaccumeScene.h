@@ -9,9 +9,11 @@ private:
     PhysicsWorld world;
     std::vector<BoxCollider> BoxColliders;
     std::vector<UniformRigidBody> rbs;
-    SphereCollider sphereCollider;
-    UniformRigidBody sphereRb;
+    //SphereCollider sphereCollider;
+    BoxCollider collider;
+    UniformRigidBody boxRb;
     std::vector<bool> inContact;
+    int widthBoxes = 10;
 
 
 public:
@@ -25,15 +27,15 @@ public:
         float mass = 1.0f;
         float radius = 1.0f;
         float inertia = 1.0f;
-        BoxColliders.reserve(100);
-        rbs.reserve(100);
-        inContact.reserve(100);
-        for(int i = 0;i<6;i++)
+        BoxColliders.reserve(widthBoxes*widthBoxes);
+        rbs.reserve(widthBoxes*widthBoxes);
+        inContact.reserve(widthBoxes*widthBoxes);
+        for(int i = 0;i<widthBoxes;i++)
         {
-            for(int j = 0; j<6;j++)
+            for(int j = 0; j<widthBoxes;j++)
             {
             UniformRigidBody rb(mass, inertia);
-            rb.position = glm::vec3(i%6*1.05f, j%6*1.05f, 0);
+            rb.position = glm::vec3(i%widthBoxes*1.05f, j%widthBoxes*1.05f, 0);
             rb.dynamic = true;
             rb.atRest = true;
             rbs.push_back(rb);
@@ -42,22 +44,23 @@ public:
             inContact.push_back(false);
             }
         }
-        inertia = (2.0f/5.0f)*10.0f*radius*radius;
-        sphereRb = UniformRigidBody(10.0f, inertia);
+        //inertia = (2.0f/5.0f)*10.0f*radius*radius;
+        boxRb = UniformRigidBody(10.0f, 10.0f);
         // SphereBody otherRb(mass, 0.5f);
 
-        sphereCollider = SphereCollider(radius);
-        sphereCollider.rb = &sphereRb;
-        sphereRb.position = glm::vec3(2,8,10);
+        collider = BoxCollider(glm::vec3(1.0f,1.0f,1.0f));
+        collider.rb = &boxRb;
+        boxRb.position = glm::vec3(2,8,10);
 
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
-        std::vector<Collider*> colliders = {  &sphereCollider};
+        std::vector<Collider*> colliders = {  &collider};
         for(auto& col: BoxColliders)
             colliders.push_back(&col);
         world.gravity = glm::vec3(0,0.0f,0);
         world.enableResponse = true;
         world.setColliders(&colliders);
+        cam.setPosition(glm::vec3((widthBoxes*0.5f)*1.05f, (widthBoxes*0.5f)*1.0f, 10));
     }
 
     void update(float dt)
@@ -70,8 +73,9 @@ public:
 
         if(gMainWindow->getKeyDown(Qt::Key_Space))
         {
-            sphereRb.position = cam.getPosition();
-            sphereRb.setVelocity(-cam.getFwd()*30.0f);
+            boxRb.position = cam.getPosition();
+            boxRb.setVelocity(-cam.getFwd()*30.0f);
+            boxRb.setAngularVelocity(glm::vec3(1.0f,1.0f,1.0f));
         }
 
 
@@ -131,10 +135,10 @@ public:
             cube.draw();
         }
 
-        sphere.setPosition(sphereRb.position);
-        sphere.setRotation(sphereRb.rotation);
-        sphere.setScale(sphereCollider.scale);
-        sphere.draw();
+        cube.setPosition(boxRb.position);
+        cube.setRotation(boxRb.rotation);
+        cube.setScale(collider.scale);
+        cube.draw();
 
 
     }
