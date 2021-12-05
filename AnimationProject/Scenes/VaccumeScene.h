@@ -12,6 +12,8 @@ private:
     //SphereCollider sphereCollider;
     BoxCollider collider;
     UniformRigidBody boxRb;
+    SphereCollider sphereCollider;
+    UniformRigidBody sphereRb;
     std::vector<bool> inContact;
     int widthBoxes = 10;
 
@@ -50,11 +52,17 @@ public:
 
         collider = BoxCollider(glm::vec3(1.0f,1.0f,1.0f));
         collider.rb = &boxRb;
-        boxRb.position = glm::vec3(2,8,10);
+        boxRb.position = glm::vec3(2,8,30);
+
+        inertia = (2.0f/5.0f)*10.0f*radius*radius;
+        sphereRb = UniformRigidBody(10.0f, inertia);
+        sphereCollider = SphereCollider(1.0f);
+        sphereCollider.rb = &sphereRb;
+        sphereRb.position = glm::vec3(5,8,30);
 
        // rb.rotation = glm::quat(glm::vec3(0.0f,0.0f, 0.0f));
 
-        std::vector<Collider*> colliders = {  &collider};
+        std::vector<Collider*> colliders = {  &collider, &sphereCollider};
         for(auto& col: BoxColliders)
             colliders.push_back(&col);
         world.gravity = glm::vec3(0,0.0f,0);
@@ -78,7 +86,11 @@ public:
             boxRb.setAngularVelocity(glm::vec3(1.0f,1.0f,1.0f));
         }
 
-
+        if(gMainWindow->getKeyDown(Qt::Key_Return))
+        {
+            sphereRb.position = cam.getPosition();
+            sphereRb.setVelocity(-cam.getFwd()*30.0f);
+        }
 
     }
 
@@ -139,6 +151,11 @@ public:
         cube.setRotation(boxRb.rotation);
         cube.setScale(collider.scale);
         cube.draw();
+
+        sphere.setPosition(sphereRb.position);
+        sphere.setRotation(sphereRb.rotation);
+        sphere.setScale(sphereCollider.scale);
+        sphere.draw();
 
 
     }

@@ -25,7 +25,11 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 
     if(lockCursor)
+    {
+        mouseDx = (float)QCursor::pos().x()-position().x()-width()/2.0f;
+        mouseDy = (float)QCursor::pos().y()-position().y()-height()/2.0f;
         QCursor::setPos(position().x()+width()/2, position().y()+height()/2);
+    }
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
